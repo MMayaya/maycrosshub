@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="May Cross Hub helps educators find reciprocal teacher transfer matches based on current post details, desired location, subjects, phase, grades, post level, and privacy preferences.">
+<meta name="theme-color" content="#002b5e">
+<meta property="og:title" content="May Cross Hub | Teacher Transfer Matching">
+<meta property="og:description" content="A privacy-conscious transfer matching platform for educators looking for reciprocal post swaps.">
+<meta property="og:type" content="website">
+<title>May Cross Hub | Teacher Transfer Matching</title>
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f0f4f8;
+    color: #333;
+    line-height: 1.6;
+}
+
+img { max-width: 100%; display: block; }
+
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 3px solid #66a3ff;
+    outline-offset: 3px;
+    border-radius: 6px;
+}
+
+@keyframes slideInLeft {
+    0% { opacity: 0; transform: translateX(-100px); }
+    100% { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInRight {
+    0% { opacity: 0; transform: translateX(50px); }
+    100% { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInDown {
+    0% { opacity: 0; transform: translateY(-30px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInUp {
+    0% { opacity: 0; transform: translateY(40px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+nav {
+    background-color: #002b5e;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+    opacity: 0;
+    animation: slideInDown 0.6s ease-out forwards;
+}
+
+.logo {
+    color: #fff;
+    font-size: 1.45rem;
+    font-weight: bold;
+    text-decoration: none;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+}
+
+.logo-mark {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #ffffff;
+    color: #004080;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    font-size: 0.9rem;
+}
+
+.nav-toggle {
+    display: none;
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 1.6rem;
+    cursor: pointer;
+    padding: 0.3rem 0.5rem;
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.nav-links a {
+    color: #cce0ff;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s, background-color 0.3s;
+    padding: 0.45rem 0.7rem;
+    border-radius: 6px;
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+    color: #fff;
+    background-color: rgba(255,255,255,0.08);
+    text-decoration: none;
+}
+
+.nav-links a.btn-signin {
+    background-color: #3385ff;
+    color: #fff !important;
+    font-weight: bold;
+}
+
+.nav-links a.btn-signin:hover {
+    background-color: #0056ff;
+}
+
+header {
+    background: linear-gradient(135deg, #004080, #0059b3);
+    color: #fff;
+    padding: 4rem 1rem 3.3rem;
+    overflow: hidden;
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+header::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(circle at 12% 18%, rgba(255,255,255,0.22), transparent 32%),
+        radial-gradient(circle at 84% 20%, rgba(255,255,255,0.14), transparent 36%);
+    pointer-events: none;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 1;
+}
+
+.header-logo {
+    width: 130px;
+    height: 130px;
+    object-fit: contain;
+    background: #fff;
+    border-radius: 50%;
+    padding: 5px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    opacity: 0;
+    animation: slideInLeft 0.8s ease-out 0.2s forwards;
+}
+
+.logo-fallback {
+    width: 130px;
+    height: 130px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: #fff;
+    color: #004080;
+    border-radius: 50%;
+    padding: 12px;
+    font-weight: bold;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    opacity: 0;
+    animation: slideInLeft 0.8s ease-out 0.2s forwards;
+}
+
+.header-text {
+    text-align: left;
+    max-width: 760px;
+    opacity: 0;
+    animation: slideInRight 0.8s ease-out 0.4s forwards;
+}
+
+.header-text h1 {
+    font-size: clamp(2.2rem, 5vw, 4.6rem);
+    line-height: 1;
+    margin-bottom: 0.55rem;
+}
+
+.motto {
+    font-size: 1.25rem;
+    font-style: italic;
+    color: #c7deff;
+    margin-bottom: 0.85rem;
+    font-weight: 500;
+}
+
+.header-text p.instructions {
+    font-size: 1.06rem;
+    color: #e6f0fa;
+    margin-bottom: 1rem;
+}
+
+.hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    margin-top: 1rem;
+}
+
+.btn {
+    display: inline-block;
+    text-decoration: none;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 0.8rem 1.1rem;
+    transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 1rem;
+}
+
+.btn:hover { transform: translateY(-2px); }
+
+.btn-primary {
+    background-color: #fff;
+    color: #004080;
+}
+
+.btn-primary:hover { background-color: #eaf3ff; }
+
+.btn-secondary {
+    background-color: rgba(255,255,255,0.12);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.25);
+}
+
+.btn-secondary:hover { background-color: rgba(255,255,255,0.2); }
+
+.btn-dark {
+    background-color: #004080;
+    color: #fff;
+}
+
+.btn-dark:hover { background-color: #003468; }
+
+.btn-whatsapp {
+    background-color: #25d366;
+    color: #fff;
+}
+
+.btn-whatsapp:hover { background-color: #1fb65a; }
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.section-title {
+    font-size: 1.8rem;
+    color: #003a75;
+    margin-bottom: 0.35rem;
+}
+
+.section-subtitle {
+    color: #555;
+    margin-bottom: 1.1rem;
+}
+
+.intro-panel,
+.content-panel,
+.search-panel,
+.feedback-panel {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    padding: 1.5rem 1.8rem;
+    margin-bottom: 1.2rem;
+    border-left: 4px solid #3385ff;
+    opacity: 0;
+    animation: fadeInUp 0.8s ease-out 0.3s forwards;
+}
+
+.content-panel {
+    border-left-color: #004080;
+}
+
+.warning-panel {
+    background: #fff8e7;
+    border: 1px solid #ffe1a7;
+    border-left: 5px solid #ffbd22;
+    border-radius: 12px;
+    padding: 1rem 1.2rem;
+    margin-bottom: 1.2rem;
+    color: #5a3d00;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+    opacity: 0;
+    animation: fadeInUp 0.8s ease-out 0.36s forwards;
+}
+
+.hub-toggle-container {
+    display: flex;
+    justify-content: center;
+    margin: 2rem 0 1rem;
+    opacity: 0;
+    animation: fadeInUp 0.8s ease-out 0.2s forwards;
+}
+
+.hub-toggle {
+    display: flex;
+    background: #dbe4ee;
+    padding: 5px;
+    border-radius: 50px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 700px;
+    position: relative;
+}
+
+.toggle-option {
+    flex: 1;
+    text-align: center;
+    padding: 12px 0;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 700;
+    color: #5d6c7c;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 0.95rem;
+    z-index: 1;
+}
+
+.toggle-option.active {
+    color: #fff;
+    background-color: #004080;
+    box-shadow: 0 4px 12px rgba(0,64,128,0.25);
+}
+
+.toggle-option:not(.active):hover {
+    background-color: rgba(255,255,255,0.4);
+    color: #002b5e;
+}
+
+.grid-4,
+.steps-grid,
+.data-grid,
+.tech-grid {
+    display: grid;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.steps-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.data-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.tech-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+.metric-card,
+.step-card,
+.data-card,
+.tech-card {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    overflow: hidden;
+    border-top: 5px solid #3385ff;
+    padding: 1.25rem;
+    opacity: 0;
+    animation: fadeInUp 0.8s ease-out forwards;
+}
+
+.metric-card:nth-child(1), .step-card:nth-child(1), .data-card:nth-child(1) { animation-delay: 0.45s; }
+.metric-card:nth-child(2), .step-card:nth-child(2), .data-card:nth-child(2) { animation-delay: 0.55s; }
+.metric-card:nth-child(3), .step-card:nth-child(3), .data-card:nth-child(3) { animation-delay: 0.65s; }
+.metric-card:nth-child(4), .step-card:nth-child(4) { animation-delay: 0.75s; }
+
+.metric-card strong {
+    color: #004080;
+    font-size: 1.7rem;
+    display: block;
+    line-height: 1;
+    margin-bottom: 0.45rem;
+}
+
+.metric-card p,
+.step-card p,
+.data-card li,
+.tech-card p {
+    color: #5d6c7c;
+    font-size: 0.95rem;
+}
+
+.step-number {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: #004080;
+    color: #fff;
+    font-weight: 900;
+    margin-bottom: 0.8rem;
+    box-shadow: 0 4px 12px rgba(0,64,128,0.25);
+}
+
+.step-card:nth-child(2) .step-number { background: #3385ff; }
+.step-card:nth-child(3) .step-number { background: #e60000; }
+.step-card:nth-child(4) .step-number { background: #ffbd22; color: #2b1f00; }
+
+.card-title {
+    color: #004080;
+    font-size: 1.15rem;
+    margin-bottom: 0.45rem;
+}
+
+.feature-list,
+.plain-list {
+    list-style: none;
+    display: grid;
+    gap: 0.65rem;
+}
+
+.feature-list li,
+.plain-list li {
+    position: relative;
+    padding-left: 1.45rem;
+}
+
+.feature-list li::before,
+.plain-list li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: #3385ff;
+    font-weight: 900;
+}
+
+.match-panel {
+    background: linear-gradient(135deg, #003a75, #004f9f);
+    color: #fff;
+    border-radius: 14px;
+    padding: 1.8rem;
+    margin: 2rem 0;
+    box-shadow: 0 8px 22px rgba(0,64,128,0.22);
+}
+
+.match-panel .section-title,
+.match-panel .section-subtitle {
+    color: #fff;
+}
+
+.match-panel .section-subtitle {
+    color: #dbe9ff;
+}
+
+.match-demo {
+    display: grid;
+    grid-template-columns: 1fr minmax(140px, 0.45fr) 1fr;
+    gap: 1rem;
+    align-items: stretch;
+    margin-top: 1rem;
+}
+
+.teacher-card {
+    background: rgba(255,255,255,0.96);
+    color: #333;
+    border-radius: 12px;
+    padding: 1.1rem;
+    border: 1px solid rgba(255,255,255,0.55);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), 0 8px 18px rgba(0,0,0,0.12);
+}
+
+.teacher-card h3 {
+    color: #004080;
+    margin-bottom: 0.75rem;
+}
+
+.route-row {
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    gap: 0.5rem;
+    margin-bottom: 0.45rem;
+}
+
+.route-row span:first-child {
+    font-weight: 700;
+    color: #5d6c7c;
+}
+
+.bridge {
+    display: grid;
+    place-items: center;
+    text-align: center;
+    background: rgba(255,255,255,0.13);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 12px;
+    padding: 1rem;
+    color: #fff;
+}
+
+.tag {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    border-radius: 999px;
+    padding: 0.25rem 0.65rem;
+    background: #e6f0fa;
+    color: #004080;
+    font-size: 0.82rem;
+    font-weight: 800;
+    margin-left: 0.4rem;
+}
+
+.form-demo {
+    margin-top: 1.2rem;
+    background: #fff;
+    border: 1px solid #d8e8fb;
+    border-radius: 12px;
+    padding: 1rem;
+    color: #333;
+}
+
+.demo-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+    gap: 0.7rem;
+    align-items: end;
+    margin-top: 0.8rem;
+}
+
+.field label {
+    display: block;
+    color: #003a75;
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-bottom: 0.28rem;
+}
+
+.field select {
+    width: 100%;
+    min-height: 44px;
+    border: 1px solid #b8d1f0;
+    border-radius: 8px;
+    background: #fff;
+    color: #333;
+    padding: 0.68rem 0.7rem;
+    font: inherit;
+}
+
+.demo-result {
+    margin-top: 0.8rem;
+    padding: 0.75rem 0.85rem;
+    border-radius: 8px;
+    background: #e9f9ee;
+    color: #116b36;
+    border: 1px solid #bde8c9;
+    font-weight: 700;
+}
+
+.privacy-panel {
+    background: linear-gradient(135deg, #ff1f1f 0%, #c40000 48%, #850000 100%);
+    color: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 0 22px rgba(230, 0, 0, 0.35), 0 10px 24px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -26px 42px rgba(0,0,0,0.12);
+    padding: 1.4rem 1.6rem;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(255,255,255,0.32);
+    border-left: 5px solid #ffd6d6;
+    position: relative;
+    overflow: hidden;
+    opacity: 0;
+    animation: fadeInUp 0.8s ease-out 0.38s forwards;
+}
+
+.privacy-panel::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 48%;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.28), rgba(255,255,255,0.08), rgba(255,255,255,0));
+    pointer-events: none;
+}
+
+.privacy-panel > * {
+    position: relative;
+    z-index: 1;
+}
+
+.privacy-panel .section-title,
+.privacy-panel .section-subtitle {
+    color: #ffffff;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.22);
+}
+
+.privacy-table-wrap {
+    overflow-x: auto;
+    border-radius: 11px;
+    margin-top: 1rem;
+}
+
+.privacy-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 760px;
+    background: rgba(255,255,255,0.96);
+    color: #333;
+    border-radius: 11px;
+    overflow: hidden;
+}
+
+.privacy-table th,
+.privacy-table td {
+    text-align: left;
+    padding: 0.85rem;
+    border-bottom: 1px solid #ffd8d8;
+}
+
+.privacy-table th {
+    background: #7a0000;
+    color: #fff;
+}
+
+.privacy-table tr:last-child td { border-bottom: 0; }
+
+.default-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 70px;
+    min-height: 30px;
+    padding: 0.25rem 0.55rem;
+    border-radius: 999px;
+    font-weight: 850;
+    font-size: 0.82rem;
+}
+
+.default-on {
+    background: #e9f9ee;
+    color: #116b36;
+    border: 1px solid #bde8c9;
+}
+
+.default-off {
+    background: #fff1f1;
+    color: #a32222;
+    border: 1px solid #f2c3c3;
+}
+
+.default-later {
+    background: #fff8e7;
+    color: #6d4900;
+    border: 1px solid #ffe1a7;
+}
+
+.cta-panel {
+    background: linear-gradient(135deg, #003a75, #004f9f);
+    color: #fff;
+    border-radius: 14px;
+    padding: 1.8rem;
+    margin: 2rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.cta-panel h2 {
+    margin-bottom: 0.3rem;
+    font-size: 1.5rem;
+}
+
+.cta-panel p {
+    color: #dbe9ff;
+    max-width: 760px;
+}
+
+footer {
+    background-color: #002b5e;
+    color: #fff;
+    margin-top: 3rem;
+    opacity: 0;
+    animation: fadeIn 1s ease-out 1.1s forwards;
+}
+
+.footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 20px 1.3rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+}
+
+.footer-brand h3,
+.footer-links h4,
+.footer-note h4 {
+    margin-bottom: 0.6rem;
+}
+
+.footer-brand p,
+.footer-note p {
+    color: #d4e3f7;
+    font-size: 0.94rem;
+}
+
+.footer-links a {
+    display: block;
+    color: #d4e3f7;
+    text-decoration: none;
+    margin-bottom: 0.45rem;
+}
+
+.footer-links a:hover { color: #fff; }
+
+.footer-bottom {
+    text-align: center;
+    padding: 1rem 20px;
+    border-top: 1px solid rgba(255,255,255,0.12);
+    color: #d4e3f7;
+    font-size: 0.92rem;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+@media (max-width: 980px) {
+    .grid-4,
+    .steps-grid,
+    .data-grid,
+    .tech-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .match-demo {
+        grid-template-columns: 1fr;
+    }
+
+    .bridge {
+        min-height: 120px;
+    }
+
+    .demo-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    nav {
+        padding: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .nav-toggle {
+        display: block;
+        margin-left: auto;
+    }
+
+    .nav-links {
+        width: 100%;
+        display: none;
+        flex-direction: column;
+        align-items: flex-start;
+        padding-top: 0.5rem;
+    }
+
+    .nav-links.show { display: flex; }
+
+    .header-content {
+        text-align: center;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .header-text { text-align: center; }
+
+    .hero-actions { justify-content: center; }
+
+    .intro-panel,
+    .content-panel,
+    .search-panel,
+    .feedback-panel,
+    .privacy-panel {
+        padding: 1rem;
+    }
+
+    .grid-4,
+    .steps-grid,
+    .data-grid,
+    .tech-grid,
+    .demo-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .cta-panel {
+        text-align: center;
+        justify-content: center;
+    }
+
+    .cta-panel .btn,
+    .hero-actions .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .container { padding: 0 14px; }
+
+    .section-title { font-size: 1.45rem; }
+
+    .toggle-option {
+        font-size: 0.85rem;
+        padding: 10px 2px;
+    }
+
+    .route-row {
+        grid-template-columns: 1fr;
+        gap: 0.1rem;
+    }
+
+    .logo {
+        font-size: 1.05rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+    }
+
+    nav,
+    .header-logo,
+    .logo-fallback,
+    .header-text,
+    .intro-panel,
+    .content-panel,
+    .search-panel,
+    .feedback-panel,
+    .warning-panel,
+    .hub-toggle-container,
+    .metric-card,
+    .step-card,
+    .data-card,
+    .tech-card,
+    .privacy-panel,
+    footer {
+        opacity: 1 !important;
+        transform: none !important;
+    }
+}
+</style>
+</head>
+
+<body>
+<nav aria-label="Main navigation">
+    <a href="index.html" class="logo">
+        <span class="logo-mark">MC</span>
+        May Cross Hub
+    </a>
+    <button class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="navLinks" aria-label="Toggle navigation menu">☰</button>
+    <div class="nav-links" id="navLinks">
+        <a href="index.html" class="active">Home</a>
+        <a href="#how-it-works">How It Works</a>
+        <a href="#matching">Matching</a>
+        <a href="#registration">Registration</a>
+        <a href="#privacy">Privacy</a>
+        <a href="signin.html">Sign In</a>
+        <a href="register.html" class="btn-signin">Register</a>
+    </div>
+</nav>
+
+<header>
+    <div class="header-content">
+        <div class="logo-fallback" aria-hidden="true">May<br>Cross<br>Hub</div>
+        <div class="header-text">
+            <h1>May Cross Hub</h1>
+            <p class="motto">Helping educators find transfer matches that cross.</p>
+            <p class="instructions">
+                A privacy-conscious teacher transfer matching platform where educators can register their current post, desired transfer area, subjects, phase, grades, and preferences to find compatible reciprocal matches.
+            </p>
+            <div class="hero-actions">
+                <a href="register.html" class="btn btn-primary">Join the Transfer List</a>
+                <a href="#matching" class="btn btn-secondary">See Match Logic</a>
+            </div>
+        </div>
+    </div>
+</header>
+
+<div class="container">
+    <div class="hub-toggle-container">
+        <div class="hub-toggle">
+            <a href="index.html" class="toggle-option active">Cross Hub</a>
+            <a href="register.html" class="toggle-option">Register</a>
+            <a href="matches.html" class="toggle-option">My Matches</a>
+            <a href="request.html" class="toggle-option">Requests</a>
+        </div>
+    </div>
+
+    <section class="intro-panel" aria-labelledby="intro-title">
+        <h2 class="section-title" id="intro-title">Teacher Transfer Matching, Built Around Real Educator Needs</h2>
+        <p>
+            May Cross Hub helps educators look for possible reciprocal transfer matches. The platform is designed to compare where an educator is currently posted, where they want to go, and whether another educator’s professional profile is compatible enough for a serious match request.
+        </p>
+    </section>
+
+    <section class="warning-panel" aria-label="Important official process note">
+        <strong>Important note:</strong> May Cross Hub can help educators discover possible matches, but official transfer rules, departmental procedures, school approval, and employer requirements must still be followed.
+    </section>
+
+    <section aria-labelledby="promise-title">
+        <h2 class="section-title" id="promise-title">Core Matching Promise</h2>
+        <p class="section-subtitle">The homepage introduces the system. The detailed registration information will be captured on the registration page.</p>
+
+        <div class="grid-4">
+            <article class="metric-card">
+                <strong>1</strong>
+                <p>Educator profile for current post details.</p>
+            </article>
+            <article class="metric-card">
+                <strong>2</strong>
+                <p>Desired province, district, town, and preferred school details.</p>
+            </article>
+            <article class="metric-card">
+                <strong>3</strong>
+                <p>Subject, phase, grade, and post compatibility checks.</p>
+            </article>
+            <article class="metric-card">
+                <strong>4</strong>
+                <p>Controlled match requests with privacy settings.</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="content-panel" id="purpose" aria-labelledby="purpose-title">
+        <h2 class="section-title" id="purpose-title">What May Cross Hub Is For</h2>
+        <p class="section-subtitle">A clean way to find educators whose transfer needs cross with yours.</p>
+        <ul class="feature-list">
+            <li>Educators register with verified email access before using the platform.</li>
+            <li>The system stores current post details, desired transfer details, and privacy preferences in Firebase.</li>
+            <li>Automatic matching looks for educators whose current location and desired location line up with another educator’s transfer route.</li>
+            <li>Users can decide whether to accept, ignore, or respond to match requests.</li>
+            <li>Sensitive details such as cellphone numbers and email addresses stay hidden by default.</li>
+        </ul>
+    </section>
+
+    <section id="how-it-works" aria-labelledby="how-title">
+        <h2 class="section-title" id="how-title">How It Works</h2>
+        <p class="section-subtitle">From account creation to a controlled match request.</p>
+
+        <div class="steps-grid">
+            <article class="step-card">
+                <div class="step-number">1</div>
+                <h3 class="card-title">Create a verified educator account</h3>
+                <p>Full name, email verification, cellphone number, password, and consent are collected during registration.</p>
+            </article>
+            <article class="step-card">
+                <div class="step-number">2</div>
+                <h3 class="card-title">Add current post details</h3>
+                <p>School, district, province, optional circuit or ward, quintile, phase, grades, subjects, and post level support accurate matching.</p>
+            </article>
+            <article class="step-card">
+                <div class="step-number">3</div>
+                <h3 class="card-title">Set desired transfer details</h3>
+                <p>Educators choose desired province, district, town, preferred school, nearby area willingness, and optional reason.</p>
+            </article>
+            <article class="step-card">
+                <div class="step-number">4</div>
+                <h3 class="card-title">Accept or decline requests</h3>
+                <p>Matching educators can send requests if allowed, while private contact details remain hidden until the correct stage.</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="match-panel" id="matching" aria-labelledby="matching-title">
+        <h2 class="section-title" id="matching-title">Best Match Logic</h2>
+        <p class="section-subtitle">
+            A strong match happens when two transfer routes cross: Teacher A is currently in Location 1 and wants Location 2, while Teacher B is currently in Location 2 and wants Location 1. Their subjects, phase, grades, and post level must also be compatible.
+        </p>
+
+        <div class="match-demo" aria-label="Example reciprocal match">
+            <article class="teacher-card">
+                <h3>Teacher A <span class="tag">Location 1</span></h3>
+                <div class="route-row"><span>Current</span><strong>District A, Province A</strong></div>
+                <div class="route-row"><span>Wants</span><strong>District B, Province B</strong></div>
+                <div class="route-row"><span>Post</span><strong>Senior Phase, Mathematics</strong></div>
+            </article>
+
+            <div class="bridge">
+                <div>
+                    <strong>Cross Match</strong>
+                    <p>Locations swap and professional details align.</p>
+                </div>
+            </div>
+
+            <article class="teacher-card">
+                <h3>Teacher B <span class="tag">Location 2</span></h3>
+                <div class="route-row"><span>Current</span><strong>District B, Province B</strong></div>
+                <div class="route-row"><span>Wants</span><strong>District A, Province A</strong></div>
+                <div class="route-row"><span>Post</span><strong>Senior Phase, Mathematics</strong></div>
+            </article>
+        </div>
+
+        <div class="form-demo" aria-labelledby="demo-title">
+            <h3 id="demo-title" class="card-title">Quick Location Match Preview</h3>
+            <p class="section-subtitle">This preview only checks reciprocal location logic. The full Firebase matching will also compare phase, grades, subjects, and post level.</p>
+
+            <div class="demo-grid">
+                <div class="field">
+                    <label for="aCurrent">A current</label>
+                    <select id="aCurrent">
+                        <option>Eastern Cape</option>
+                        <option>Free State</option>
+                        <option>Gauteng</option>
+                        <option>KwaZulu-Natal</option>
+                        <option>Limpopo</option>
+                        <option>Mpumalanga</option>
+                        <option>North West</option>
+                        <option>Northern Cape</option>
+                        <option>Western Cape</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="aDesired">A wants</label>
+                    <select id="aDesired">
+                        <option>Gauteng</option>
+                        <option>Eastern Cape</option>
+                        <option>Free State</option>
+                        <option>KwaZulu-Natal</option>
+                        <option>Limpopo</option>
+                        <option>Mpumalanga</option>
+                        <option>North West</option>
+                        <option>Northern Cape</option>
+                        <option>Western Cape</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="bCurrent">B current</label>
+                    <select id="bCurrent">
+                        <option>Gauteng</option>
+                        <option>Eastern Cape</option>
+                        <option>Free State</option>
+                        <option>KwaZulu-Natal</option>
+                        <option>Limpopo</option>
+                        <option>Mpumalanga</option>
+                        <option>North West</option>
+                        <option>Northern Cape</option>
+                        <option>Western Cape</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="bDesired">B wants</label>
+                    <select id="bDesired">
+                        <option>Eastern Cape</option>
+                        <option>Free State</option>
+                        <option>Gauteng</option>
+                        <option>KwaZulu-Natal</option>
+                        <option>Limpopo</option>
+                        <option>Mpumalanga</option>
+                        <option>North West</option>
+                        <option>Northern Cape</option>
+                        <option>Western Cape</option>
+                    </select>
+                </div>
+                <button class="btn btn-dark" id="checkMatch" type="button">Check</button>
+            </div>
+
+            <div class="demo-result" id="demoResult" role="status" aria-live="polite">A direct reciprocal location match is possible.</div>
+        </div>
+    </section>
+
+    <section id="registration" aria-labelledby="registration-title">
+        <h2 class="section-title" id="registration-title">Registration Overview</h2>
+        <p class="section-subtitle">These details belong on the registration page, but the homepage explains what the platform will use for matching.</p>
+
+        <div class="data-grid">
+            <article class="data-card">
+                <h3 class="card-title">Basic Information</h3>
+                <ul class="plain-list">
+                    <li>Full names: name and surname</li>
+                    <li>Email address with verification before access</li>
+                    <li>Cellphone number, not shown publicly</li>
+                    <li>Password for secure sign in</li>
+                    <li>Consent checkbox before registration</li>
+                </ul>
+            </article>
+
+            <article class="data-card">
+                <h3 class="card-title">Current Post Details</h3>
+                <ul class="plain-list">
+                    <li>School name, district, and province</li>
+                    <li>Circuit or ward, optional</li>
+                    <li>School quintile from 1 to 5</li>
+                    <li>Phase taught: Foundation, Intermediate, Senior, or FET</li>
+                    <li>Grades taught from 1 to 12</li>
+                    <li>Main qualified subjects and additional current subjects</li>
+                    <li>Post level or role for compatibility checks</li>
+                </ul>
+            </article>
+
+            <article class="data-card">
+                <h3 class="card-title">Desired Transfer Details</h3>
+                <ul class="plain-list">
+                    <li>Desired province, district, and town</li>
+                    <li>Preferred school, optional</li>
+                    <li>Willing to accept nearby areas: yes or no</li>
+                    <li>Optional reason for transfer</li>
+                    <li>Availability for match requests</li>
+                </ul>
+            </article>
+        </div>
+    </section>
+
+    <section class="privacy-panel" id="privacy" aria-labelledby="privacy-title">
+        <h2 class="section-title" id="privacy-title">Privacy Settings</h2>
+        <p class="section-subtitle">
+            These defaults follow a privacy-first approach while still allowing educators to see the professional details needed for matching.
+        </p>
+
+        <div class="privacy-table-wrap">
+            <table class="privacy-table">
+                <thead>
+                    <tr>
+                        <th>Privacy option</th>
+                        <th>Recommended default</th>
+                        <th>Why it matters</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Show my full name to matched educators</td>
+                        <td><span class="default-pill default-off">Off</span></td>
+                        <td>Can be revealed after a match request is accepted.</td>
+                    </tr>
+                    <tr>
+                        <td>Show my school name</td>
+                        <td><span class="default-pill default-later">Later</span></td>
+                        <td>Useful for serious matches, but best hidden at first.</td>
+                    </tr>
+                    <tr>
+                        <td>Show my subjects and district</td>
+                        <td><span class="default-pill default-on">On</span></td>
+                        <td>Needed for matching without exposing private contact details.</td>
+                    </tr>
+                    <tr>
+                        <td>Show my cellphone number</td>
+                        <td><span class="default-pill default-off">Off</span></td>
+                        <td>Cellphone numbers should stay private unless the educator chooses otherwise.</td>
+                    </tr>
+                    <tr>
+                        <td>Show my email address</td>
+                        <td><span class="default-pill default-off">Off</span></td>
+                        <td>Match requests can happen inside the platform first.</td>
+                    </tr>
+                    <tr>
+                        <td>Allow educators to send me match requests</td>
+                        <td><span class="default-pill default-on">On</span></td>
+                        <td>Allows compatible educators to start a controlled request.</td>
+                    </tr>
+                    <tr>
+                        <td>Allow admin to contact me about possible matches</td>
+                        <td><span class="default-pill default-on">On</span></td>
+                        <td>Allows admin help where an important match may be missed.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="content-panel" id="platform" aria-labelledby="platform-title">
+        <h2 class="section-title" id="platform-title">GitHub + Firebase Ready</h2>
+        <p class="section-subtitle">
+            The public website can be hosted on GitHub Pages while Firebase handles accounts, verified emails, educator profiles, privacy settings, match requests, and automatic matching rules.
+        </p>
+
+        <div class="tech-grid">
+            <article class="tech-card">
+                <h3 class="card-title">GitHub Pages</h3>
+                <p>Hosts the public website and static pages.</p>
+            </article>
+            <article class="tech-card">
+                <h3 class="card-title">Firebase Auth</h3>
+                <p>Handles sign in, passwords, and email verification.</p>
+            </article>
+            <article class="tech-card">
+                <h3 class="card-title">Firestore</h3>
+                <p>Stores profiles, privacy settings, and match requests.</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="cta-panel" aria-labelledby="cta-title">
+        <div>
+            <h2 id="cta-title">Next: Build the Registration Page</h2>
+            <p>
+                The homepage now introduces the May Cross Hub idea. The next page can collect the full educator profile and save it to Firebase.
+            </p>
+        </div>
+        <a href="register.html" class="btn btn-primary">Build Registration Next</a>
+    </section>
+</div>
+
+<footer>
+    <div class="footer-content">
+        <div class="footer-brand">
+            <h3>May Cross Hub</h3>
+            <p>
+                A teacher transfer matching platform designed around reciprocal location needs, professional compatibility, and privacy controls.
+            </p>
+        </div>
+
+        <div class="footer-links">
+            <h4>Quick Links</h4>
+            <a href="index.html">Home</a>
+            <a href="register.html">Register</a>
+            <a href="signin.html">Sign In</a>
+            <a href="privacy.html">Privacy Policy</a>
+        </div>
+
+        <div class="footer-note">
+            <h4>Future Tools</h4>
+            <p>
+                My Matches, Match Requests, Admin Review, and Firebase-powered automatic matching can be added after registration.
+            </p>
+        </div>
+    </div>
+
+    <div class="footer-bottom">
+        <p>&copy; <span id="year">2026</span> May Cross Hub. All rights reserved.</p>
+    </div>
+</footer>
+
+<script>
+const navToggle = document.getElementById('navToggle');
+const navLinks = document.getElementById('navLinks');
+const demoResult = document.getElementById('demoResult');
+const checkMatch = document.getElementById('checkMatch');
+const year = document.getElementById('year');
+
+if (year) {
+    year.textContent = new Date().getFullYear();
+}
+
+if (navToggle && navLinks) {
+    navToggle.addEventListener('click', () => {
+        const isOpen = navLinks.classList.toggle('show');
+        navToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+
+    navLinks.querySelectorAll('a').forEach((link) => {
+        link.addEventListener('click', () => {
+            navLinks.classList.remove('show');
+            navToggle.setAttribute('aria-expanded', 'false');
+        });
+    });
+}
+
+function updateDemoResult() {
+    const aCurrent = document.getElementById('aCurrent').value;
+    const aDesired = document.getElementById('aDesired').value;
+    const bCurrent = document.getElementById('bCurrent').value;
+    const bDesired = document.getElementById('bDesired').value;
+    const isReciprocal = aCurrent === bDesired && aDesired === bCurrent && aCurrent !== aDesired;
+
+    demoResult.textContent = isReciprocal
+        ? 'A direct reciprocal location match is possible.'
+        : 'This is not a direct reciprocal location match yet.';
+
+    demoResult.style.background = isReciprocal ? '#e9f9ee' : '#fff8e7';
+    demoResult.style.color = isReciprocal ? '#116b36' : '#6d4900';
+    demoResult.style.borderColor = isReciprocal ? '#bde8c9' : '#ffe1a7';
+}
+
+if (checkMatch && demoResult) {
+    checkMatch.addEventListener('click', updateDemoResult);
+    document.querySelectorAll('.form-demo select').forEach((select) => {
+        select.addEventListener('change', updateDemoResult);
+    });
+    updateDemoResult();
+}
+</script>
+</body>
+</html>
