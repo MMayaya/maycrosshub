@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Create a May Cross Hub educator account and add your reciprocal transfer preferences.">
+<meta name="theme-color" content="#002b5e">
+<title>Create Account | May Cross Hub</title>
+
+<style>
+:root {
+    --navy: #002b5e;
+    --blue: #004080;
+    --bright-blue: #3385ff;
+    --pale-blue: #eaf3ff;
+    --ink: #1f2d3d;
+    --muted: #5d6c7c;
+    --line: #d8e4f2;
+    --surface: #ffffff;
+    --background: #f0f4f8;
+    --success: #116b36;
+    --danger: #b42318;
+    --shadow: 0 16px 45px rgba(0, 43, 94, 0.12);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    min-height: 100vh;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background:
+        radial-gradient(circle at 10% 10%, rgba(51, 133, 255, 0.13), transparent 27rem),
+        var(--background);
+    color: var(--ink);
+    line-height: 1.55;
+}
+
+button,
+input,
+select,
+textarea { font: inherit; }
+
+a { color: inherit; }
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 3px solid #66a3ff;
+    outline-offset: 3px;
+}
+
+.site-nav {
+    min-height: 72px;
+    background: var(--navy);
+    color: #fff;
+    padding: 0.8rem clamp(1rem, 4vw, 3rem);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.14);
+}
+
+.brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    color: #fff;
+    text-decoration: none;
+    font-size: 1.25rem;
+    font-weight: 800;
+}
+
+.brand-mark {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: #fff;
+    color: var(--blue);
+    font-size: 0.85rem;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.22);
+}
+
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.nav-actions a {
+    color: #d7e8ff;
+    text-decoration: none;
+    font-weight: 650;
+    padding: 0.5rem 0.7rem;
+    border-radius: 7px;
+}
+
+.nav-actions a:hover { background: rgba(255,255,255,0.09); color: #fff; }
+
+.page-shell {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: clamp(2rem, 5vw, 4.5rem) 1.25rem 4rem;
+    display: grid;
+    grid-template-columns: minmax(250px, 0.68fr) minmax(0, 1.32fr);
+    gap: clamp(1.5rem, 4vw, 4rem);
+    align-items: start;
+}
+
+.intro {
+    position: sticky;
+    top: 2rem;
+}
+
+.eyebrow {
+    color: var(--bright-blue);
+    font-weight: 800;
+    font-size: 0.82rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 0.65rem;
+}
+
+.intro h1 {
+    color: var(--navy);
+    font-size: clamp(2.2rem, 5vw, 4rem);
+    line-height: 1.05;
+    letter-spacing: -0.045em;
+    margin-bottom: 1rem;
+}
+
+.intro-text {
+    color: var(--muted);
+    font-size: 1.06rem;
+    max-width: 32rem;
+}
+
+.route-card {
+    margin-top: 2rem;
+    border-radius: 16px;
+    padding: 1.25rem;
+    background: linear-gradient(135deg, var(--navy), #0059b3);
+    color: #fff;
+    box-shadow: 0 12px 30px rgba(0, 64, 128, 0.18);
+}
+
+.route-label {
+    color: #bcd8ff;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.route-line {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 0.7rem;
+    margin-top: 0.8rem;
+    font-weight: 750;
+}
+
+.route-line span:last-child { text-align: right; }
+
+.route-arrow {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.14);
+    color: #fff;
+}
+
+.trust-list {
+    list-style: none;
+    display: grid;
+    gap: 0.72rem;
+    margin-top: 1.5rem;
+    color: #405268;
+}
+
+.trust-list li {
+    display: grid;
+    grid-template-columns: 24px 1fr;
+    gap: 0.6rem;
+    align-items: start;
+}
+
+.check-icon {
+    width: 22px;
+    height: 22px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: #dff5e7;
+    color: var(--success);
+    font-size: 0.78rem;
+    font-weight: 900;
+    margin-top: 0.1rem;
+}
+
+.signup-card {
+    background: var(--surface);
+    border: 1px solid rgba(184, 209, 240, 0.75);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+.progress-wrap {
+    background: #f8fbff;
+    border-bottom: 1px solid var(--line);
+    padding: 1.2rem clamp(1rem, 4vw, 2rem);
+}
+
+.progress-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.65rem;
+    color: var(--muted);
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+
+.progress-track {
+    height: 7px;
+    background: #dfe9f5;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    width: 25%;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--blue), var(--bright-blue));
+    transition: width 0.25s ease;
+}
+
+.step-dots {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+    margin-top: 0.9rem;
+}
+
+.step-dot {
+    border: 0;
+    background: transparent;
+    color: #7b8b9c;
+    padding: 0.2rem;
+    text-align: center;
+    font-size: 0.76rem;
+    font-weight: 700;
+    cursor: default;
+}
+
+.step-dot strong {
+    width: 26px;
+    height: 26px;
+    margin: 0 auto 0.25rem;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: #dfe9f5;
+    color: #516173;
+}
+
+.step-dot.active { color: var(--blue); }
+.step-dot.active strong,
+.step-dot.done strong { background: var(--blue); color: #fff; }
+
+.form-body { padding: clamp(1.4rem, 4vw, 2.25rem); }
+
+.form-step { display: none; }
+.form-step.active { display: block; animation: stepIn 0.24s ease-out; }
+
+@keyframes stepIn {
+    from { opacity: 0; transform: translateY(7px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.step-heading { margin-bottom: 1.5rem; }
+
+.step-heading h2 {
+    color: var(--navy);
+    font-size: 1.65rem;
+    margin-bottom: 0.25rem;
+}
+
+.step-heading p { color: var(--muted); }
+
+.field-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.field { min-width: 0; }
+.field.full { grid-column: 1 / -1; }
+
+.field label,
+.group-label {
+    display: block;
+    color: #28425f;
+    font-size: 0.9rem;
+    font-weight: 750;
+    margin-bottom: 0.38rem;
+}
+
+.optional { color: #8794a3; font-weight: 500; }
+
+.field input,
+.field select,
+.field textarea {
+    width: 100%;
+    min-height: 48px;
+    padding: 0.72rem 0.82rem;
+    border: 1px solid #bdcee1;
+    border-radius: 9px;
+    background: #fff;
+    color: var(--ink);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.field textarea { min-height: 105px; resize: vertical; }
+
+.field input:hover,
+.field select:hover,
+.field textarea:hover { border-color: #88acd7; }
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+    border-color: var(--bright-blue);
+    box-shadow: 0 0 0 4px rgba(51, 133, 255, 0.11);
+    outline: 0;
+}
+
+.field input[aria-invalid="true"],
+.field select[aria-invalid="true"] { border-color: var(--danger); }
+
+.helper {
+    color: #748294;
+    font-size: 0.8rem;
+    margin-top: 0.3rem;
+}
+
+.password-wrap { position: relative; }
+.password-wrap input { padding-right: 4.5rem; }
+
+.show-password {
+    position: absolute;
+    right: 0.55rem;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 0;
+    background: transparent;
+    color: var(--blue);
+    font-weight: 750;
+    font-size: 0.8rem;
+    padding: 0.35rem;
+    cursor: pointer;
+}
+
+.choice-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.65rem;
+}
+
+.choice input { position: absolute; opacity: 0; pointer-events: none; }
+
+.choice label {
+    display: block;
+    min-height: 44px;
+    border: 1px solid #bdcee1;
+    border-radius: 9px;
+    padding: 0.65rem;
+    text-align: center;
+    color: #405268;
+    font-weight: 650;
+    cursor: pointer;
+}
+
+.choice input:checked + label {
+    border-color: var(--bright-blue);
+    background: var(--pale-blue);
+    color: var(--blue);
+    box-shadow: inset 0 0 0 1px var(--bright-blue);
+}
+
+.choice input:focus-visible + label { outline: 3px solid #66a3ff; outline-offset: 3px; }
+
+.switch-list {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.switch-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1rem;
+    align-items: center;
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    padding: 0.9rem 1rem;
+}
+
+.switch-row strong { display: block; color: #28425f; font-size: 0.92rem; }
+.switch-row span { color: var(--muted); font-size: 0.8rem; }
+
+.switch { position: relative; width: 44px; height: 24px; }
+.switch input { position: absolute; opacity: 0; }
+
+.slider {
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    background: #c6d1dd;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.slider::before {
+    content: "";
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    left: 3px;
+    top: 3px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    transition: 0.2s;
+}
+
+.switch input:checked + .slider { background: var(--bright-blue); }
+.switch input:checked + .slider::before { transform: translateX(20px); }
+.switch input:focus-visible + .slider { outline: 3px solid #66a3ff; outline-offset: 3px; }
+
+.review-box {
+    background: #f6f9fd;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-top: 1.25rem;
+}
+
+.review-box h3 { color: var(--navy); font-size: 1rem; margin-bottom: 0.55rem; }
+
+.review-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem 1rem;
+    font-size: 0.88rem;
+}
+
+.review-item span { display: block; color: #748294; font-size: 0.76rem; }
+.review-item strong { color: #28425f; overflow-wrap: anywhere; }
+
+.consent {
+    display: grid;
+    grid-template-columns: 20px 1fr;
+    gap: 0.65rem;
+    margin-top: 1.2rem;
+    color: #405268;
+    font-size: 0.88rem;
+}
+
+.consent input { width: 18px; height: 18px; margin-top: 0.15rem; accent-color: var(--blue); }
+.consent a { color: var(--blue); font-weight: 700; }
+
+.form-error {
+    display: none;
+    margin-top: 1rem;
+    padding: 0.72rem 0.85rem;
+    border-radius: 8px;
+    background: #fff1f0;
+    border: 1px solid #f5c4c0;
+    color: var(--danger);
+    font-size: 0.88rem;
+    font-weight: 650;
+}
+
+.form-error.show { display: block; }
+
+.form-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.8rem;
+    margin-top: 1.7rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--line);
+}
+
+.button {
+    min-height: 47px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    border-radius: 9px;
+    padding: 0.72rem 1.15rem;
+    font-weight: 750;
+    border: 1px solid transparent;
+    cursor: pointer;
+    text-decoration: none;
+    transition: transform 0.18s, background 0.18s, box-shadow 0.18s;
+}
+
+.button:hover { transform: translateY(-1px); }
+
+.button-primary {
+    background: var(--blue);
+    color: #fff;
+    box-shadow: 0 7px 16px rgba(0,64,128,0.2);
+}
+
+.button-primary:hover { background: #003468; }
+
+.button-ghost {
+    background: #fff;
+    border-color: #bdcee1;
+    color: var(--blue);
+}
+
+.button-ghost:hover { background: #f5f9ff; }
+.button[hidden] { display: none; }
+
+.signin-prompt {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-top: 1.2rem;
+}
+
+.signin-prompt a { color: var(--blue); font-weight: 750; text-decoration: none; }
+.signin-prompt a:hover { text-decoration: underline; }
+
+.success-state {
+    display: none;
+    text-align: center;
+    padding: clamp(2rem, 6vw, 4rem) 1.5rem;
+}
+
+.success-state.show { display: block; }
+
+.success-icon {
+    width: 66px;
+    height: 66px;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 1.1rem;
+    border-radius: 50%;
+    background: #dff5e7;
+    color: var(--success);
+    font-size: 1.75rem;
+    font-weight: 900;
+}
+
+.success-state h2 { color: var(--navy); margin-bottom: 0.55rem; }
+.success-state p { color: var(--muted); max-width: 31rem; margin: 0 auto 1.35rem; }
+
+.prototype-note {
+    margin-top: 1.25rem;
+    padding: 0.75rem 0.9rem;
+    border-radius: 9px;
+    background: #fff8e7;
+    border: 1px solid #ffe1a7;
+    color: #6d4900;
+    font-size: 0.82rem;
+}
+
+footer {
+    text-align: center;
+    color: #68798c;
+    font-size: 0.86rem;
+    padding: 0 1rem 2rem;
+}
+
+@media (max-width: 880px) {
+    .page-shell { grid-template-columns: 1fr; padding-top: 2.25rem; }
+    .intro { position: static; }
+    .intro h1 { max-width: 36rem; }
+    .intro-text { max-width: 42rem; }
+    .route-card { max-width: 32rem; }
+    .trust-list { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 640px) {
+    .site-nav { min-height: 64px; }
+    .brand { font-size: 1rem; }
+    .brand-mark { width: 36px; height: 36px; }
+    .nav-actions a:first-child { display: none; }
+    .page-shell { padding-inline: 0.85rem; }
+    .intro { padding-inline: 0.3rem; }
+    .intro h1 { font-size: 2.5rem; }
+    .trust-list { grid-template-columns: 1fr; }
+    .step-dot span { display: none; }
+    .field-grid,
+    .review-grid { grid-template-columns: 1fr; }
+    .choice-grid { grid-template-columns: 1fr 1fr; }
+    .form-actions { align-items: stretch; }
+    .form-actions .button { flex: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+
+<body>
+<nav class="site-nav" aria-label="Main navigation">
+    <a class="brand" href="index.html">
+        <span class="brand-mark" aria-hidden="true">MC</span>
+        <span>May Cross Hub</span>
+    </a>
+    <div class="nav-actions">
+        <a href="index.html">Back to home</a>
+        <a href="signin.html">Sign in</a>
+    </div>
+</nav>
+
+<main class="page-shell">
+    <aside class="intro">
+        <p class="eyebrow">Educator registration</p>
+        <h1>Find the transfer route that crosses yours.</h1>
+        <p class="intro-text">
+            Create your account, describe your current post and tell us where you would like to go. Your private contact details stay hidden by default.
+        </p>
+
+        <div class="route-card" aria-label="Reciprocal transfer illustration">
+            <p class="route-label">A reciprocal match</p>
+            <div class="route-line">
+                <span>Your school</span>
+                <span class="route-arrow" aria-hidden="true">&#8596;</span>
+                <span>Their school</span>
+            </div>
+        </div>
+
+        <ul class="trust-list">
+            <li><span class="check-icon" aria-hidden="true">&#10003;</span><span>Email verification before access</span></li>
+            <li><span class="check-icon" aria-hidden="true">&#10003;</span><span>Contact details hidden by default</span></li>
+            <li><span class="check-icon" aria-hidden="true">&#10003;</span><span>You control incoming match requests</span></li>
+        </ul>
+    </aside>
+
+    <section aria-labelledby="form-title">
+        <div class="signup-card">
+            <div class="progress-wrap" id="progressWrap">
+                <div class="progress-meta">
+                    <span id="stepLabel">Step 1 of 4</span>
+                    <span id="stepName">Your account</span>
+                </div>
+                <div class="progress-track" aria-hidden="true">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                <div class="step-dots" aria-hidden="true">
+                    <div class="step-dot active"><strong>1</strong><span>Account</span></div>
+                    <div class="step-dot"><strong>2</strong><span>Current post</span></div>
+                    <div class="step-dot"><strong>3</strong><span>Destination</span></div>
+                    <div class="step-dot"><strong>4</strong><span>Privacy</span></div>
+                </div>
+            </div>
+
+            <form id="signupForm" novalidate>
+                <div class="form-body">
+                    <section class="form-step active" data-step="0" aria-labelledby="form-title">
+                        <div class="step-heading">
+                            <h2 id="form-title" tabindex="-1">Create your account</h2>
+                            <p>Use an email address you can verify.</p>
+                        </div>
+
+                        <div class="field-grid">
+                            <div class="field">
+                                <label for="firstName">First name</label>
+                                <input id="firstName" name="firstName" type="text" autocomplete="given-name" required>
+                            </div>
+                            <div class="field">
+                                <label for="lastName">Surname</label>
+                                <input id="lastName" name="lastName" type="text" autocomplete="family-name" required>
+                            </div>
+                            <div class="field full">
+                                <label for="email">Email address</label>
+                                <input id="email" name="email" type="email" autocomplete="email" inputmode="email" required>
+                                <p class="helper">We will use this address for account verification and service updates.</p>
+                            </div>
+                            <div class="field full">
+                                <label for="phone">Cellphone number</label>
+                                <input id="phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="e.g. 082 123 4567" pattern="[0-9+() -]{7,20}" required>
+                            </div>
+                            <div class="field">
+                                <label for="password">Password</label>
+                                <div class="password-wrap">
+                                    <input id="password" name="password" type="password" autocomplete="new-password" minlength="8" required>
+                                    <button class="show-password" type="button" data-password-target="password" aria-label="Show password">Show</button>
+                                </div>
+                                <p class="helper">At least 8 characters.</p>
+                            </div>
+                            <div class="field">
+                                <label for="confirmPassword">Confirm password</label>
+                                <div class="password-wrap">
+                                    <input id="confirmPassword" name="confirmPassword" type="password" autocomplete="new-password" minlength="8" required>
+                                    <button class="show-password" type="button" data-password-target="confirmPassword" aria-label="Show confirmed password">Show</button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="form-step" data-step="1" aria-labelledby="current-title">
+                        <div class="step-heading">
+                            <h2 id="current-title" tabindex="-1">Your current post</h2>
+                            <p>These details help us compare professional compatibility.</p>
+                        </div>
+
+                        <div class="field-grid">
+                            <div class="field full">
+                                <label for="currentSchool">Current school</label>
+                                <input id="currentSchool" name="currentSchool" type="text" autocomplete="organization" required>
+                            </div>
+                            <div class="field">
+                                <label for="currentProvince">Province</label>
+                                <select id="currentProvince" name="currentProvince" required>
+                                    <option value="">Select province</option>
+                                    <option>Eastern Cape</option><option>Free State</option><option>Gauteng</option>
+                                    <option>KwaZulu-Natal</option><option>Limpopo</option><option>Mpumalanga</option>
+                                    <option>North West</option><option>Northern Cape</option><option>Western Cape</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label for="currentDistrict">District</label>
+                                <input id="currentDistrict" name="currentDistrict" type="text" required>
+                            </div>
+                            <div class="field">
+                                <label for="circuit">Circuit or ward <span class="optional">(optional)</span></label>
+                                <input id="circuit" name="circuit" type="text">
+                            </div>
+                            <div class="field">
+                                <label for="quintile">School quintile</label>
+                                <select id="quintile" name="quintile" required>
+                                    <option value="">Select quintile</option>
+                                    <option value="1">Quintile 1</option><option value="2">Quintile 2</option>
+                                    <option value="3">Quintile 3</option><option value="4">Quintile 4</option>
+                                    <option value="5">Quintile 5</option>
+                                </select>
+                            </div>
+                            <div class="field full">
+                                <span class="group-label" id="phase-label">Teaching phase</span>
+                                <div class="choice-grid" role="radiogroup" aria-labelledby="phase-label">
+                                    <div class="choice"><input type="radio" id="foundation" name="phase" value="Foundation" required><label for="foundation">Foundation</label></div>
+                                    <div class="choice"><input type="radio" id="intermediate" name="phase" value="Intermediate"><label for="intermediate">Intermediate</label></div>
+                                    <div class="choice"><input type="radio" id="senior" name="phase" value="Senior"><label for="senior">Senior</label></div>
+                                    <div class="choice"><input type="radio" id="fet" name="phase" value="FET"><label for="fet">FET</label></div>
+                                </div>
+                            </div>
+                            <div class="field">
+                                <label for="grades">Grades taught</label>
+                                <input id="grades" name="grades" type="text" placeholder="e.g. 8, 9 and 10" required>
+                            </div>
+                            <div class="field">
+                                <label for="postLevel">Post level or role</label>
+                                <select id="postLevel" name="postLevel" required>
+                                    <option value="">Select role</option>
+                                    <option>Post Level 1 Educator</option>
+                                    <option>Departmental Head</option>
+                                    <option>Deputy Principal</option>
+                                    <option>Principal</option>
+                                    <option>Other</option>
+                                </select>
+                            </div>
+                            <div class="field full">
+                                <label for="subjects">Main qualified subjects</label>
+                                <input id="subjects" name="subjects" type="text" placeholder="e.g. Mathematics and Natural Sciences" required>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="form-step" data-step="2" aria-labelledby="destination-title">
+                        <div class="step-heading">
+                            <h2 id="destination-title" tabindex="-1">Where would you like to go?</h2>
+                            <p>Tell us what a useful reciprocal transfer would look like.</p>
+                        </div>
+
+                        <div class="field-grid">
+                            <div class="field">
+                                <label for="desiredProvince">Desired province</label>
+                                <select id="desiredProvince" name="desiredProvince" required>
+                                    <option value="">Select province</option>
+                                    <option>Eastern Cape</option><option>Free State</option><option>Gauteng</option>
+                                    <option>KwaZulu-Natal</option><option>Limpopo</option><option>Mpumalanga</option>
+                                    <option>North West</option><option>Northern Cape</option><option>Western Cape</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label for="desiredDistrict">Desired district</label>
+                                <input id="desiredDistrict" name="desiredDistrict" type="text" required>
+                            </div>
+                            <div class="field">
+                                <label for="desiredTown">Desired town or area</label>
+                                <input id="desiredTown" name="desiredTown" type="text" required>
+                            </div>
+                            <div class="field">
+                                <label for="preferredSchool">Preferred school <span class="optional">(optional)</span></label>
+                                <input id="preferredSchool" name="preferredSchool" type="text">
+                            </div>
+                            <div class="field full">
+                                <span class="group-label" id="nearby-label">Would you consider nearby areas?</span>
+                                <div class="choice-grid" role="radiogroup" aria-labelledby="nearby-label">
+                                    <div class="choice"><input type="radio" id="nearbyYes" name="nearby" value="Yes" required><label for="nearbyYes">Yes</label></div>
+                                    <div class="choice"><input type="radio" id="nearbyNo" name="nearby" value="No"><label for="nearbyNo">No</label></div>
+                                </div>
+                            </div>
+                            <div class="field full">
+                                <label for="reason">Reason for transfer <span class="optional">(optional)</span></label>
+                                <textarea id="reason" name="reason" maxlength="500" placeholder="Share only what you are comfortable disclosing."></textarea>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="form-step" data-step="3" aria-labelledby="privacy-title">
+                        <div class="step-heading">
+                            <h2 id="privacy-title" tabindex="-1">Privacy and final review</h2>
+                            <p>You can change these settings later. Contact details are off by default.</p>
+                        </div>
+
+                        <div class="switch-list">
+                            <label class="switch-row">
+                                <span><strong>Show my subjects and district</strong><span>Needed for useful professional matching.</span></span>
+                                <span class="switch"><input type="checkbox" name="showProfessional" checked><span class="slider"></span></span>
+                            </label>
+                            <label class="switch-row">
+                                <span><strong>Allow educators to send match requests</strong><span>Requests remain inside May Cross Hub.</span></span>
+                                <span class="switch"><input type="checkbox" name="allowRequests" checked><span class="slider"></span></span>
+                            </label>
+                            <label class="switch-row">
+                                <span><strong>Show my school name</strong><span>Keep this private until you are ready.</span></span>
+                                <span class="switch"><input type="checkbox" name="showSchool"><span class="slider"></span></span>
+                            </label>
+                            <label class="switch-row">
+                                <span><strong>Show my cellphone or email</strong><span>Not recommended before a request is accepted.</span></span>
+                                <span class="switch"><input type="checkbox" name="showContact"><span class="slider"></span></span>
+                            </label>
+                        </div>
+
+                        <div class="review-box">
+                            <h3>Your match profile</h3>
+                            <div class="review-grid" id="reviewGrid"></div>
+                        </div>
+
+                        <label class="consent">
+                            <input id="consent" name="consent" type="checkbox" required>
+                            <span>I confirm that the information is accurate and consent to it being used for transfer matching in line with the <a href="privacy.html">privacy policy</a>.</span>
+                        </label>
+                    </section>
+
+                    <div class="form-error" id="formError" role="alert"></div>
+
+                    <div class="form-actions">
+                        <button class="button button-ghost" id="backButton" type="button" hidden>Back</button>
+                        <button class="button button-primary" id="nextButton" type="button">Continue <span aria-hidden="true">&#8594;</span></button>
+                        <button class="button button-primary" id="submitButton" type="submit" hidden>Create account</button>
+                    </div>
+
+                    <p class="signin-prompt">Already registered? <a href="signin.html">Sign in</a></p>
+                    <p class="prototype-note">Preview note: this page validates the form in your browser. Connect Firebase before launch to create accounts, store profiles and send verification emails.</p>
+                </div>
+            </form>
+
+            <div class="success-state" id="successState" role="status" aria-live="polite">
+                <div class="success-icon" aria-hidden="true">&#10003;</div>
+                <h2 tabindex="-1">Your profile is ready to connect</h2>
+                <p>The form passed validation. Once Firebase is connected, this step can create the account and send an email verification link.</p>
+                <a class="button button-primary" href="index.html">Return to home</a>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer>&copy; <span id="year"></span> May Cross Hub. Transfer discovery does not replace official departmental approval.</footer>
+
+<script>
+const form = document.getElementById('signupForm');
+const steps = Array.from(document.querySelectorAll('.form-step'));
+const dots = Array.from(document.querySelectorAll('.step-dot'));
+const backButton = document.getElementById('backButton');
+const nextButton = document.getElementById('nextButton');
+const submitButton = document.getElementById('submitButton');
+const formError = document.getElementById('formError');
+const progressBar = document.getElementById('progressBar');
+const stepLabel = document.getElementById('stepLabel');
+const stepName = document.getElementById('stepName');
+const reviewGrid = document.getElementById('reviewGrid');
+const successState = document.getElementById('successState');
+const progressWrap = document.getElementById('progressWrap');
+
+const stepNames = ['Your account', 'Current post', 'Transfer destination', 'Privacy and review'];
+let currentStep = 0;
+
+document.getElementById('year').textContent = new Date().getFullYear();
+
+function fieldsForStep(step) {
+    return Array.from(steps[step].querySelectorAll('input, select, textarea'));
+}
+
+function clearError() {
+    formError.textContent = '';
+    formError.classList.remove('show');
+}
+
+function showError(message) {
+    formError.textContent = message;
+    formError.classList.add('show');
+}
+
+function validateStep(step) {
+    clearError();
+    const fields = fieldsForStep(step);
+
+    fields.forEach((field) => field.removeAttribute('aria-invalid'));
+
+    for (const field of fields) {
+        if (!field.checkValidity()) {
+            field.setAttribute('aria-invalid', 'true');
+            showError('Please complete the highlighted required information before continuing.');
+            field.focus();
+            return false;
+        }
+    }
+
+    if (step === 0) {
+        const password = document.getElementById('password');
+        const confirmation = document.getElementById('confirmPassword');
+        if (password.value !== confirmation.value) {
+            confirmation.setAttribute('aria-invalid', 'true');
+            showError('The two passwords do not match.');
+            confirmation.focus();
+            return false;
+        }
+    }
+
+    return true;
+}
+
+function updateReview() {
+    const selectedPhase = form.querySelector('input[name="phase"]:checked');
+    const nearby = form.querySelector('input[name="nearby"]:checked');
+    const values = [
+        ['Educator', `${document.getElementById('firstName').value} ${document.getElementById('lastName').value}`.trim()],
+        ['Current post', document.getElementById('currentSchool').value],
+        ['Current area', `${document.getElementById('currentDistrict').value}, ${document.getElementById('currentProvince').value}`],
+        ['Teaching profile', `${selectedPhase ? selectedPhase.value : ''} - ${document.getElementById('subjects').value}`],
+        ['Desired area', `${document.getElementById('desiredTown').value}, ${document.getElementById('desiredProvince').value}`],
+        ['Nearby areas', nearby ? nearby.value : 'Not selected']
+    ];
+
+    reviewGrid.innerHTML = values.map(([label, value]) =>
+        `<div class="review-item"><span>${label}</span><strong>${value || 'Not provided'}</strong></div>`
+    ).join('');
+}
+
+function renderStep() {
+    steps.forEach((step, index) => step.classList.toggle('active', index === currentStep));
+    dots.forEach((dot, index) => {
+        dot.classList.toggle('active', index === currentStep);
+        dot.classList.toggle('done', index < currentStep);
+    });
+
+    progressBar.style.width = `${((currentStep + 1) / steps.length) * 100}%`;
+    stepLabel.textContent = `Step ${currentStep + 1} of ${steps.length}`;
+    stepName.textContent = stepNames[currentStep];
+    backButton.hidden = currentStep === 0;
+    nextButton.hidden = currentStep === steps.length - 1;
+    submitButton.hidden = currentStep !== steps.length - 1;
+    clearError();
+
+    if (currentStep === steps.length - 1) updateReview();
+    steps[currentStep].querySelector('h2').focus({ preventScroll: true });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+nextButton.addEventListener('click', () => {
+    if (!validateStep(currentStep)) return;
+    currentStep += 1;
+    renderStep();
+});
+
+backButton.addEventListener('click', () => {
+    currentStep -= 1;
+    renderStep();
+});
+
+document.querySelectorAll('.show-password').forEach((button) => {
+    button.addEventListener('click', () => {
+        const input = document.getElementById(button.dataset.passwordTarget);
+        const isHidden = input.type === 'password';
+        input.type = isHidden ? 'text' : 'password';
+        button.textContent = isHidden ? 'Hide' : 'Show';
+        button.setAttribute('aria-label', `${isHidden ? 'Hide' : 'Show'} password`);
+    });
+});
+
+form.addEventListener('input', (event) => {
+    event.target.removeAttribute('aria-invalid');
+    clearError();
+});
+
+form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    if (!validateStep(currentStep)) return;
+
+    if (currentStep < steps.length - 1) {
+        currentStep += 1;
+        renderStep();
+        return;
+    }
+
+    form.hidden = true;
+    progressWrap.hidden = true;
+    successState.classList.add('show');
+    successState.querySelector('h2').focus({ preventScroll: true });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+</script>
+</body>
+</html>

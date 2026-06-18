@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Manage incoming and sent educator transfer match requests on May Cross Hub.">
+<meta name="theme-color" content="#002b5e">
+<title>Match Requests | May Cross Hub</title>
+
+<style>
+:root {
+    --navy: #002b5e;
+    --blue: #004080;
+    --bright-blue: #3385ff;
+    --pale-blue: #eaf3ff;
+    --ink: #1f2d3d;
+    --muted: #5d6c7c;
+    --line: #d8e4f2;
+    --surface: #ffffff;
+    --background: #f0f4f8;
+    --success: #116b36;
+    --success-bg: #e9f9ee;
+    --warning: #6d4900;
+    --warning-bg: #fff8e7;
+    --danger: #a32222;
+    --danger-bg: #fff1f1;
+    --shadow: 0 10px 30px rgba(0, 43, 94, 0.09);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+    min-height: 100vh;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--background);
+    color: var(--ink);
+    line-height: 1.55;
+}
+
+button,
+input { font: inherit; }
+
+a { color: inherit; }
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible {
+    outline: 3px solid #66a3ff;
+    outline-offset: 3px;
+}
+
+.site-nav {
+    min-height: 72px;
+    padding: 0.75rem clamp(1rem, 4vw, 3rem);
+    display: flex;
+    align-items: center;
+    gap: clamp(1rem, 3vw, 2.5rem);
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--navy);
+    color: #fff;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.14);
+}
+
+.brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    color: #fff;
+    text-decoration: none;
+    font-size: 1.2rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.brand-mark {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: #fff;
+    color: var(--blue);
+    font-size: 0.85rem;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.22);
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-right: auto;
+}
+
+.nav-links a {
+    padding: 0.5rem 0.72rem;
+    border-radius: 7px;
+    color: #cfe1fa;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 650;
+}
+
+.nav-links a:hover,
+.nav-links a.active { background: rgba(255,255,255,0.1); color: #fff; }
+
+.profile-menu {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    color: #d7e8ff;
+    font-size: 0.86rem;
+}
+
+.profile-menu strong { display: block; color: #fff; }
+
+.avatar {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: #dceaff;
+    color: var(--blue);
+    font-size: 0.78rem;
+    font-weight: 850;
+}
+
+.page-shell {
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: 2rem 1.25rem 4rem;
+}
+
+.page-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 1.5rem;
+    margin-bottom: 1.2rem;
+}
+
+.eyebrow {
+    margin-bottom: 0.35rem;
+    color: var(--bright-blue);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.page-heading h1 {
+    color: var(--navy);
+    font-size: clamp(2rem, 5vw, 3.25rem);
+    line-height: 1.08;
+    letter-spacing: -0.035em;
+}
+
+.page-heading p:not(.eyebrow) {
+    max-width: 680px;
+    margin-top: 0.55rem;
+    color: var(--muted);
+}
+
+.button {
+    min-height: 43px;
+    padding: 0.62rem 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: var(--blue);
+    color: #fff;
+    font-weight: 750;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 0.18s, background 0.18s;
+}
+
+.button:hover { transform: translateY(-1px); background: #003468; }
+
+.button-secondary {
+    border-color: #bdcee1;
+    background: #fff;
+    color: var(--blue);
+}
+
+.button-secondary:hover { background: #f5f9ff; }
+
+.button-success { background: var(--success); }
+.button-success:hover { background: #0c572c; }
+
+.button-danger {
+    border-color: #e3baba;
+    background: #fff;
+    color: var(--danger);
+}
+
+.button-danger:hover { background: var(--danger-bg); }
+
+.privacy-strip {
+    padding: 0.9rem 1rem;
+    display: grid;
+    grid-template-columns: 32px 1fr;
+    gap: 0.75rem;
+    align-items: start;
+    border: 1px solid #b8d1f0;
+    border-radius: 11px;
+    background: #f8fbff;
+    color: #405268;
+    font-size: 0.88rem;
+}
+
+.privacy-icon {
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--pale-blue);
+    color: var(--blue);
+    font-weight: 900;
+}
+
+.privacy-strip strong { display: block; color: var(--blue); }
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.85rem;
+    margin: 1.15rem 0;
+}
+
+.stat-card {
+    padding: 0.95rem 1rem;
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    background: #fff;
+    box-shadow: 0 4px 14px rgba(0,43,94,0.05);
+}
+
+.stat-card strong {
+    display: block;
+    color: var(--blue);
+    font-size: 1.55rem;
+    line-height: 1.15;
+}
+
+.stat-card span { color: var(--muted); font-size: 0.82rem; }
+
+.request-toolbar {
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    border: 1px solid var(--line);
+    border-radius: 13px;
+    background: #fff;
+    box-shadow: 0 4px 15px rgba(0,43,94,0.05);
+}
+
+.tabs {
+    display: flex;
+    gap: 0.3rem;
+    overflow-x: auto;
+}
+
+.tab {
+    min-height: 39px;
+    padding: 0.5rem 0.75rem;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: #5c6d7f;
+    font-size: 0.85rem;
+    font-weight: 750;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.tab:hover { background: #f1f6fc; color: var(--blue); }
+.tab.active { background: var(--blue); color: #fff; }
+
+.search-box { min-width: 230px; }
+
+.search-box label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+}
+
+.search-box input {
+    width: 100%;
+    min-height: 41px;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid #bdcee1;
+    border-radius: 8px;
+    color: var(--ink);
+}
+
+.search-box input:focus {
+    border-color: var(--bright-blue);
+    outline: 0;
+    box-shadow: 0 0 0 3px rgba(51,133,255,0.1);
+}
+
+.result-summary {
+    margin: 0.8rem 0;
+    color: var(--muted);
+    font-size: 0.86rem;
+}
+
+.request-list { display: grid; gap: 1rem; }
+
+.request-card {
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+}
+
+.request-card[hidden] { display: none; }
+
+.request-card-head {
+    padding: 0.85rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    border-bottom: 1px solid var(--line);
+    background: #fbfdff;
+}
+
+.request-identity {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.request-avatar {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--pale-blue);
+    color: var(--blue);
+    font-size: 0.76rem;
+    font-weight: 850;
+}
+
+.request-identity h2 { color: var(--navy); font-size: 1.03rem; }
+.request-identity p { color: var(--muted); font-size: 0.78rem; }
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 27px;
+    padding: 0.22rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 850;
+    white-space: nowrap;
+}
+
+.status-incoming { background: var(--warning-bg); color: var(--warning); }
+.status-sent { background: var(--pale-blue); color: var(--blue); }
+.status-accepted { background: var(--success-bg); color: var(--success); }
+.status-archived { background: #eef1f5; color: #5f6d7c; }
+
+.request-body {
+    padding: 1rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 170px;
+    gap: 1rem;
+}
+
+.score-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.score {
+    padding: 0.24rem 0.55rem;
+    border-radius: 6px;
+    background: var(--blue);
+    color: #fff;
+    font-size: 0.76rem;
+    font-weight: 850;
+}
+
+.tag {
+    padding: 0.22rem 0.5rem;
+    border: 1px solid #d8e4f2;
+    border-radius: 6px;
+    background: #f7faff;
+    color: #516173;
+    font-size: 0.74rem;
+    font-weight: 650;
+}
+
+.route-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 36px minmax(0, 1fr);
+    gap: 0.65rem;
+    align-items: center;
+}
+
+.route-box {
+    padding: 0.65rem 0.75rem;
+    border: 1px solid #e0e8f1;
+    border-radius: 8px;
+    background: #fbfdff;
+}
+
+.route-box span { display: block; color: #748294; font-size: 0.71rem; font-weight: 750; }
+.route-box strong { display: block; color: #28425f; font-size: 0.9rem; }
+
+.route-arrow {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--blue);
+    color: #fff;
+    font-weight: 900;
+}
+
+.request-note {
+    margin-top: 0.7rem;
+    padding: 0.65rem 0.75rem;
+    border-left: 3px solid var(--bright-blue);
+    border-radius: 6px;
+    background: #f3f8ff;
+    color: #405268;
+    font-size: 0.82rem;
+}
+
+.request-actions {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.55rem;
+}
+
+.request-actions .button { width: 100%; font-size: 0.83rem; }
+
+.accepted-panel {
+    margin-top: 0.7rem;
+    padding: 0.7rem 0.8rem;
+    border: 1px solid #bde8c9;
+    border-radius: 8px;
+    background: var(--success-bg);
+    color: var(--success);
+    font-size: 0.82rem;
+}
+
+.empty-state {
+    display: none;
+    padding: 2.5rem 1rem;
+    border: 1px dashed #b8c9dc;
+    border-radius: 14px;
+    background: #fff;
+    text-align: center;
+}
+
+.empty-state.show { display: block; }
+.empty-state h2 { color: var(--navy); }
+.empty-state p { color: var(--muted); margin-top: 0.3rem; }
+
+.prototype-banner {
+    margin-top: 1.25rem;
+    padding: 0.8rem 0.9rem;
+    border: 1px solid #ffe1a7;
+    border-radius: 9px;
+    background: var(--warning-bg);
+    color: var(--warning);
+    font-size: 0.82rem;
+}
+
+dialog {
+    width: min(92vw, 470px);
+    margin: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 15px;
+    background: #fff;
+    color: var(--ink);
+    box-shadow: 0 24px 70px rgba(0,0,0,0.28);
+}
+
+dialog::backdrop { background: rgba(0,27,58,0.62); }
+
+.dialog-body { padding: 1.35rem; }
+
+.dialog-icon {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 0.8rem;
+    border-radius: 50%;
+    background: var(--pale-blue);
+    color: var(--blue);
+    font-weight: 900;
+}
+
+.dialog-body h2 { color: var(--navy); font-size: 1.35rem; }
+.dialog-body p { margin-top: 0.45rem; color: var(--muted); }
+
+.dialog-actions {
+    padding: 1rem 1.35rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.65rem;
+    border-top: 1px solid var(--line);
+    background: #f8fbff;
+}
+
+.toast {
+    position: fixed;
+    right: 1.25rem;
+    bottom: 1.25rem;
+    max-width: 360px;
+    padding: 0.9rem 1rem;
+    border-radius: 10px;
+    background: var(--navy);
+    color: #fff;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.22);
+    opacity: 0;
+    transform: translateY(16px);
+    pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s;
+    z-index: 50;
+}
+
+.toast.show { opacity: 1; transform: translateY(0); }
+
+footer {
+    margin-top: 2rem;
+    padding: 1.4rem 1rem;
+    background: var(--navy);
+    color: #d4e3f7;
+    text-align: center;
+    font-size: 0.86rem;
+}
+
+@media (max-width: 850px) {
+    .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .request-body { grid-template-columns: 1fr; }
+    .request-actions { flex-direction: row; flex-wrap: wrap; }
+    .request-actions .button { width: auto; flex: 1; }
+}
+
+@media (max-width: 680px) {
+    .site-nav { flex-wrap: wrap; padding: 0.75rem 1rem; }
+    .nav-links { order: 3; width: 100%; overflow-x: auto; }
+    .profile-menu span { display: none; }
+    .page-shell { padding-inline: 0.85rem; }
+    .page-heading { align-items: start; flex-direction: column; }
+    .request-toolbar { align-items: stretch; flex-direction: column; }
+    .search-box { min-width: 0; }
+}
+
+@media (max-width: 500px) {
+    .brand { font-size: 1rem; }
+    .brand-mark { width: 36px; height: 36px; }
+    .stats-grid { grid-template-columns: 1fr; }
+    .request-card-head { align-items: start; }
+    .route-grid { grid-template-columns: 1fr; }
+    .route-arrow { margin: 0 auto; transform: rotate(90deg); }
+    .request-actions { flex-direction: column; }
+    .dialog-actions { flex-direction: column-reverse; }
+    .dialog-actions .button { width: 100%; }
+    .toast { left: 0.85rem; right: 0.85rem; bottom: 0.85rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+
+<body>
+<nav class="site-nav" aria-label="Main navigation">
+    <a class="brand" href="index.html">
+        <span class="brand-mark" aria-hidden="true">MC</span>
+        <span>May Cross Hub</span>
+    </a>
+
+    <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="matches.html">My Matches</a>
+        <a href="request.html" class="active" aria-current="page">Requests</a>
+    </div>
+
+    <div class="profile-menu" aria-label="Preview educator profile">
+        <span><strong>Preview profile</strong>Senior Phase</span>
+        <span class="avatar" aria-hidden="true">TM</span>
+    </div>
+</nav>
+
+<main class="page-shell">
+    <header class="page-heading">
+        <div>
+            <p class="eyebrow">Private, controlled conversations</p>
+            <h1>Match requests</h1>
+            <p>Review reciprocal routes before responding. Accepting a request does not approve a transfer or automatically reveal your private contact details.</p>
+        </div>
+        <a class="button button-secondary" href="matches.html">Find more matches</a>
+    </header>
+
+    <aside class="privacy-strip" aria-label="Privacy reminder">
+        <span class="privacy-icon" aria-hidden="true">i</span>
+        <p><strong>Contact sharing remains off.</strong> Names, school details, email addresses and cellphone numbers stay hidden until a future user-controlled sharing step is implemented.</p>
+    </aside>
+
+    <section class="stats-grid" aria-label="Request summary">
+        <article class="stat-card"><strong id="incomingCount">2</strong><span>incoming requests</span></article>
+        <article class="stat-card"><strong id="sentCount">1</strong><span>sent requests</span></article>
+        <article class="stat-card"><strong id="acceptedCount">1</strong><span>accepted requests</span></article>
+        <article class="stat-card"><strong id="archivedCount">0</strong><span>archived requests</span></article>
+    </section>
+
+    <section class="request-toolbar" aria-label="Request filters">
+        <div class="tabs" role="tablist" aria-label="Request status">
+            <button class="tab active" type="button" role="tab" aria-selected="true" data-filter="all">All</button>
+            <button class="tab" type="button" role="tab" aria-selected="false" data-filter="incoming">Incoming</button>
+            <button class="tab" type="button" role="tab" aria-selected="false" data-filter="sent">Sent</button>
+            <button class="tab" type="button" role="tab" aria-selected="false" data-filter="accepted">Accepted</button>
+            <button class="tab" type="button" role="tab" aria-selected="false" data-filter="archived">Archived</button>
+        </div>
+
+        <div class="search-box">
+            <label for="requestSearch">Search requests</label>
+            <input id="requestSearch" type="search" placeholder="Search match or district">
+        </div>
+    </section>
+
+    <p class="result-summary" id="resultSummary" role="status" aria-live="polite">Showing 4 requests</p>
+
+    <section class="request-list" id="requestList" aria-label="Match requests">
+        <article class="request-card" data-status="incoming" data-search="mch-1048 tshwane gauteng or tambo eastern cape mathematics natural sciences">
+            <div class="request-card-head">
+                <div class="request-identity">
+                    <span class="request-avatar" aria-hidden="true">M1</span>
+                    <div><h2>Match MCH-1048</h2><p>Received 2 hours ago</p></div>
+                </div>
+                <span class="status-pill status-incoming">Awaiting your response</span>
+            </div>
+            <div class="request-body">
+                <div>
+                    <div class="score-line"><span class="score">96% match</span><span class="tag">Senior Phase</span><span class="tag">Mathematics</span><span class="tag">Post Level 1</span></div>
+                    <div class="route-grid">
+                        <div class="route-box"><span>Their current area</span><strong>Tshwane, Gauteng</strong></div>
+                        <span class="route-arrow" aria-hidden="true">&#8596;</span>
+                        <div class="route-box"><span>They want</span><strong>OR Tambo, Eastern Cape</strong></div>
+                    </div>
+                    <p class="request-note"><strong>Optional note:</strong> Interested in discussing this reciprocal route. Professional details appear closely aligned.</p>
+                </div>
+                <div class="request-actions">
+                    <button class="button button-success action-button" type="button" data-action="accept">Accept request</button>
+                    <button class="button button-danger action-button" type="button" data-action="decline">Decline</button>
+                    <a class="button button-secondary" href="matches.html">Review match</a>
+                </div>
+            </div>
+        </article>
+
+        <article class="request-card" data-status="incoming" data-search="mch-1126 ekurhuleni gauteng chris hani eastern cape mathematics technology">
+            <div class="request-card-head">
+                <div class="request-identity">
+                    <span class="request-avatar" aria-hidden="true">M2</span>
+                    <div><h2>Match MCH-1126</h2><p>Received yesterday</p></div>
+                </div>
+                <span class="status-pill status-incoming">Awaiting your response</span>
+            </div>
+            <div class="request-body">
+                <div>
+                    <div class="score-line"><span class="score">89% match</span><span class="tag">Senior Phase</span><span class="tag">Mathematics</span><span class="tag">Technology</span></div>
+                    <div class="route-grid">
+                        <div class="route-box"><span>Their current area</span><strong>Ekurhuleni, Gauteng</strong></div>
+                        <span class="route-arrow" aria-hidden="true">&#8596;</span>
+                        <div class="route-box"><span>They want</span><strong>Chris Hani, Eastern Cape</strong></div>
+                    </div>
+                    <p class="request-note">No optional message was added. Review the professional and route information before responding.</p>
+                </div>
+                <div class="request-actions">
+                    <button class="button button-success action-button" type="button" data-action="accept">Accept request</button>
+                    <button class="button button-danger action-button" type="button" data-action="decline">Decline</button>
+                    <a class="button button-secondary" href="matches.html">Review match</a>
+                </div>
+            </div>
+        </article>
+
+        <article class="request-card" data-status="sent" data-search="mch-1183 mbombela mpumalanga alfred nzo eastern cape mathematics physical sciences">
+            <div class="request-card-head">
+                <div class="request-identity">
+                    <span class="request-avatar" aria-hidden="true">M3</span>
+                    <div><h2>Match MCH-1183</h2><p>Sent 3 days ago</p></div>
+                </div>
+                <span class="status-pill status-sent">Waiting for response</span>
+            </div>
+            <div class="request-body">
+                <div>
+                    <div class="score-line"><span class="score">78% match</span><span class="tag">FET Phase</span><span class="tag">Mathematics</span><span class="tag">Nearby area</span></div>
+                    <div class="route-grid">
+                        <div class="route-box"><span>Their current area</span><strong>Mbombela, Mpumalanga</strong></div>
+                        <span class="route-arrow" aria-hidden="true">&#8596;</span>
+                        <div class="route-box"><span>They want</span><strong>Alfred Nzo, Eastern Cape</strong></div>
+                    </div>
+                    <p class="request-note">This request remains private while the matched educator considers it.</p>
+                </div>
+                <div class="request-actions">
+                    <button class="button button-danger action-button" type="button" data-action="cancel">Cancel request</button>
+                    <a class="button button-secondary" href="matches.html">Review match</a>
+                </div>
+            </div>
+        </article>
+
+        <article class="request-card" data-status="accepted" data-search="mch-0994 johannesburg gauteng amathole eastern cape mathematics senior phase">
+            <div class="request-card-head">
+                <div class="request-identity">
+                    <span class="request-avatar" aria-hidden="true">M4</span>
+                    <div><h2>Match MCH-0994</h2><p>Accepted 5 days ago</p></div>
+                </div>
+                <span class="status-pill status-accepted">Accepted</span>
+            </div>
+            <div class="request-body">
+                <div>
+                    <div class="score-line"><span class="score">92% match</span><span class="tag">Senior Phase</span><span class="tag">Mathematics</span><span class="tag">Post Level 1</span></div>
+                    <div class="route-grid">
+                        <div class="route-box"><span>Their current area</span><strong>Johannesburg, Gauteng</strong></div>
+                        <span class="route-arrow" aria-hidden="true">&#8596;</span>
+                        <div class="route-box"><span>They want</span><strong>Amathole, Eastern Cape</strong></div>
+                    </div>
+                    <p class="accepted-panel"><strong>Next step:</strong> confirm serious interest inside the platform. Contact details remain hidden in this prototype.</p>
+                </div>
+                <div class="request-actions">
+                    <button class="button button-secondary" type="button" data-preview-message>Open conversation</button>
+                    <button class="button button-danger action-button" type="button" data-action="archive">Archive</button>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <section class="empty-state" id="emptyState" aria-live="polite">
+        <h2>No requests found</h2>
+        <p>Try another status tab or clear the search.</p>
+    </section>
+
+    <p class="prototype-banner">Preview data only: these actions change the page locally but do not contact another educator. Connect Firebase and Firestore before enabling real requests, notifications or conversations.</p>
+</main>
+
+<dialog id="actionDialog" aria-labelledby="dialogTitle">
+    <div class="dialog-body">
+        <span class="dialog-icon" aria-hidden="true">?</span>
+        <h2 id="dialogTitle">Confirm request action</h2>
+        <p id="dialogMessage"></p>
+    </div>
+    <div class="dialog-actions">
+        <button class="button button-secondary" id="dialogCancel" type="button">Go back</button>
+        <button class="button" id="dialogConfirm" type="button">Confirm</button>
+    </div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<footer>&copy; <span id="year"></span> May Cross Hub. Request activity does not replace official departmental transfer procedures.</footer>
+
+<script>
+const cards = Array.from(document.querySelectorAll('.request-card'));
+const tabs = Array.from(document.querySelectorAll('.tab'));
+const search = document.getElementById('requestSearch');
+const resultSummary = document.getElementById('resultSummary');
+const emptyState = document.getElementById('emptyState');
+const actionDialog = document.getElementById('actionDialog');
+const dialogTitle = document.getElementById('dialogTitle');
+const dialogMessage = document.getElementById('dialogMessage');
+const dialogConfirm = document.getElementById('dialogConfirm');
+const dialogCancel = document.getElementById('dialogCancel');
+const toast = document.getElementById('toast');
+let activeFilter = 'all';
+let pendingCard = null;
+let pendingAction = null;
+let toastTimer;
+
+const actionCopy = {
+    accept: {
+        title: 'Accept this request?',
+        message: 'This will mark the preview request as accepted. Your private contact details will remain hidden.',
+        confirm: 'Accept request'
+    },
+    decline: {
+        title: 'Decline this request?',
+        message: 'This will move the preview request to Archived. The other educator would not receive your contact details.',
+        confirm: 'Decline request'
+    },
+    cancel: {
+        title: 'Cancel your sent request?',
+        message: 'This will move the preview request to Archived and remove it from the Sent tab.',
+        confirm: 'Cancel request'
+    },
+    archive: {
+        title: 'Archive this request?',
+        message: 'This will remove the accepted preview request from your active list. It can still be viewed under Archived.',
+        confirm: 'Archive request'
+    }
+};
+
+document.getElementById('year').textContent = new Date().getFullYear();
+
+function showToast(message) {
+    toast.textContent = message;
+    toast.classList.add('show');
+    window.clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => toast.classList.remove('show'), 3200);
+}
+
+function updateCounts() {
+    ['incoming', 'sent', 'accepted', 'archived'].forEach((status) => {
+        const total = cards.filter((card) => card.dataset.status === status).length;
+        document.getElementById(`${status}Count`).textContent = total;
+    });
+}
+
+function applyFilters() {
+    const query = search.value.trim().toLowerCase();
+    let visible = 0;
+
+    cards.forEach((card) => {
+        const statusMatches = activeFilter === 'all' || card.dataset.status === activeFilter;
+        const searchMatches = !query || card.dataset.search.includes(query);
+        const shouldShow = statusMatches && searchMatches;
+        card.hidden = !shouldShow;
+        if (shouldShow) visible += 1;
+    });
+
+    resultSummary.textContent = `Showing ${visible} request${visible === 1 ? '' : 's'}`;
+    emptyState.classList.toggle('show', visible === 0);
+}
+
+function setStatus(card, status) {
+    card.dataset.status = status;
+    const pill = card.querySelector('.status-pill');
+    pill.className = `status-pill status-${status}`;
+
+    if (status === 'accepted') {
+        pill.textContent = 'Accepted';
+        card.querySelector('.request-actions').innerHTML = `
+            <button class="button button-secondary" type="button" data-preview-message>Open conversation</button>
+            <button class="button button-danger action-button" type="button" data-action="archive">Archive</button>`;
+        bindCardActions(card);
+    } else {
+        pill.textContent = 'Archived';
+        card.querySelector('.request-actions').innerHTML = '<span class="status-pill status-archived">No further action</span>';
+    }
+
+    updateCounts();
+    applyFilters();
+}
+
+function openActionDialog(card, action) {
+    const copy = actionCopy[action];
+    pendingCard = card;
+    pendingAction = action;
+    dialogTitle.textContent = copy.title;
+    dialogMessage.textContent = copy.message;
+    dialogConfirm.textContent = copy.confirm;
+    dialogConfirm.className = action === 'accept' ? 'button button-success' : 'button button-danger';
+    actionDialog.showModal();
+}
+
+function bindCardActions(card) {
+    card.querySelectorAll('.action-button').forEach((button) => {
+        button.addEventListener('click', () => openActionDialog(card, button.dataset.action));
+    });
+
+    card.querySelectorAll('[data-preview-message]').forEach((button) => {
+        button.addEventListener('click', () => showToast('Conversation tools will become available after Firebase is connected.'));
+    });
+}
+
+cards.forEach(bindCardActions);
+
+tabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+        activeFilter = tab.dataset.filter;
+        tabs.forEach((item) => {
+            const isActive = item === tab;
+            item.classList.toggle('active', isActive);
+            item.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+        applyFilters();
+    });
+});
+
+search.addEventListener('input', applyFilters);
+
+dialogCancel.addEventListener('click', () => actionDialog.close());
+
+dialogConfirm.addEventListener('click', () => {
+    if (!pendingCard || !pendingAction) return;
+    const nextStatus = pendingAction === 'accept' ? 'accepted' : 'archived';
+    const message = pendingAction === 'accept'
+        ? 'Request accepted in this preview. Contact details remain hidden.'
+        : 'Request moved to Archived in this preview.';
+    setStatus(pendingCard, nextStatus);
+    actionDialog.close();
+    showToast(message);
+    pendingCard = null;
+    pendingAction = null;
+});
+
+actionDialog.addEventListener('click', (event) => {
+    if (event.target === actionDialog) actionDialog.close();
+});
+
+updateCounts();
+applyFilters();
+</script>
+</body>
+</html>

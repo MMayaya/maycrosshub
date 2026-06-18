@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Sign in to May Cross Hub to view your educator transfer profile, matches and requests.">
+<meta name="theme-color" content="#002b5e">
+<title>Sign In | May Cross Hub</title>
+
+<style>
+:root {
+    --navy: #002b5e;
+    --blue: #004080;
+    --bright-blue: #3385ff;
+    --pale-blue: #eaf3ff;
+    --ink: #1f2d3d;
+    --muted: #5d6c7c;
+    --line: #d8e4f2;
+    --surface: #ffffff;
+    --background: #f0f4f8;
+    --success: #116b36;
+    --danger: #b42318;
+    --shadow: 0 18px 50px rgba(0, 43, 94, 0.14);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { min-height: 100%; }
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--ink);
+    line-height: 1.55;
+    background:
+        radial-gradient(circle at 12% 18%, rgba(51, 133, 255, 0.14), transparent 25rem),
+        radial-gradient(circle at 88% 78%, rgba(0, 64, 128, 0.09), transparent 28rem),
+        var(--background);
+}
+
+button,
+input { font: inherit; }
+
+a { color: inherit; }
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible {
+    outline: 3px solid #66a3ff;
+    outline-offset: 3px;
+}
+
+.site-nav {
+    min-height: 72px;
+    padding: 0.8rem clamp(1rem, 4vw, 3rem);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    background: var(--navy);
+    color: #fff;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.14);
+}
+
+.brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    color: #fff;
+    text-decoration: none;
+    font-size: 1.25rem;
+    font-weight: 800;
+}
+
+.brand-mark {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: #fff;
+    color: var(--blue);
+    font-size: 0.85rem;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.22);
+}
+
+.back-link {
+    padding: 0.5rem 0.7rem;
+    border-radius: 7px;
+    color: #d7e8ff;
+    text-decoration: none;
+    font-weight: 650;
+}
+
+.back-link:hover { color: #fff; background: rgba(255,255,255,0.09); }
+
+.page-shell {
+    width: 100%;
+    max-width: 1080px;
+    flex: 1;
+    margin: 0 auto;
+    padding: clamp(2.5rem, 7vw, 6rem) 1.25rem 4rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(340px, 440px);
+    gap: clamp(2rem, 7vw, 6rem);
+    align-items: center;
+}
+
+.intro { max-width: 34rem; }
+
+.eyebrow {
+    margin-bottom: 0.65rem;
+    color: var(--bright-blue);
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.intro h1 {
+    margin-bottom: 1rem;
+    color: var(--navy);
+    font-size: clamp(2.45rem, 6vw, 4.7rem);
+    line-height: 1.02;
+    letter-spacing: -0.05em;
+}
+
+.intro-text {
+    max-width: 31rem;
+    color: var(--muted);
+    font-size: 1.08rem;
+}
+
+.match-card {
+    margin-top: 2rem;
+    overflow: hidden;
+    border-radius: 16px;
+    color: #fff;
+    background: linear-gradient(135deg, var(--navy), #0059b3);
+    box-shadow: 0 14px 35px rgba(0, 64, 128, 0.2);
+}
+
+.match-card-top {
+    padding: 1.2rem 1.3rem;
+    border-bottom: 1px solid rgba(255,255,255,0.16);
+}
+
+.match-card-top span {
+    display: block;
+    margin-bottom: 0.2rem;
+    color: #bcd8ff;
+    font-size: 0.76rem;
+    font-weight: 800;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+}
+
+.match-card-top strong { font-size: 1.15rem; }
+
+.match-details {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.3rem 1.2rem;
+}
+
+.match-details div:last-child { text-align: right; }
+.match-details small { display: block; color: #bcd8ff; }
+
+.swap-mark {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.14);
+    font-weight: 900;
+}
+
+.signin-card {
+    overflow: hidden;
+    border: 1px solid rgba(184, 209, 240, 0.8);
+    border-radius: 20px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+}
+
+.card-accent {
+    height: 6px;
+    background: linear-gradient(90deg, var(--blue), var(--bright-blue));
+}
+
+.card-body { padding: clamp(1.5rem, 5vw, 2.35rem); }
+
+.card-heading { margin-bottom: 1.55rem; }
+
+.card-heading h2 {
+    margin-bottom: 0.28rem;
+    color: var(--navy);
+    font-size: 1.85rem;
+    letter-spacing: -0.025em;
+}
+
+.card-heading p { color: var(--muted); }
+
+.field { margin-bottom: 1rem; }
+
+.field-label {
+    display: block;
+    margin-bottom: 0.38rem;
+    color: #28425f;
+    font-size: 0.9rem;
+    font-weight: 750;
+}
+
+.field input[type="email"],
+.field input[type="password"],
+.field input[type="text"] {
+    width: 100%;
+    min-height: 50px;
+    padding: 0.75rem 0.85rem;
+    border: 1px solid #bdcee1;
+    border-radius: 9px;
+    background: #fff;
+    color: var(--ink);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.field input:hover { border-color: #88acd7; }
+
+.field input:focus {
+    border-color: var(--bright-blue);
+    outline: 0;
+    box-shadow: 0 0 0 4px rgba(51, 133, 255, 0.11);
+}
+
+.field input[aria-invalid="true"] { border-color: var(--danger); }
+
+.password-wrap { position: relative; }
+.password-wrap input { padding-right: 4.5rem !important; }
+
+.show-password {
+    position: absolute;
+    top: 50%;
+    right: 0.55rem;
+    transform: translateY(-50%);
+    padding: 0.35rem;
+    border: 0;
+    background: transparent;
+    color: var(--blue);
+    font-size: 0.8rem;
+    font-weight: 750;
+    cursor: pointer;
+}
+
+.form-options {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 0.2rem 0 1.25rem;
+}
+
+.remember {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #405268;
+    font-size: 0.88rem;
+    cursor: pointer;
+}
+
+.remember input {
+    width: 17px;
+    height: 17px;
+    accent-color: var(--blue);
+}
+
+.text-button {
+    padding: 0.25rem;
+    border: 0;
+    background: transparent;
+    color: var(--blue);
+    font-size: 0.86rem;
+    font-weight: 750;
+    cursor: pointer;
+}
+
+.text-button:hover { text-decoration: underline; }
+
+.message {
+    display: none;
+    margin-bottom: 1rem;
+    padding: 0.75rem 0.85rem;
+    border-radius: 8px;
+    font-size: 0.86rem;
+    font-weight: 650;
+}
+
+.message.show { display: block; }
+
+.message-error {
+    border: 1px solid #f5c4c0;
+    background: #fff1f0;
+    color: var(--danger);
+}
+
+.message-info {
+    border: 1px solid #b8d1f0;
+    background: var(--pale-blue);
+    color: var(--blue);
+}
+
+.button {
+    width: 100%;
+    min-height: 49px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    background: var(--blue);
+    color: #fff;
+    font-weight: 750;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: 0 7px 16px rgba(0,64,128,0.2);
+    transition: transform 0.18s, background 0.18s, box-shadow 0.18s;
+}
+
+.button:hover {
+    transform: translateY(-1px);
+    background: #003468;
+    box-shadow: 0 9px 20px rgba(0,64,128,0.24);
+}
+
+.register-prompt {
+    margin-top: 1.3rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid var(--line);
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.register-prompt a {
+    color: var(--blue);
+    font-weight: 750;
+    text-decoration: none;
+}
+
+.register-prompt a:hover { text-decoration: underline; }
+
+.prototype-note {
+    margin-top: 1rem;
+    padding: 0.75rem 0.85rem;
+    border: 1px solid #ffe1a7;
+    border-radius: 9px;
+    background: #fff8e7;
+    color: #6d4900;
+    font-size: 0.8rem;
+}
+
+.success-state {
+    display: none;
+    padding: clamp(2.2rem, 7vw, 3.5rem) 1.5rem;
+    text-align: center;
+}
+
+.success-state.show { display: block; }
+
+.success-icon {
+    width: 66px;
+    height: 66px;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 1.1rem;
+    border-radius: 50%;
+    background: #dff5e7;
+    color: var(--success);
+    font-size: 1.7rem;
+    font-weight: 900;
+}
+
+.success-state h2 { margin-bottom: 0.55rem; color: var(--navy); }
+.success-state p { margin: 0 auto 1.35rem; color: var(--muted); max-width: 28rem; }
+
+footer {
+    padding: 0 1rem 2rem;
+    color: #68798c;
+    text-align: center;
+    font-size: 0.85rem;
+}
+
+@media (max-width: 820px) {
+    .page-shell {
+        max-width: 600px;
+        grid-template-columns: 1fr;
+        gap: 2.25rem;
+        padding-top: 2.5rem;
+    }
+
+    .intro { max-width: none; }
+    .intro h1 { max-width: 35rem; }
+    .intro-text { max-width: 36rem; }
+    .match-card { max-width: 31rem; }
+}
+
+@media (max-width: 520px) {
+    .site-nav { min-height: 64px; }
+    .brand { font-size: 1rem; }
+    .brand-mark { width: 36px; height: 36px; }
+    .back-link { font-size: 0.88rem; padding-inline: 0.35rem; }
+    .page-shell { padding-inline: 0.85rem; }
+    .intro { padding-inline: 0.3rem; }
+    .intro h1 { font-size: 2.65rem; }
+    .form-options { align-items: flex-start; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+
+<body>
+<nav class="site-nav" aria-label="Main navigation">
+    <a class="brand" href="index.html">
+        <span class="brand-mark" aria-hidden="true">MC</span>
+        <span>May Cross Hub</span>
+    </a>
+    <a class="back-link" href="index.html">Back to home</a>
+</nav>
+
+<main class="page-shell">
+    <section class="intro" aria-labelledby="welcome-title">
+        <p class="eyebrow">Welcome back</p>
+        <h1 id="welcome-title">Your next match may already be waiting.</h1>
+        <p class="intro-text">
+            Sign in to review your transfer profile, explore compatible reciprocal matches and manage requests without exposing your private contact details.
+        </p>
+
+        <div class="match-card" aria-label="Example reciprocal transfer match">
+            <div class="match-card-top">
+                <span>Match preview</span>
+                <strong>Professional details aligned</strong>
+            </div>
+            <div class="match-details">
+                <div><small>Current</small><strong>Your district</strong></div>
+                <span class="swap-mark" aria-hidden="true">&#8596;</span>
+                <div><small>Desired</small><strong>Their district</strong></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="signin-card" aria-labelledby="signin-title">
+        <div class="card-accent" aria-hidden="true"></div>
+
+        <form id="signinForm" novalidate>
+            <div class="card-body">
+                <div class="card-heading">
+                    <h2 id="signin-title">Sign in</h2>
+                    <p>Use the details from your educator account.</p>
+                </div>
+
+                <div class="field">
+                    <label class="field-label" for="email">Email address</label>
+                    <input id="email" name="email" type="email" autocomplete="email" inputmode="email" required>
+                </div>
+
+                <div class="field">
+                    <label class="field-label" for="password">Password</label>
+                    <div class="password-wrap">
+                        <input id="password" name="password" type="password" autocomplete="current-password" minlength="8" required>
+                        <button class="show-password" id="showPassword" type="button" aria-label="Show password">Show</button>
+                    </div>
+                </div>
+
+                <div class="form-options">
+                    <label class="remember">
+                        <input id="remember" name="remember" type="checkbox">
+                        <span>Keep me signed in</span>
+                    </label>
+                    <button class="text-button" id="forgotPassword" type="button">Forgot password?</button>
+                </div>
+
+                <div class="message message-error" id="formError" role="alert"></div>
+                <div class="message message-info" id="resetMessage" role="status" aria-live="polite"></div>
+
+                <button class="button" type="submit">Sign in <span aria-hidden="true">&#8594;</span></button>
+
+                <p class="register-prompt">New to May Cross Hub? <a href="register.html">Create an educator account</a></p>
+                <p class="prototype-note">Preview note: connect Firebase Authentication before launch to verify credentials, manage sessions and send password-reset emails.</p>
+            </div>
+        </form>
+
+        <div class="success-state" id="successState" role="status" aria-live="polite">
+            <div class="success-icon" aria-hidden="true">&#10003;</div>
+            <h2 tabindex="-1">Sign-in form ready</h2>
+            <p>The details passed browser validation. Once Firebase is connected, this action can securely authenticate the educator and open their dashboard.</p>
+            <a class="button" href="index.html">Return to home</a>
+        </div>
+    </section>
+</main>
+
+<footer>&copy; <span id="year"></span> May Cross Hub. Your contact details remain private unless you choose to share them.</footer>
+
+<script>
+const form = document.getElementById('signinForm');
+const email = document.getElementById('email');
+const password = document.getElementById('password');
+const showPassword = document.getElementById('showPassword');
+const forgotPassword = document.getElementById('forgotPassword');
+const formError = document.getElementById('formError');
+const resetMessage = document.getElementById('resetMessage');
+const successState = document.getElementById('successState');
+
+document.getElementById('year').textContent = new Date().getFullYear();
+
+function hideMessages() {
+    formError.textContent = '';
+    formError.classList.remove('show');
+    resetMessage.textContent = '';
+    resetMessage.classList.remove('show');
+}
+
+showPassword.addEventListener('click', () => {
+    const isHidden = password.type === 'password';
+    password.type = isHidden ? 'text' : 'password';
+    showPassword.textContent = isHidden ? 'Hide' : 'Show';
+    showPassword.setAttribute('aria-label', `${isHidden ? 'Hide' : 'Show'} password`);
+});
+
+forgotPassword.addEventListener('click', () => {
+    hideMessages();
+    resetMessage.textContent = email.validity.valid
+        ? `Password recovery is ready to be connected for ${email.value}.`
+        : 'Enter your account email first. Password recovery will work after Firebase is connected.';
+    resetMessage.classList.add('show');
+    if (!email.validity.valid) email.focus();
+});
+
+form.addEventListener('input', (event) => {
+    event.target.removeAttribute('aria-invalid');
+    hideMessages();
+});
+
+form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    hideMessages();
+
+    const fields = [email, password];
+    for (const field of fields) {
+        field.removeAttribute('aria-invalid');
+        if (!field.checkValidity()) {
+            field.setAttribute('aria-invalid', 'true');
+            formError.textContent = field === email
+                ? 'Enter a valid email address.'
+                : 'Enter your password using at least 8 characters.';
+            formError.classList.add('show');
+            field.focus();
+            return;
+        }
+    }
+
+    form.hidden = true;
+    successState.classList.add('show');
+    successState.querySelector('h2').focus({ preventScroll: true });
+});
+</script>
+</body>
+</html>
