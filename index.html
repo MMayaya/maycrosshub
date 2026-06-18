@@ -86,20 +86,6 @@ nav {
     gap: 0.55rem;
 }
 
-.logo-mark {
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    background: #ffffff;
-    color: #004080;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 900;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    font-size: 0.9rem;
-}
-
 .nav-toggle {
     display: none;
     background: transparent;
@@ -175,8 +161,8 @@ header::before {
 }
 
 .header-logo {
-    width: 130px;
-    height: 130px;
+    width: clamp(170px, 18vw, 210px);
+    height: clamp(170px, 18vw, 210px);
     object-fit: contain;
     background: #fff;
     border-radius: 50%;
@@ -187,8 +173,8 @@ header::before {
 }
 
 .logo-fallback {
-    width: 130px;
-    height: 130px;
+    width: clamp(170px, 18vw, 210px);
+    height: clamp(170px, 18vw, 210px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -198,10 +184,14 @@ header::before {
     border-radius: 50%;
     padding: 12px;
     font-weight: bold;
+    font-size: 1.2rem;
+    line-height: 1.25;
     box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     opacity: 0;
     animation: slideInLeft 0.8s ease-out 0.2s forwards;
 }
+
+.logo-fallback[hidden] { display: none; }
 
 .header-text {
     text-align: left;
@@ -899,7 +889,6 @@ footer {
 <body>
 <nav aria-label="Main navigation">
     <a href="index.html" class="logo">
-        <span class="logo-mark">MC</span>
         May Cross Hub
     </a>
     <button class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="navLinks" aria-label="Toggle navigation menu">☰</button>
@@ -916,7 +905,16 @@ footer {
 
 <header>
     <div class="header-content">
-        <div class="logo-fallback" aria-hidden="true">May<br>Cross<br>Hub</div>
+        <img
+            src="maycross.png"
+            class="header-logo"
+            alt="May Cross Hub logo"
+            width="210"
+            height="210"
+            fetchpriority="high"
+            onerror="this.hidden=true; this.nextElementSibling.hidden=false;"
+        >
+        <div class="logo-fallback" aria-hidden="true" hidden>May<br>Cross<br>Hub</div>
         <div class="header-text">
             <h1>May Cross Hub</h1>
             <p class="motto">Helping educators find transfer matches that cross.</p>
