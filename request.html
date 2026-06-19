@@ -1000,7 +1000,10 @@ function bindCardActions(card) {
     });
 
     card.querySelectorAll('[data-preview-message]').forEach((button) => {
-        button.addEventListener('click', () => showToast('Conversation tools are the next feature to connect.'));
+        button.addEventListener('click', () => {
+            const requestId = encodeURIComponent(card.dataset.requestId);
+            window.location.href = `conversation.html?request=${requestId}`;
+        });
     });
 }
 

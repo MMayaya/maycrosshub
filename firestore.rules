@@ -74,6 +74,10 @@ service cloud.firestore {
         && (data.fromUid == request.auth.uid || data.toUid == request.auth.uid);
     }
 
+    function requestData(requestId) {
+      return get(/databases/$(database)/documents/requests/$(requestId)).data;
+    }
+
     function validRequestData() {
       return request.resource.data.keys().hasOnly([
           'fromUid', 'toUid', 'status', 'matchScore',
@@ -124,6 +128,26 @@ service cloud.firestore {
         && validRequestTransition();
 
       allow delete: if false;
+
+      match /messages/{messageId} {
+        allow read: if verified()
+          && requestData(requestId).status == 'accepted'
+          && requestParticipant(requestData(requestId));
+
+        allow create: if verified()
+          && requestData(requestId).status == 'accepted'
+          && requestParticipant(requestData(requestId))
+          && request.resource.data.keys().hasOnly([
+              'senderUid', 'text', 'createdAt'
+            ])
+          && request.resource.data.senderUid == request.auth.uid
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 1000
+          && request.resource.data.createdAt == request.time;
+
+        allow update, delete: if false;
+      }
     }
   }
 }

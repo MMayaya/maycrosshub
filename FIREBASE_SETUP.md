@@ -53,8 +53,10 @@ In **Authentication > Templates**, review the sender name, verification email, p
 2. Register educator B with the opposite current and desired provinces and verify the email.
 3. Sign in as educator A and confirm educator B appears under My Matches.
 4. Send a match request.
-5. Sign in as educator B and accept or decline the request.
-6. Confirm neither educator can read the other's private profile document.
+5. Sign in as educator B and accept the request.
+6. Open the conversation from both accounts and exchange a test message.
+7. Confirm neither educator can open a conversation for a pending or unrelated request.
+8. Confirm neither educator can read the other's private profile document.
 
 ## Firestore structure
 
@@ -62,5 +64,6 @@ In **Authentication > Templates**, review the sender name, verification email, p
 - `profiles/{uid}/savedMatches/{matchUid}`: owner-only saved matches.
 - `matchProfiles/{uid}`: sanitised matching fields readable by verified educators.
 - `requests/{fromUid_toUid}`: participant-only match request and status.
+- `requests/{fromUid_toUid}/messages/{messageId}`: immutable messages available only to the verified participants while the request is accepted.
 
 If Firebase reports that a query needs an index, use the link in the error message to create the suggested composite index, then wait for it to finish building.
