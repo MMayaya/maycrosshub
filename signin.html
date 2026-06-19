@@ -722,16 +722,8 @@ form.addEventListener('submit', async (event) => {
         );
 
         if (!credential.user.emailVerified) {
-            let verificationMessage = 'Verify your email before signing in.';
-            try {
-                await sendEmailVerification(credential.user);
-            } catch (error) {
-                verificationMessage += ` ${verificationErrorMessage(error)}`;
-            }
             await signOut(auth);
-            formError.textContent = verificationMessage.includes('(')
-                ? verificationMessage
-                : `${verificationMessage} Firebase accepted a new verification-email request.`;
+            formError.textContent = 'Verify your email before signing in. After Firebase removes the temporary rate limit, use Resend verification once.';
             formError.classList.add('show');
             return;
         }
