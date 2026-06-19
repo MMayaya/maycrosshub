@@ -73,18 +73,6 @@ textarea:focus-visible {
     font-weight: 800;
 }
 
-.brand-mark {
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    display: grid;
-    place-items: center;
-    background: #fff;
-    color: var(--blue);
-    font-size: 0.85rem;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.22);
-}
-
 .nav-actions {
     display: flex;
     align-items: center;
@@ -354,6 +342,63 @@ textarea:focus-visible {
     margin-top: 0.3rem;
 }
 
+.multi-entry-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.6rem;
+    align-items: stretch;
+}
+
+.multi-entry-row .add-item-button {
+    min-height: 48px;
+    padding: 0.65rem 1rem;
+    border: 1px solid var(--blue);
+    border-radius: 9px;
+    color: #fff;
+    background: var(--blue);
+    font-weight: 750;
+    cursor: pointer;
+}
+
+.multi-entry-row .add-item-button:hover { background: #003468; }
+
+.selected-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    min-height: 34px;
+    margin-top: 0.65rem;
+}
+
+.item-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.38rem 0.48rem 0.38rem 0.7rem;
+    border: 1px solid #b8d3f3;
+    border-radius: 999px;
+    color: var(--blue);
+    background: var(--pale-blue);
+    font-size: 0.84rem;
+    font-weight: 700;
+}
+
+.item-chip button {
+    width: 24px;
+    height: 24px;
+    border: 0;
+    border-radius: 50%;
+    color: var(--blue);
+    background: #fff;
+    font-weight: 900;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.item-chip button:hover { background: #d7e8ff; }
+.other-subject { margin-top: 0.6rem; }
+[hidden] { display: none !important; }
+
 .password-wrap { position: relative; }
 .password-wrap input { padding-right: 4.5rem; }
 
@@ -571,16 +616,6 @@ textarea:focus-visible {
 .success-state h2 { color: var(--navy); margin-bottom: 0.55rem; }
 .success-state p { color: var(--muted); max-width: 31rem; margin: 0 auto 1.35rem; }
 
-.prototype-note {
-    margin-top: 1.25rem;
-    padding: 0.75rem 0.9rem;
-    border-radius: 9px;
-    background: #fff8e7;
-    border: 1px solid #ffe1a7;
-    color: #6d4900;
-    font-size: 0.82rem;
-}
-
 footer {
     text-align: center;
     color: #68798c;
@@ -600,7 +635,6 @@ footer {
 @media (max-width: 640px) {
     .site-nav { min-height: 64px; }
     .brand { font-size: 1rem; }
-    .brand-mark { width: 36px; height: 36px; }
     .nav-actions a:first-child { display: none; }
     .page-shell { padding-inline: 0.85rem; }
     .intro { padding-inline: 0.3rem; }
@@ -612,6 +646,8 @@ footer {
     .choice-grid { grid-template-columns: 1fr 1fr; }
     .form-actions { align-items: stretch; }
     .form-actions .button { flex: 1; }
+    .multi-entry-row { grid-template-columns: 1fr; }
+    .multi-entry-row .add-item-button { width: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -623,7 +659,6 @@ footer {
 <body>
 <nav class="site-nav" aria-label="Main navigation">
     <a class="brand" href="index.html">
-        <span class="brand-mark" aria-hidden="true">MC</span>
         <span>May Cross Hub</span>
     </a>
     <div class="nav-actions">
@@ -740,7 +775,9 @@ footer {
                             </div>
                             <div class="field">
                                 <label for="currentDistrict">District</label>
-                                <input id="currentDistrict" name="currentDistrict" type="text" required>
+                                <select id="currentDistrict" name="currentDistrict" required disabled>
+                                    <option value="">Select province first</option>
+                                </select>
                             </div>
                             <div class="field">
                                 <label for="circuit">Circuit or ward <span class="optional">(optional)</span></label>
@@ -764,9 +801,15 @@ footer {
                                     <div class="choice"><input type="radio" id="fet" name="phase" value="FET"><label for="fet">FET</label></div>
                                 </div>
                             </div>
-                            <div class="field">
-                                <label for="grades">Grades taught</label>
-                                <input id="grades" name="grades" type="text" placeholder="e.g. 8, 9 and 10" required>
+                            <div class="field full">
+                                <label for="gradeInput">Grades taught</label>
+                                <div class="multi-entry-row">
+                                    <input id="gradeInput" type="text" inputmode="text" maxlength="2" autocomplete="off" placeholder="Enter R or 1 to 12" aria-describedby="gradeHelp">
+                                    <button class="add-item-button" id="addGradeButton" type="button">Add grade</button>
+                                </div>
+                                <input id="grades" name="grades" type="hidden">
+                                <div class="selected-items" id="gradeList" aria-live="polite"></div>
+                                <p class="helper" id="gradeHelp">Add each grade separately, for example 8, then 9.</p>
                             </div>
                             <div class="field">
                                 <label for="postLevel">Post level or role</label>
@@ -780,8 +823,68 @@ footer {
                                 </select>
                             </div>
                             <div class="field full">
-                                <label for="subjects">Main qualified subjects</label>
-                                <input id="subjects" name="subjects" type="text" placeholder="e.g. Mathematics and Natural Sciences" required>
+                                <label for="subjectSelect">Main qualified subjects</label>
+                                <div class="multi-entry-row">
+<select id="subjectSelect">
+                                        <option value="">Select a subject</option>
+                                        <option>Accounting</option>
+                                        <option>Afrikaans</option>
+                                        <option>Agricultural Management Practices</option>
+                                        <option>Agricultural Sciences</option>
+                                        <option>Agricultural Technology</option>
+                                        <option>Business Studies</option>
+                                        <option>Civil Technology</option>
+                                        <option>Coding and Robotics</option>
+                                        <option>Computer Applications Technology</option>
+                                        <option>Consumer Studies</option>
+                                        <option>Creative Arts</option>
+                                        <option>Dance Studies</option>
+                                        <option>Design</option>
+                                        <option>Dramatic Arts</option>
+                                        <option>Economics</option>
+                                        <option>Economic and Management Sciences</option>
+                                        <option>Electrical Technology</option>
+                                        <option>Engineering Graphics and Design</option>
+                                        <option>English</option>
+                                        <option>Geography</option>
+                                        <option>History</option>
+                                        <option>Hospitality Studies</option>
+                                        <option>Information Technology</option>
+                                        <option>isiNdebele</option>
+                                        <option>isiXhosa</option>
+                                        <option>isiZulu</option>
+                                        <option>Life Orientation</option>
+                                        <option>Life Sciences</option>
+                                        <option>Life Skills</option>
+                                        <option>Mathematical Literacy</option>
+                                        <option>Mathematics</option>
+                                        <option>Mechanical Technology</option>
+                                        <option>Music</option>
+                                        <option>Natural Sciences</option>
+                                        <option>Natural Sciences and Technology</option>
+                                        <option>Physical Sciences</option>
+                                        <option>Religion Studies</option>
+                                        <option>Sepedi</option>
+                                        <option>Sesotho</option>
+                                        <option>Setswana</option>
+                                        <option>siSwati</option>
+                                        <option>Social Sciences</option>
+                                        <option>South African Sign Language</option>
+                                        <option>Technical Mathematics</option>
+                                        <option>Technical Sciences</option>
+                                        <option>Technology</option>
+                                        <option>Tourism</option>
+                                        <option>Tshivenda</option>
+                                        <option>Visual Arts</option>
+                                        <option>Xitsonga</option>
+                                        <option value="Other">Other subject</option>
+                                    </select>
+                                    <button class="add-item-button" id="addSubjectButton" type="button">Add subject</button>
+                                </div>
+                                <input class="other-subject" id="otherSubject" type="text" maxlength="80" autocomplete="off" placeholder="Enter the subject name" hidden>
+                                <input id="subjects" name="subjects" type="hidden">
+                                <div class="selected-items" id="subjectList" aria-live="polite"></div>
+                                <p class="helper">Choose a subject, then select Add subject. Use Other subject for an option not listed.</p>
                             </div>
                         </div>
                     </section>
@@ -804,7 +907,9 @@ footer {
                             </div>
                             <div class="field">
                                 <label for="desiredDistrict">Desired district</label>
-                                <input id="desiredDistrict" name="desiredDistrict" type="text" required>
+                                <select id="desiredDistrict" name="desiredDistrict" required disabled>
+                                    <option value="">Select province first</option>
+                                </select>
                             </div>
                             <div class="field">
                                 <label for="desiredTown">Desired town or area</label>
@@ -873,14 +978,13 @@ footer {
                     </div>
 
                     <p class="signin-prompt">Already registered? <a href="signin.html">Sign in</a></p>
-                    <p class="prototype-note">Firebase stores a private educator profile plus a separate sanitised match profile. Direct identifiers, school name and transfer reason are never written to the match-readable document.</p>
                 </div>
             </form>
 
             <div class="success-state" id="successState" role="status" aria-live="polite">
                 <div class="success-icon" aria-hidden="true">&#10003;</div>
                 <h2 tabindex="-1">Check your email</h2>
-                <p>Your Firebase account and private educator profile were created, and a verification link was sent. Verify the address before signing in or appearing in match results.</p>
+                <p>Your account and educator profile were created, and a verification link was sent. Verify the address before signing in or appearing in match results.</p>
                 <a class="button button-primary" href="signin.html">Continue to sign in</a>
             </div>
         </div>
@@ -925,7 +1029,197 @@ const progressWrap = document.getElementById('progressWrap');
 const stepNames = ['Your account', 'Current post', 'Transfer destination', 'Privacy and review'];
 let currentStep = 0;
 
+const DISTRICTS_BY_PROVINCE = Object.freeze({
+    'Eastern Cape': [
+        'Alfred Nzo East', 'Alfred Nzo West', 'Amathole East', 'Amathole West',
+        'Buffalo City Metro', 'Chris Hani East', 'Chris Hani West', 'Joe Gqabi',
+        'Nelson Mandela Bay Metro', 'OR Tambo Coastal', 'OR Tambo Inland', 'Sarah Baartman'
+    ],
+    'Free State': [
+        'Fezile Dabi', 'Lejweleputswa', 'Motheo', 'Thabo Mofutsanyana', 'Xhariep'
+    ],
+    'Gauteng': [
+        'Ekurhuleni North', 'Ekurhuleni South', 'Gauteng East', 'Gauteng North',
+        'Gauteng West', 'Johannesburg Central', 'Johannesburg East', 'Johannesburg North',
+        'Johannesburg South', 'Johannesburg West', 'Sedibeng East', 'Sedibeng West',
+        'Tshwane North', 'Tshwane South', 'Tshwane West'
+    ],
+    'KwaZulu-Natal': [
+        'Amajuba', 'Harry Gwala', 'iLembe', 'King Cetshwayo', 'Pinetown', 'Ugu',
+        'uMgungundlovu', 'uMkhanyakude', 'uMlazi', 'uMzinyathi', 'uThukela', 'Zululand'
+    ],
+    'Limpopo': [
+        'Capricorn Ladana', 'Capricorn South', 'Mogalakwena', 'Mopani East', 'Mopani West',
+        'Sekhukhune', 'Sekhukhune East/Riba Cross', 'Vhembe East', 'Vhembe West', 'Waterberg'
+    ],
+    'Mpumalanga': ['Ehlanzeni', 'Gert Sibande', 'Nkangala'],
+    'North West': [
+        'Bojanala', 'Dr Kenneth Kaunda', 'Dr Ruth Segomotsi Mompati', 'Ngaka Modiri Molema'
+    ],
+    'Northern Cape': ['Frances Baard', 'John Taolo Gaetsewe', 'Namakwa', 'Pixley ka Seme', 'ZF Mgcawu'],
+    'Western Cape': [
+        'Cape Winelands', 'Eden and Central Karoo', 'Metro Central', 'Metro East',
+        'Metro North', 'Metro South', 'Overberg', 'West Coast'
+    ]
+});
+
+const currentProvince = document.getElementById('currentProvince');
+const currentDistrict = document.getElementById('currentDistrict');
+const desiredProvince = document.getElementById('desiredProvince');
+const desiredDistrict = document.getElementById('desiredDistrict');
+const gradeInput = document.getElementById('gradeInput');
+const gradeList = document.getElementById('gradeList');
+const gradesField = document.getElementById('grades');
+const addGradeButton = document.getElementById('addGradeButton');
+const subjectSelect = document.getElementById('subjectSelect');
+const otherSubject = document.getElementById('otherSubject');
+const subjectList = document.getElementById('subjectList');
+const subjectsField = document.getElementById('subjects');
+const addSubjectButton = document.getElementById('addSubjectButton');
+const selectedGrades = [];
+const selectedSubjects = [];
+
 document.getElementById('year').textContent = new Date().getFullYear();
+
+function populateDistricts(provinceSelect, districtSelect) {
+    const districts = DISTRICTS_BY_PROVINCE[provinceSelect.value] || [];
+    districtSelect.replaceChildren();
+
+    const prompt = document.createElement('option');
+    prompt.value = '';
+    prompt.textContent = districts.length ? 'Select district' : 'Select province first';
+    districtSelect.append(prompt);
+
+    districts.forEach((district) => {
+        const option = document.createElement('option');
+        option.value = district;
+        option.textContent = district;
+        districtSelect.append(option);
+    });
+
+    districtSelect.disabled = districts.length === 0;
+    districtSelect.value = '';
+}
+
+currentProvince.addEventListener('change', () => populateDistricts(currentProvince, currentDistrict));
+desiredProvince.addEventListener('change', () => populateDistricts(desiredProvince, desiredDistrict));
+
+function renderSelectedItems(container, values, type) {
+    container.replaceChildren();
+    values.forEach((value) => {
+        const chip = document.createElement('span');
+        const removeButton = document.createElement('button');
+
+        chip.className = 'item-chip';
+        chip.append(document.createTextNode(value));
+        removeButton.type = 'button';
+        removeButton.textContent = '\u00d7';
+        removeButton.setAttribute('aria-label', `Remove ${type} ${value}`);
+        removeButton.addEventListener('click', () => {
+            const index = values.indexOf(value);
+            if (index !== -1) values.splice(index, 1);
+            syncSelectedItems();
+        });
+        chip.append(removeButton);
+        container.append(chip);
+    });
+}
+
+function syncSelectedItems() {
+    gradesField.value = selectedGrades.join(',');
+    subjectsField.value = selectedSubjects.join(',');
+    renderSelectedItems(gradeList, selectedGrades, 'grade');
+    renderSelectedItems(subjectList, selectedSubjects, 'subject');
+}
+
+function addGrade() {
+    const rawValue = gradeInput.value.trim().toUpperCase();
+    const numericGrade = Number(rawValue);
+    const grade = rawValue === 'R' ? 'R' : String(numericGrade);
+    const valid = rawValue === 'R'
+        || (/^\d{1,2}$/.test(rawValue) && Number.isInteger(numericGrade) && numericGrade >= 1 && numericGrade <= 12);
+
+    gradeInput.removeAttribute('aria-invalid');
+    if (!valid) {
+        gradeInput.setAttribute('aria-invalid', 'true');
+        showError('Enter grade R or a number from 1 to 12.');
+        gradeInput.focus();
+        return;
+    }
+    if (selectedGrades.includes(grade)) {
+        showError(`Grade ${grade} has already been added.`);
+        gradeInput.focus();
+        return;
+    }
+
+    selectedGrades.push(grade);
+    selectedGrades.sort((a, b) => {
+        if (a === 'R') return -1;
+        if (b === 'R') return 1;
+        return Number(a) - Number(b);
+    });
+    gradeInput.value = '';
+    clearError();
+    syncSelectedItems();
+    gradeInput.focus();
+}
+
+function addSubject() {
+    const selectedValue = subjectSelect.value;
+    const subject = selectedValue === 'Other'
+        ? otherSubject.value.trim()
+        : selectedValue;
+
+    subjectSelect.removeAttribute('aria-invalid');
+    otherSubject.removeAttribute('aria-invalid');
+    if (!subject) {
+        const target = selectedValue === 'Other' ? otherSubject : subjectSelect;
+        target.setAttribute('aria-invalid', 'true');
+        showError(selectedValue === 'Other'
+            ? 'Enter the other subject name before adding it.'
+            : 'Select a subject before adding it.');
+        target.focus();
+        return;
+    }
+    if (selectedSubjects.some((item) => item.toLowerCase() === subject.toLowerCase())) {
+        showError(`${subject} has already been added.`);
+        return;
+    }
+    if (selectedSubjects.length >= 20) {
+        showError('You can add up to 20 subjects.');
+        return;
+    }
+
+    selectedSubjects.push(subject);
+    selectedSubjects.sort((a, b) => a.localeCompare(b));
+    subjectSelect.value = '';
+    otherSubject.value = '';
+    otherSubject.hidden = true;
+    clearError();
+    syncSelectedItems();
+    subjectSelect.focus();
+}
+
+addGradeButton.addEventListener('click', addGrade);
+gradeInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        addGrade();
+    }
+});
+
+subjectSelect.addEventListener('change', () => {
+    const isOther = subjectSelect.value === 'Other';
+    otherSubject.hidden = !isOther;
+    if (isOther) otherSubject.focus();
+});
+addSubjectButton.addEventListener('click', addSubject);
+otherSubject.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        addSubject();
+    }
+});
 
 function fieldsForStep(step) {
     return Array.from(steps[step].querySelectorAll('input, select, textarea'));
@@ -946,48 +1240,40 @@ function registrationErrorMessage(error) {
         'auth/email-already-in-use': 'An account already exists for this email address. Try signing in instead.',
         'auth/invalid-email': 'Enter a valid email address.',
         'auth/weak-password': 'Choose a stronger password using at least 8 characters.',
-        'auth/operation-not-allowed': 'Email and password registration is not enabled in Firebase Authentication yet.',
-        'auth/configuration-not-found': 'Firebase Authentication is not configured for this project yet.',
-        'auth/unauthorized-domain': 'This website domain is not authorised in Firebase Authentication.',
+        'auth/operation-not-allowed': 'Email and password registration is temporarily unavailable.',
+        'auth/configuration-not-found': 'Account registration is temporarily unavailable.',
+        'auth/unauthorized-domain': 'This website address is not authorised for account registration.',
         'auth/network-request-failed': 'The account could not be created because of a network problem. Please try again.',
         'auth/too-many-requests': 'Too many attempts were made. Please wait before trying again.'
     };
 
-    const firestoreMessages = {
-        'permission-denied': 'Firestore rejected the profile. Publish the supplied security rules before registering users.',
-        'failed-precondition': 'Create the Firestore database before registering users.',
+    const profileMessages = {
+        'permission-denied': 'Your educator profile could not be saved. Please try again or contact support.',
+        'failed-precondition': 'The profile service is not ready. Please contact support.',
         'unavailable': 'The profile service is temporarily unavailable. Please try again.'
     };
 
     return messages[error.code]
-        || firestoreMessages[error.code]
+        || profileMessages[error.code]
         || 'The account could not be created. Please try again.';
 }
 
 function verificationErrorMessage(error) {
     const messages = {
-        'auth/too-many-requests': 'Firebase has temporarily rate-limited verification emails. Wait before trying again.',
-        'auth/network-request-failed': 'The verification request could not reach Firebase. Check the connection.',
-        'auth/unauthorized-domain': 'This website domain is not authorised in Firebase Authentication.',
+        'auth/too-many-requests': 'Verification emails are temporarily rate-limited. Wait before trying again.',
+        'auth/network-request-failed': 'The verification request could not be sent. Check the connection.',
+        'auth/unauthorized-domain': 'This website address is not authorised for account verification.',
         'auth/operation-not-allowed': 'Email and password authentication is not enabled.'
     };
     const code = error?.code || 'unknown-error';
-    return `${messages[code] || 'Firebase could not send the verification email.'} (${code})`;
-}
-
-function listFromInput(value) {
-    return value
-        .split(/[,;]+/)
-        .map((item) => item.trim())
-        .filter(Boolean)
-        .slice(0, 20);
+    return `${messages[code] || 'The verification email could not be sent.'} (${code})`;
 }
 
 function buildProfileDocuments(uid, email) {
     const phase = form.querySelector('input[name="phase"]:checked')?.value || '';
     const nearby = form.querySelector('input[name="nearby"]:checked')?.value === 'Yes';
-    const grades = listFromInput(document.getElementById('grades').value);
-    const subjects = listFromInput(document.getElementById('subjects').value);
+    const grades = [...selectedGrades];
+    const subjects = [...selectedSubjects];
     const showProfessional = form.elements.showProfessional.checked;
     const allowRequests = form.elements.allowRequests.checked;
 
@@ -1075,6 +1361,20 @@ function validateStep(step) {
         }
     }
 
+    if (step === 1 && selectedGrades.length === 0) {
+        gradeInput.setAttribute('aria-invalid', 'true');
+        showError('Add at least one grade taught before continuing.');
+        gradeInput.focus();
+        return false;
+    }
+
+    if (step === 1 && selectedSubjects.length === 0) {
+        subjectSelect.setAttribute('aria-invalid', 'true');
+        showError('Add at least one qualified subject before continuing.');
+        subjectSelect.focus();
+        return false;
+    }
+
     return true;
 }
 
@@ -1085,7 +1385,7 @@ function updateReview() {
         ['Educator', `${document.getElementById('firstName').value} ${document.getElementById('lastName').value}`.trim()],
         ['Current post', document.getElementById('currentSchool').value],
         ['Current area', `${document.getElementById('currentDistrict').value}, ${document.getElementById('currentProvince').value}`],
-        ['Teaching profile', `${selectedPhase ? selectedPhase.value : ''} - ${document.getElementById('subjects').value}`],
+        ['Teaching profile', `${selectedPhase ? selectedPhase.value : ''} - Grades ${selectedGrades.join(', ')} - ${selectedSubjects.join(', ')}`],
         ['Desired area', `${document.getElementById('desiredTown').value}, ${document.getElementById('desiredProvince').value}`],
         ['Nearby areas', nearby ? nearby.value : 'Not selected']
     ];

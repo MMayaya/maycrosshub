@@ -76,18 +76,6 @@ input:focus-visible {
     white-space: nowrap;
 }
 
-.brand-mark {
-    width: 42px;
-    height: 42px;
-    display: grid;
-    place-items: center;
-    border-radius: 50%;
-    background: #fff;
-    color: var(--blue);
-    font-size: 0.85rem;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.22);
-}
-
 .nav-links {
     display: flex;
     align-items: center;
@@ -495,16 +483,6 @@ input:focus-visible {
 .empty-state h2 { color: var(--navy); }
 .empty-state p { color: var(--muted); margin-top: 0.3rem; }
 
-.prototype-banner {
-    margin-top: 1.25rem;
-    padding: 0.8rem 0.9rem;
-    border: 1px solid #ffe1a7;
-    border-radius: 9px;
-    background: var(--warning-bg);
-    color: var(--warning);
-    font-size: 0.82rem;
-}
-
 dialog {
     width: min(92vw, 470px);
     margin: auto;
@@ -591,7 +569,6 @@ footer {
 
 @media (max-width: 500px) {
     .brand { font-size: 1rem; }
-    .brand-mark { width: 36px; height: 36px; }
     .stats-grid { grid-template-columns: 1fr; }
     .request-card-head { align-items: start; }
     .route-grid { grid-template-columns: 1fr; }
@@ -612,7 +589,6 @@ footer {
 <body>
 <nav class="site-nav" aria-label="Main navigation">
     <a class="brand" href="index.html">
-        <span class="brand-mark" aria-hidden="true">MC</span>
         <span>May Cross Hub</span>
     </a>
 
@@ -762,7 +738,7 @@ footer {
                         <span class="route-arrow" aria-hidden="true">&#8596;</span>
                         <div class="route-box"><span>They want</span><strong>Amathole, Eastern Cape</strong></div>
                     </div>
-                    <p class="accepted-panel"><strong>Next step:</strong> confirm serious interest inside the platform. Contact details remain hidden in this prototype.</p>
+                    <p class="accepted-panel"><strong>Next step:</strong> confirm serious interest inside the platform. Contact details remain hidden.</p>
                 </div>
                 <div class="request-actions">
                     <button class="button button-secondary" type="button" data-preview-message>Open conversation</button>
@@ -777,7 +753,6 @@ footer {
         <p>Try another status tab or clear the search.</p>
     </section>
 
-    <p class="prototype-banner">Live Firebase data: request actions are stored in Firestore and visible only to the two participating verified educators. Contact details remain private.</p>
 </main>
 
 <dialog id="actionDialog" aria-labelledby="dialogTitle">
@@ -1048,7 +1023,7 @@ dialogConfirm.addEventListener('click', async () => {
             ? 'Request accepted. Contact details remain hidden.'
             : 'Request status updated.');
     } catch (error) {
-        showToast('The request could not be updated. Check Firestore rules and try again.');
+        showToast('The request could not be updated. Please try again.');
     } finally {
         dialogConfirm.disabled = false;
         pendingRequestId = null;
@@ -1088,7 +1063,7 @@ function watchRequests(uid) {
     const handleError = (error) => {
         console.error('Request loading failed.', error);
         emptyState.querySelector('h2').textContent = 'Requests could not be loaded';
-        emptyState.querySelector('p').textContent = 'Create Firestore and publish the supplied security rules.';
+        emptyState.querySelector('p').textContent = 'Please refresh the page or try again later.';
         emptyState.classList.add('show');
     };
 
@@ -1125,7 +1100,7 @@ onAuthStateChanged(auth, async (user) => {
     } catch (error) {
         console.error('Profile loading failed.', error);
         emptyState.querySelector('h2').textContent = 'Profile could not be loaded';
-        emptyState.querySelector('p').textContent = 'Check the Firestore setup and security rules.';
+        emptyState.querySelector('p').textContent = 'Please refresh the page or try again later.';
         emptyState.classList.add('show');
     }
 });

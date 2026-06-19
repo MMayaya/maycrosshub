@@ -74,18 +74,6 @@ input:focus-visible {
     font-weight: 800;
 }
 
-.brand-mark {
-    width: 42px;
-    height: 42px;
-    display: grid;
-    place-items: center;
-    border-radius: 50%;
-    background: #fff;
-    color: var(--blue);
-    font-size: 0.85rem;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.22);
-}
-
 .back-link {
     padding: 0.5rem 0.7rem;
     border-radius: 7px;
@@ -363,16 +351,6 @@ input:focus-visible {
 
 .register-prompt a:hover { text-decoration: underline; }
 
-.prototype-note {
-    margin-top: 1rem;
-    padding: 0.75rem 0.85rem;
-    border: 1px solid #ffe1a7;
-    border-radius: 9px;
-    background: #fff8e7;
-    color: #6d4900;
-    font-size: 0.8rem;
-}
-
 .success-state {
     display: none;
     padding: clamp(2.2rem, 7vw, 3.5rem) 1.5rem;
@@ -421,7 +399,6 @@ footer {
 @media (max-width: 520px) {
     .site-nav { min-height: 64px; }
     .brand { font-size: 1rem; }
-    .brand-mark { width: 36px; height: 36px; }
     .back-link { font-size: 0.88rem; padding-inline: 0.35rem; }
     .page-shell { padding-inline: 0.85rem; }
     .intro { padding-inline: 0.3rem; }
@@ -439,7 +416,6 @@ footer {
 <body>
 <nav class="site-nav" aria-label="Main navigation">
     <a class="brand" href="index.html">
-        <span class="brand-mark" aria-hidden="true">MC</span>
         <span>May Cross Hub</span>
     </a>
     <a class="back-link" href="index.html">Back to home</a>
@@ -506,14 +482,13 @@ footer {
                 <button class="button" id="signinButton" type="submit">Sign in <span aria-hidden="true">&#8594;</span></button>
 
                 <p class="register-prompt">New to May Cross Hub? <a href="register.html">Create an educator account</a></p>
-                <p class="prototype-note">Firebase Authentication is connected. Only verified email accounts can continue to the matches area.</p>
             </div>
         </form>
 
         <div class="success-state" id="successState" role="status" aria-live="polite">
             <div class="success-icon" aria-hidden="true">&#10003;</div>
             <h2 tabindex="-1">You are signed in</h2>
-            <p>Firebase verified your account successfully. You can now continue to the matches area.</p>
+            <p>Your account was verified successfully. You can now continue to the matches area.</p>
             <a class="button" href="matches.html">View my matches</a>
         </div>
     </section>
@@ -569,9 +544,9 @@ function signInErrorMessage(error) {
         'auth/invalid-email': 'Enter a valid email address.',
         'auth/invalid-credential': 'The email address or password is incorrect.',
         'auth/user-disabled': 'This account has been disabled. Contact May Cross Hub support.',
-        'auth/operation-not-allowed': 'Email and password sign-in is not enabled in Firebase Authentication yet.',
-        'auth/configuration-not-found': 'Firebase Authentication is not configured for this project yet.',
-        'auth/unauthorized-domain': 'This website domain is not authorised in Firebase Authentication.',
+        'auth/operation-not-allowed': 'Email and password sign-in is temporarily unavailable.',
+        'auth/configuration-not-found': 'Account sign-in is temporarily unavailable.',
+        'auth/unauthorized-domain': 'This website address is not authorised for account sign-in.',
         'auth/network-request-failed': 'Sign-in failed because of a network problem. Please try again.',
         'auth/too-many-requests': 'Too many attempts were made. Please wait before trying again.'
     };
@@ -581,15 +556,15 @@ function signInErrorMessage(error) {
 
 function verificationErrorMessage(error) {
     const messages = {
-        'auth/too-many-requests': 'Firebase has temporarily rate-limited verification emails. Wait before trying again.',
-        'auth/network-request-failed': 'The verification request could not reach Firebase. Check the connection.',
+        'auth/too-many-requests': 'Verification emails are temporarily rate-limited. Wait before trying again.',
+        'auth/network-request-failed': 'The verification request could not be sent. Check the connection.',
         'auth/invalid-credential': 'The email address or password is incorrect.',
         'auth/user-disabled': 'This account has been disabled.',
         'auth/operation-not-allowed': 'Email and password authentication is not enabled.',
-        'auth/unauthorized-domain': 'This website domain is not authorised in Firebase Authentication.'
+        'auth/unauthorized-domain': 'This website address is not authorised for account verification.'
     };
     const code = error?.code || 'unknown-error';
-    return `${messages[code] || 'Firebase could not send the verification email.'} (${code})`;
+    return `${messages[code] || 'The verification email could not be sent.'} (${code})`;
 }
 
 async function activateVerifiedProfile(user) {
@@ -638,7 +613,7 @@ forgotPassword.addEventListener('click', async () => {
 
     try {
         await sendPasswordResetEmail(auth, email.value.trim());
-        resetMessage.textContent = 'If an account is registered for that address, Firebase has sent password-reset instructions.';
+        resetMessage.textContent = 'If an account is registered for that address, password-reset instructions have been sent.';
         resetMessage.classList.add('show');
     } catch (error) {
         formError.textContent = signInErrorMessage(error);
@@ -669,7 +644,7 @@ resendVerification.addEventListener('click', async () => {
             resetMessage.textContent = 'This email address is already verified. You can sign in normally.';
         } else {
             await sendEmailVerification(credential.user);
-            resetMessage.textContent = 'Firebase accepted the request. Check Inbox, Spam, Junk and Promotions for the verification email.';
+            resetMessage.textContent = 'The request was accepted. Check Inbox, Spam, Junk and Promotions for the verification email.';
         }
         resetMessage.classList.add('show');
     } catch (error) {
@@ -723,7 +698,7 @@ form.addEventListener('submit', async (event) => {
 
         if (!credential.user.emailVerified) {
             await signOut(auth);
-            formError.textContent = 'Verify your email before signing in. After Firebase removes the temporary rate limit, use Resend verification once.';
+            formError.textContent = 'Verify your email before signing in. If email sending is temporarily limited, wait and use Resend verification once.';
             formError.classList.add('show');
             return;
         }

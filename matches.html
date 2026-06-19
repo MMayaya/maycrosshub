@@ -77,18 +77,6 @@ select:focus-visible {
     white-space: nowrap;
 }
 
-.brand-mark {
-    width: 42px;
-    height: 42px;
-    display: grid;
-    place-items: center;
-    border-radius: 50%;
-    background: #fff;
-    color: var(--blue);
-    font-size: 0.85rem;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.22);
-}
-
 .nav-links {
     display: flex;
     align-items: center;
@@ -543,16 +531,6 @@ select:focus-visible {
 .empty-state h3 { color: var(--navy); }
 .empty-state p { color: var(--muted); margin: 0.3rem auto 1rem; }
 
-.prototype-banner {
-    margin-top: 1.25rem;
-    padding: 0.8rem 0.9rem;
-    border: 1px solid #ffe1a7;
-    border-radius: 9px;
-    background: var(--warning-bg);
-    color: var(--warning);
-    font-size: 0.82rem;
-}
-
 .toast {
     position: fixed;
     right: 1.25rem;
@@ -606,7 +584,6 @@ footer {
 
 @media (max-width: 500px) {
     .brand { font-size: 1rem; }
-    .brand-mark { width: 36px; height: 36px; }
     .route-grid { grid-template-columns: 1fr; }
     .route-arrow { transform: rotate(90deg); margin: 0 auto; }
     .match-actions { flex-direction: column; }
@@ -624,7 +601,6 @@ footer {
 <body>
 <nav class="site-nav" aria-label="Main navigation">
     <a class="brand" href="index.html">
-        <span class="brand-mark" aria-hidden="true">MC</span>
         <span>May Cross Hub</span>
     </a>
 
@@ -835,7 +811,6 @@ footer {
         <button class="button button-secondary" id="emptyClear" type="button">Show all matches</button>
     </section>
 
-    <p class="prototype-banner">Live Firebase data: only sanitised professional match profiles are queried here. Names, email addresses, cellphone numbers, school names and transfer reasons remain in the private profile.</p>
 </main>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -1060,7 +1035,7 @@ function bindMatchActions() {
                 button.textContent = isSaved ? 'Save match' : 'Saved';
                 showToast(isSaved ? 'Match removed from saved matches.' : 'Match saved securely.');
             } catch (error) {
-                showToast('The saved-match update failed. Check Firestore rules and try again.');
+                showToast('The saved-match update failed. Please try again.');
             } finally {
                 button.disabled = false;
             }
@@ -1094,7 +1069,7 @@ function bindMatchActions() {
             } catch (error) {
                 button.textContent = 'Send request';
                 button.disabled = false;
-                showToast('The request could not be sent. Check Firestore rules and try again.');
+                showToast('The request could not be sent. Please try again.');
             }
         });
     });
@@ -1171,7 +1146,7 @@ onAuthStateChanged(auth, async (user) => {
         await loadMatches(user);
     } catch (error) {
         console.error('Match loading failed.', error);
-        showEmpty('Matches could not be loaded', 'Create Firestore, publish the supplied rules, and follow any index link shown in the Firebase console.');
+        showEmpty('Matches could not be loaded', 'Please refresh the page or try again later.');
     }
 });
 </script>

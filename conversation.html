@@ -509,7 +509,7 @@ function watchMessages() {
         console.error('Conversation loading failed.', error);
         showBlocked(
             'Conversation could not be loaded',
-            'Publish the updated Firestore rules, then reopen this accepted request.'
+            'Please return to requests and try opening the conversation again.'
         );
     });
 }
@@ -579,7 +579,7 @@ messageForm.addEventListener('submit', async (event) => {
     } catch (error) {
         console.error('Message sending failed.', error);
         formError.textContent = error.code === 'permission-denied'
-            ? 'Message blocked. Publish the updated Firestore rules and confirm the request is still accepted.'
+            ? 'This message cannot be sent. Confirm that the request is still accepted.'
             : 'The message could not be sent. Check your connection and try again.';
         formError.classList.add('show');
     } finally {
@@ -607,7 +607,7 @@ onAuthStateChanged(auth, async (user) => {
         showBlocked(
             'Conversation could not be opened',
             error.code === 'permission-denied'
-                ? 'Publish the updated Firestore rules, then try again.'
+                ? 'You do not currently have access to this conversation.'
                 : 'Check your connection and reopen the accepted request.'
         );
     }
