@@ -129,6 +129,19 @@ input:focus-visible {
     font-weight: 850;
 }
 
+.signout-button {
+    padding: 0.42rem 0.58rem;
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 7px;
+    background: transparent;
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 750;
+    cursor: pointer;
+}
+
+.signout-button:hover { background: rgba(255,255,255,0.1); }
+
 .page-shell {
     max-width: 1160px;
     margin: 0 auto;
@@ -612,6 +625,7 @@ footer {
     <div class="profile-menu" aria-label="Preview educator profile">
         <span><strong>Preview profile</strong>Senior Phase</span>
         <span class="avatar" aria-hidden="true">TM</span>
+        <button class="signout-button" id="signOutButton" type="button">Sign out</button>
     </div>
 </nav>
 
@@ -631,9 +645,9 @@ footer {
     </aside>
 
     <section class="stats-grid" aria-label="Request summary">
-        <article class="stat-card"><strong id="incomingCount">2</strong><span>incoming requests</span></article>
-        <article class="stat-card"><strong id="sentCount">1</strong><span>sent requests</span></article>
-        <article class="stat-card"><strong id="acceptedCount">1</strong><span>accepted requests</span></article>
+        <article class="stat-card"><strong id="incomingCount">0</strong><span>incoming requests</span></article>
+        <article class="stat-card"><strong id="sentCount">0</strong><span>sent requests</span></article>
+        <article class="stat-card"><strong id="acceptedCount">0</strong><span>accepted requests</span></article>
         <article class="stat-card"><strong id="archivedCount">0</strong><span>archived requests</span></article>
     </section>
 
@@ -654,7 +668,7 @@ footer {
 
     <p class="result-summary" id="resultSummary" role="status" aria-live="polite">Showing 4 requests</p>
 
-    <section class="request-list" id="requestList" aria-label="Match requests">
+    <section class="request-list" id="requestList" aria-label="Match requests" hidden>
         <article class="request-card" data-status="incoming" data-search="mch-1048 tshwane gauteng or tambo eastern cape mathematics natural sciences">
             <div class="request-card-head">
                 <div class="request-identity">
@@ -763,7 +777,7 @@ footer {
         <p>Try another status tab or clear the search.</p>
     </section>
 
-    <p class="prototype-banner">Preview data only: these actions change the page locally but do not contact another educator. Connect Firebase and Firestore before enabling real requests, notifications or conversations.</p>
+    <p class="prototype-banner">Live Firebase data: request actions are stored in Firestore and visible only to the two participating verified educators. Contact details remain private.</p>
 </main>
 
 <dialog id="actionDialog" aria-labelledby="dialogTitle">
@@ -782,8 +796,28 @@ footer {
 
 <footer>&copy; <span id="year"></span> May Cross Hub. Request activity does not replace official departmental transfer procedures.</footer>
 
-<script>
-const cards = Array.from(document.querySelectorAll('.request-card'));
+<script type="module">
+import { firebaseApp } from "./firebase-config.js";
+import {
+    getAuth,
+    onAuthStateChanged,
+    signOut
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+import {
+    collection,
+    doc,
+    getDoc,
+    getFirestore,
+    onSnapshot,
+    query,
+    serverTimestamp,
+    updateDoc,
+    where
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+
+const auth = getAuth(firebaseApp);
+const db = getFirestore(firebaseApp);
+const requestList = document.getElementById('requestList');
 const tabs = Array.from(document.querySelectorAll('.tab'));
 const search = document.getElementById('requestSearch');
 const resultSummary = document.getElementById('resultSummary');
@@ -794,35 +828,130 @@ const dialogMessage = document.getElementById('dialogMessage');
 const dialogConfirm = document.getElementById('dialogConfirm');
 const dialogCancel = document.getElementById('dialogCancel');
 const toast = document.getElementById('toast');
+const profileMenu = document.querySelector('.profile-menu span');
+const signOutButton = document.getElementById('signOutButton');
+let cards = [];
 let activeFilter = 'all';
-let pendingCard = null;
+let currentUser = null;
+let incomingDocuments = new Map();
+let sentDocuments = new Map();
+let pendingRequestId = null;
 let pendingAction = null;
 let toastTimer;
+let renderVersion = 0;
 
 const actionCopy = {
     accept: {
         title: 'Accept this request?',
-        message: 'This will mark the preview request as accepted. Your private contact details will remain hidden.',
+        message: 'This will mark the request as accepted. Your private contact details will remain hidden.',
         confirm: 'Accept request'
     },
     decline: {
         title: 'Decline this request?',
-        message: 'This will move the preview request to Archived. The other educator would not receive your contact details.',
+        message: 'This will decline the request. The other educator will not receive your contact details.',
         confirm: 'Decline request'
     },
     cancel: {
         title: 'Cancel your sent request?',
-        message: 'This will move the preview request to Archived and remove it from the Sent tab.',
+        message: 'This will cancel the request and remove it from the Sent tab.',
         confirm: 'Cancel request'
     },
     archive: {
         title: 'Archive this request?',
-        message: 'This will remove the accepted preview request from your active list. It can still be viewed under Archived.',
+        message: 'This will remove the accepted request from your active list. It can still be viewed under Archived.',
         confirm: 'Archive request'
     }
 };
 
 document.getElementById('year').textContent = new Date().getFullYear();
+signOutButton.addEventListener('click', async () => {
+    await signOut(auth);
+    window.location.replace('signin.html');
+});
+
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+}
+
+function displayStatus(request) {
+    if (request.status === 'pending') {
+        return request.toUid === currentUser.uid ? 'incoming' : 'sent';
+    }
+    return request.status === 'accepted' ? 'accepted' : 'archived';
+}
+
+function statusText(status) {
+    return {
+        incoming: 'Awaiting your response',
+        sent: 'Waiting for response',
+        accepted: 'Accepted',
+        archived: 'Archived'
+    }[status];
+}
+
+function formatDate(timestamp) {
+    if (!timestamp?.toDate) return 'Just now';
+    return timestamp.toDate().toLocaleString('en-ZA', {
+        dateStyle: 'medium',
+        timeStyle: 'short'
+    });
+}
+
+function requestActions(status) {
+    if (status === 'incoming') {
+        return `
+            <button class="button button-success action-button" type="button" data-action="accept">Accept request</button>
+            <button class="button button-danger action-button" type="button" data-action="decline">Decline</button>`;
+    }
+    if (status === 'sent') {
+        return '<button class="button button-danger action-button" type="button" data-action="cancel">Cancel request</button>';
+    }
+    if (status === 'accepted') {
+        return `
+            <button class="button button-secondary" type="button" data-preview-message>Open conversation</button>
+            <button class="button button-danger action-button" type="button" data-action="archive">Archive</button>`;
+    }
+    return '<span class="status-pill status-archived">No further action</span>';
+}
+
+function renderRequestCard(request, counterpart) {
+    const status = displayStatus(request);
+    const currentArea = [counterpart.currentDistrict, counterpart.currentProvince].filter(Boolean).join(', ');
+    const desiredArea = [counterpart.desiredDistrict, counterpart.desiredProvince].filter(Boolean).join(', ');
+    const tags = [counterpart.phase, ...(counterpart.subjects || []).slice(0, 2), counterpart.postLevel].filter(Boolean);
+    const searchText = [counterpart.displayCode, currentArea, desiredArea, ...tags].join(' ').toLowerCase();
+    const acceptedNote = status === 'accepted'
+        ? '<p class="accepted-panel"><strong>Next step:</strong> continue inside the platform. Contact details remain hidden.</p>'
+        : '<p class="request-note">Review the reciprocal route and professional information before responding.</p>';
+
+    return `
+        <article class="request-card" data-status="${status}" data-search="${escapeHtml(searchText)}" data-request-id="${escapeHtml(request.id)}">
+            <div class="request-card-head">
+                <div class="request-identity">
+                    <span class="request-avatar" aria-hidden="true">${status === 'incoming' ? 'IN' : status === 'sent' ? 'OUT' : 'OK'}</span>
+                    <div><h2>${escapeHtml(counterpart.displayCode || 'Private educator')}</h2><p>${escapeHtml(formatDate(request.createdAt))}</p></div>
+                </div>
+                <span class="status-pill status-${status}">${statusText(status)}</span>
+            </div>
+            <div class="request-body">
+                <div>
+                    <div class="score-line"><span class="score">${Number(request.matchScore || 0)}% match</span>${tags.map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}</div>
+                    <div class="route-grid">
+                        <div class="route-box"><span>Their current area</span><strong>${escapeHtml(currentArea || counterpart.currentProvince || 'Private')}</strong></div>
+                        <span class="route-arrow" aria-hidden="true">&#8596;</span>
+                        <div class="route-box"><span>They want</span><strong>${escapeHtml(desiredArea || counterpart.desiredProvince || 'Private')}</strong></div>
+                    </div>
+                    ${acceptedNote}
+                </div>
+                <div class="request-actions">${requestActions(status)}</div>
+            </div>
+        </article>`;
+}
 
 function showToast(message) {
     toast.textContent = message;
@@ -854,29 +983,9 @@ function applyFilters() {
     emptyState.classList.toggle('show', visible === 0);
 }
 
-function setStatus(card, status) {
-    card.dataset.status = status;
-    const pill = card.querySelector('.status-pill');
-    pill.className = `status-pill status-${status}`;
-
-    if (status === 'accepted') {
-        pill.textContent = 'Accepted';
-        card.querySelector('.request-actions').innerHTML = `
-            <button class="button button-secondary" type="button" data-preview-message>Open conversation</button>
-            <button class="button button-danger action-button" type="button" data-action="archive">Archive</button>`;
-        bindCardActions(card);
-    } else {
-        pill.textContent = 'Archived';
-        card.querySelector('.request-actions').innerHTML = '<span class="status-pill status-archived">No further action</span>';
-    }
-
-    updateCounts();
-    applyFilters();
-}
-
-function openActionDialog(card, action) {
+function openActionDialog(requestId, action) {
     const copy = actionCopy[action];
-    pendingCard = card;
+    pendingRequestId = requestId;
     pendingAction = action;
     dialogTitle.textContent = copy.title;
     dialogMessage.textContent = copy.message;
@@ -887,15 +996,13 @@ function openActionDialog(card, action) {
 
 function bindCardActions(card) {
     card.querySelectorAll('.action-button').forEach((button) => {
-        button.addEventListener('click', () => openActionDialog(card, button.dataset.action));
+        button.addEventListener('click', () => openActionDialog(card.dataset.requestId, button.dataset.action));
     });
 
     card.querySelectorAll('[data-preview-message]').forEach((button) => {
-        button.addEventListener('click', () => showToast('Conversation tools will become available after Firebase is connected.'));
+        button.addEventListener('click', () => showToast('Conversation tools are the next feature to connect.'));
     });
 }
-
-cards.forEach(bindCardActions);
 
 tabs.forEach((tab) => {
     tab.addEventListener('click', () => {
@@ -913,25 +1020,112 @@ search.addEventListener('input', applyFilters);
 
 dialogCancel.addEventListener('click', () => actionDialog.close());
 
-dialogConfirm.addEventListener('click', () => {
-    if (!pendingCard || !pendingAction) return;
-    const nextStatus = pendingAction === 'accept' ? 'accepted' : 'archived';
-    const message = pendingAction === 'accept'
-        ? 'Request accepted in this preview. Contact details remain hidden.'
-        : 'Request moved to Archived in this preview.';
-    setStatus(pendingCard, nextStatus);
-    actionDialog.close();
-    showToast(message);
-    pendingCard = null;
-    pendingAction = null;
+dialogConfirm.addEventListener('click', async () => {
+    if (!pendingRequestId || !pendingAction) return;
+    const statusByAction = {
+        accept: 'accepted',
+        decline: 'declined',
+        cancel: 'cancelled',
+        archive: 'archived'
+    };
+    const nextStatus = statusByAction[pendingAction];
+    dialogConfirm.disabled = true;
+
+    try {
+        const changes = {
+            status: nextStatus,
+            updatedAt: serverTimestamp()
+        };
+        if (pendingAction === 'accept' || pendingAction === 'decline') {
+            changes.respondedAt = serverTimestamp();
+        }
+        await updateDoc(doc(db, 'requests', pendingRequestId), changes);
+        actionDialog.close();
+        showToast(pendingAction === 'accept'
+            ? 'Request accepted. Contact details remain hidden.'
+            : 'Request status updated.');
+    } catch (error) {
+        showToast('The request could not be updated. Check Firestore rules and try again.');
+    } finally {
+        dialogConfirm.disabled = false;
+        pendingRequestId = null;
+        pendingAction = null;
+    }
 });
 
 actionDialog.addEventListener('click', (event) => {
     if (event.target === actionDialog) actionDialog.close();
 });
 
-updateCounts();
-applyFilters();
+async function refreshRequests() {
+    const version = ++renderVersion;
+    const merged = new Map([...incomingDocuments, ...sentDocuments]);
+    const requests = Array.from(merged.values()).sort((a, b) => {
+        const aTime = a.createdAt?.seconds || 0;
+        const bTime = b.createdAt?.seconds || 0;
+        return bTime - aTime;
+    });
+
+    const rendered = await Promise.all(requests.map(async (request) => {
+        const counterpartUid = request.fromUid === currentUser.uid ? request.toUid : request.fromUid;
+        const snapshot = await getDoc(doc(db, 'matchProfiles', counterpartUid));
+        return renderRequestCard(request, snapshot.exists() ? snapshot.data() : {});
+    }));
+    if (version !== renderVersion) return;
+
+    requestList.innerHTML = rendered.join('');
+    requestList.hidden = false;
+    cards = Array.from(document.querySelectorAll('.request-card'));
+    cards.forEach(bindCardActions);
+    updateCounts();
+    applyFilters();
+}
+
+function watchRequests(uid) {
+    const handleError = (error) => {
+        console.error('Request loading failed.', error);
+        emptyState.querySelector('h2').textContent = 'Requests could not be loaded';
+        emptyState.querySelector('p').textContent = 'Create Firestore and publish the supplied security rules.';
+        emptyState.classList.add('show');
+    };
+
+    onSnapshot(query(collection(db, 'requests'), where('toUid', '==', uid)), (snapshot) => {
+        incomingDocuments = new Map(snapshot.docs.map((item) => [item.id, { id: item.id, ...item.data() }]));
+        refreshRequests().catch(handleError);
+    }, handleError);
+
+    onSnapshot(query(collection(db, 'requests'), where('fromUid', '==', uid)), (snapshot) => {
+        sentDocuments = new Map(snapshot.docs.map((item) => [item.id, { id: item.id, ...item.data() }]));
+        refreshRequests().catch(handleError);
+    }, handleError);
+}
+
+onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+        window.location.replace('signin.html');
+        return;
+    }
+    if (!user.emailVerified) {
+        await signOut(auth);
+        window.location.replace('signin.html');
+        return;
+    }
+
+    currentUser = user;
+    requestList.replaceChildren();
+    requestList.hidden = false;
+    try {
+        const profileSnapshot = await getDoc(doc(db, 'profiles', user.uid));
+        const phase = profileSnapshot.exists() ? profileSnapshot.data().current?.phase : '';
+        profileMenu.innerHTML = `<strong>${escapeHtml(user.displayName || 'Educator')}</strong>${escapeHtml(phase || 'Verified account')}`;
+        watchRequests(user.uid);
+    } catch (error) {
+        console.error('Profile loading failed.', error);
+        emptyState.querySelector('h2').textContent = 'Profile could not be loaded';
+        emptyState.querySelector('p').textContent = 'Check the Firestore setup and security rules.';
+        emptyState.classList.add('show');
+    }
+});
 </script>
 </body>
 </html>

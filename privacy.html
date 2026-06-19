@@ -552,7 +552,7 @@ footer {
     <div class="content">
         <aside class="status-banner" aria-label="Important draft status">
             <span class="status-icon" aria-hidden="true">!</span>
-            <p><strong>This is a responsible pre-launch draft.</strong> The current website is a static prototype and does not yet create accounts or store submitted profiles. Before launch, the operator must add real contact details, appoint the responsible privacy roles, configure Firebase securely, decide retention periods, and obtain a South African legal review.</p>
+            <p><strong>This is a responsible pre-launch draft.</strong> The website code now creates Firebase accounts and stores private and sanitised profile documents when Firebase is configured. Before public launch, the operator must publish and test the supplied security rules, add real contact details, appoint the responsible privacy roles, decide retention periods, and obtain a South African legal review.</p>
         </aside>
 
         <section class="policy-section" id="scope" aria-labelledby="scope-title">
@@ -560,12 +560,12 @@ footer {
             <h2 id="scope-title">Scope and current status</h2>
             <p>This policy is for May Cross Hub, a proposed service that helps educators discover possible reciprocal transfer matches. It applies to the public website, account registration, educator profiles, privacy preferences, match results and match requests once those features are connected.</p>
             <p>May Cross Hub is not a provincial education department, employer or official transfer authority. Finding a possible match does not approve or complete a transfer.</p>
-            <div class="callout"><strong>Current prototype:</strong> the forms demonstrate the planned experience in the browser. Firebase Authentication and Firestore are not connected, so the prototype does not presently send the entered information to a May Cross Hub database.</div>
+            <div class="callout"><strong>Current implementation:</strong> registration sends account details to Firebase Authentication and writes a private educator profile plus a separate sanitised match profile to Firestore. Matches and requests require a signed-in, email-verified account.</div>
         </section>
 
         <section class="policy-section" id="collect" aria-labelledby="collect-title">
             <span class="section-number" aria-hidden="true">2</span>
-            <h2 id="collect-title">Information May Cross Hub plans to collect</h2>
+            <h2 id="collect-title">Information May Cross Hub collects</h2>
             <p>Only information reasonably needed to create an account, compare reciprocal transfer routes, assess professional compatibility, manage requests and protect the service should be collected.</p>
 
             <div class="data-grid">
@@ -583,7 +583,7 @@ footer {
 
         <section class="policy-section" id="use" aria-labelledby="use-title">
             <span class="section-number" aria-hidden="true">3</span>
-            <h2 id="use-title">How information would be used</h2>
+            <h2 id="use-title">How information is used</h2>
             <ul class="policy-list">
                 <li>Create and verify an educator account.</li>
                 <li>Compare current and desired locations to identify reciprocal routes.</li>
@@ -623,20 +623,20 @@ footer {
                     <thead><tr><th>Recipient</th><th>What may be shared</th><th>Purpose and control</th></tr></thead>
                     <tbody>
                         <tr><td>Potential matched educators</td><td>Privacy-controlled professional profile and broad location</td><td>Assess compatibility and manage match requests.</td></tr>
-                        <tr><td>Firebase / Google Cloud, if selected</td><td>Account, profile and technical service data</td><td>Authentication, database hosting and security, subject to final configuration and contractual review.</td></tr>
+                        <tr><td>Firebase / Google Cloud</td><td>Account, profile and technical service data</td><td>Authentication, database hosting and security, subject to final configuration and contractual review.</td></tr>
                         <tr><td>Authorised May Cross Hub administrators</td><td>Only information needed for support, safety or administration</td><td>Role-based access, confidentiality and access logging should apply.</td></tr>
                         <tr><td>Authorities or legal recipients</td><td>Information covered by a valid legal obligation or request</td><td>Handled carefully and limited to what is required.</td></tr>
                     </tbody>
                 </table>
             </div>
 
-            <p>Before launch, the operator must confirm where Firebase data will be stored, assess any cross-border processing, choose appropriate service regions and update this policy with accurate provider details.</p>
+            <p>Before launch, the operator must confirm and document where Firebase data is stored, assess any cross-border processing, verify the selected service region and update this policy with accurate provider details.</p>
         </section>
 
         <section class="policy-section" id="security" aria-labelledby="security-title">
             <span class="section-number" aria-hidden="true">6</span>
             <h2 id="security-title">Security, incidents and retention</h2>
-            <p>Appropriate technical and organisational safeguards should protect the integrity and confidentiality of personal information. Planned controls include verified authentication, least-privilege administrator access, Firestore security rules, encrypted connections, monitoring, backups and a tested incident response process.</p>
+            <p>Implemented controls include verified authentication, separate private and match-safe profile documents, participant-only request access and Firestore security rules supplied with the website. Before launch, the operator must publish and test those rules and complete administrator access controls, monitoring, backups and an incident response process.</p>
 
             <details>
                 <summary>What happens after a security incident?</summary>
@@ -648,7 +648,7 @@ footer {
             </details>
             <details>
                 <summary>Does this website use cookies?</summary>
-                <p>The current static prototype does not include advertising or analytics cookies. Firebase Authentication may later use necessary browser storage to maintain secure sessions. Any analytics or optional tracking added later must be disclosed and, where required, offered as a separate choice.</p>
+                <p>Firebase Authentication uses necessary browser storage to maintain secure sessions, and the homepage initialises Firebase Analytics where the browser supports it. Advertising is not included. Any additional optional tracking must be disclosed and, where required, offered as a separate choice.</p>
             </details>
         </section>
 

@@ -873,15 +873,15 @@ footer {
                     </div>
 
                     <p class="signin-prompt">Already registered? <a href="signin.html">Sign in</a></p>
-                    <p class="prototype-note">Preview note: this page validates the form in your browser. Connect Firebase before launch to create accounts, store profiles and send verification emails.</p>
+                    <p class="prototype-note">Firebase stores a private educator profile plus a separate sanitised match profile. Direct identifiers, school name and transfer reason are never written to the match-readable document.</p>
                 </div>
             </form>
 
             <div class="success-state" id="successState" role="status" aria-live="polite">
                 <div class="success-icon" aria-hidden="true">&#10003;</div>
-                <h2 tabindex="-1">Your profile is ready to connect</h2>
-                <p>The form passed validation. Once Firebase is connected, this step can create the account and send an email verification link.</p>
-                <a class="button button-primary" href="index.html">Return to home</a>
+                <h2 tabindex="-1">Check your email</h2>
+                <p>Your Firebase account and private educator profile were created, and a verification link was sent. Verify the address before signing in or appearing in match results.</p>
+                <a class="button button-primary" href="signin.html">Continue to sign in</a>
             </div>
         </div>
     </section>
@@ -889,7 +889,25 @@ footer {
 
 <footer>&copy; <span id="year"></span> May Cross Hub. Transfer discovery does not replace official departmental approval.</footer>
 
-<script>
+<script type="module">
+import { firebaseApp } from "./firebase-config.js";
+import {
+    createUserWithEmailAndPassword,
+    deleteUser,
+    getAuth,
+    sendEmailVerification,
+    signOut,
+    updateProfile
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+import {
+    doc,
+    getFirestore,
+    serverTimestamp,
+    writeBatch
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+
+const auth = getAuth(firebaseApp);
+const db = getFirestore(firebaseApp);
 const form = document.getElementById('signupForm');
 const steps = Array.from(document.querySelectorAll('.form-step'));
 const dots = Array.from(document.querySelectorAll('.step-dot'));
@@ -921,6 +939,103 @@ function clearError() {
 function showError(message) {
     formError.textContent = message;
     formError.classList.add('show');
+}
+
+function registrationErrorMessage(error) {
+    const messages = {
+        'auth/email-already-in-use': 'An account already exists for this email address. Try signing in instead.',
+        'auth/invalid-email': 'Enter a valid email address.',
+        'auth/weak-password': 'Choose a stronger password using at least 8 characters.',
+        'auth/operation-not-allowed': 'Email and password registration is not enabled in Firebase Authentication yet.',
+        'auth/configuration-not-found': 'Firebase Authentication is not configured for this project yet.',
+        'auth/unauthorized-domain': 'This website domain is not authorised in Firebase Authentication.',
+        'auth/network-request-failed': 'The account could not be created because of a network problem. Please try again.',
+        'auth/too-many-requests': 'Too many attempts were made. Please wait before trying again.'
+    };
+
+    const firestoreMessages = {
+        'permission-denied': 'Firestore rejected the profile. Publish the supplied security rules before registering users.',
+        'failed-precondition': 'Create the Firestore database before registering users.',
+        'unavailable': 'The profile service is temporarily unavailable. Please try again.'
+    };
+
+    return messages[error.code]
+        || firestoreMessages[error.code]
+        || 'The account could not be created. Please try again.';
+}
+
+function listFromInput(value) {
+    return value
+        .split(/[,;]+/)
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .slice(0, 20);
+}
+
+function buildProfileDocuments(uid, email) {
+    const phase = form.querySelector('input[name="phase"]:checked')?.value || '';
+    const nearby = form.querySelector('input[name="nearby"]:checked')?.value === 'Yes';
+    const grades = listFromInput(document.getElementById('grades').value);
+    const subjects = listFromInput(document.getElementById('subjects').value);
+    const showProfessional = form.elements.showProfessional.checked;
+    const allowRequests = form.elements.allowRequests.checked;
+
+    const privateProfile = {
+        uid,
+        firstName: document.getElementById('firstName').value.trim(),
+        lastName: document.getElementById('lastName').value.trim(),
+        email,
+        phone: document.getElementById('phone').value.trim(),
+        current: {
+            school: document.getElementById('currentSchool').value.trim(),
+            province: document.getElementById('currentProvince').value,
+            district: document.getElementById('currentDistrict').value.trim(),
+            circuit: document.getElementById('circuit').value.trim(),
+            quintile: document.getElementById('quintile').value,
+            phase,
+            grades,
+            subjects,
+            postLevel: document.getElementById('postLevel').value
+        },
+        desired: {
+            province: document.getElementById('desiredProvince').value,
+            district: document.getElementById('desiredDistrict').value.trim(),
+            town: document.getElementById('desiredTown').value.trim(),
+            preferredSchool: document.getElementById('preferredSchool').value.trim(),
+            nearby,
+            reason: document.getElementById('reason').value.trim()
+        },
+        privacy: {
+            showProfessional,
+            allowRequests,
+            showSchool: form.elements.showSchool.checked,
+            showContact: form.elements.showContact.checked
+        },
+        available: false,
+        emailVerified: false,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+    };
+
+    const matchProfile = {
+        uid,
+        displayCode: `MCH-${uid.slice(0, 6).toUpperCase()}`,
+        currentProvince: privateProfile.current.province,
+        currentDistrict: showProfessional ? privateProfile.current.district : '',
+        desiredProvince: privateProfile.desired.province,
+        desiredDistrict: showProfessional ? privateProfile.desired.district : '',
+        desiredTown: showProfessional ? privateProfile.desired.town : '',
+        phase: showProfessional ? phase : '',
+        grades: showProfessional ? grades : [],
+        subjects: showProfessional ? subjects : [],
+        postLevel: showProfessional ? privateProfile.current.postLevel : '',
+        nearby,
+        available: false,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+    };
+
+    return { privateProfile, matchProfile, allowRequests, showProfessional };
 }
 
 function validateStep(step) {
@@ -1015,7 +1130,7 @@ form.addEventListener('input', (event) => {
     clearError();
 });
 
-form.addEventListener('submit', (event) => {
+form.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (!validateStep(currentStep)) return;
 
@@ -1025,11 +1140,58 @@ form.addEventListener('submit', (event) => {
         return;
     }
 
-    form.hidden = true;
-    progressWrap.hidden = true;
-    successState.classList.add('show');
-    successState.querySelector('h2').focus({ preventScroll: true });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const displayName = `${document.getElementById('firstName').value} ${document.getElementById('lastName').value}`.trim();
+    const originalButtonText = submitButton.textContent;
+    let credential = null;
+    let profileSaved = false;
+
+    submitButton.disabled = true;
+    backButton.disabled = true;
+    submitButton.textContent = 'Creating account...';
+
+    try {
+        credential = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(credential.user, { displayName });
+
+        const { privateProfile, matchProfile } = buildProfileDocuments(credential.user.uid, email);
+        const batch = writeBatch(db);
+        batch.set(doc(db, 'profiles', credential.user.uid), privateProfile);
+        batch.set(doc(db, 'matchProfiles', credential.user.uid), matchProfile);
+        await batch.commit();
+        profileSaved = true;
+
+        await sendEmailVerification(credential.user);
+        await signOut(auth);
+
+        form.hidden = true;
+        progressWrap.hidden = true;
+        successState.classList.add('show');
+        successState.querySelector('h2').focus({ preventScroll: true });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (error) {
+        if (credential?.user && !profileSaved) {
+            const rolledBack = await deleteUser(credential.user)
+                .then(() => true)
+                .catch(() => false);
+            await signOut(auth).catch(() => {});
+            showError(rolledBack
+                ? registrationErrorMessage(error)
+                : 'The account was created but the educator profile could not be saved. Contact support before trying again.');
+        } else if (profileSaved) {
+            await signOut(auth).catch(() => {});
+            showError('Your account and profile were created, but the verification email could not be sent. Sign in to request another verification email.');
+        } else {
+            showError(registrationErrorMessage(error));
+        }
+    } finally {
+        if (!form.hidden) {
+            submitButton.disabled = false;
+            backButton.disabled = false;
+            submitButton.textContent = originalButtonText;
+        }
+    }
 });
 </script>
 </body>

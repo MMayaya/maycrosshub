@@ -1233,12 +1233,12 @@ footer {
 
     <section class="cta-panel" aria-labelledby="cta-title">
         <div>
-            <h2 id="cta-title">Next: Build the Registration Page</h2>
+            <h2 id="cta-title">Ready to look for a reciprocal match?</h2>
             <p>
-                The homepage now introduces the May Cross Hub idea. The next page can collect the full educator profile and save it to Firebase.
+                Create a verified educator account, save your private profile and activate privacy-controlled matching through Firebase.
             </p>
         </div>
-        <a href="register.html" class="btn btn-primary">Build Registration Next</a>
+        <a href="register.html" class="btn btn-primary">Create Educator Account</a>
     </section>
 </div>
 
@@ -1260,9 +1260,9 @@ footer {
         </div>
 
         <div class="footer-note">
-            <h4>Future Tools</h4>
+            <h4>Platform Tools</h4>
             <p>
-                My Matches, Match Requests, Admin Review, and Firebase-powered automatic matching can be added after registration.
+                Verified accounts, reciprocal match discovery and private match requests are connected. Admin review and in-platform conversations remain future work.
             </p>
         </div>
     </div>
@@ -1319,6 +1319,18 @@ if (checkMatch && demoResult) {
         select.addEventListener('change', updateDemoResult);
     });
     updateDemoResult();
+}
+</script>
+
+<script type="module">
+import { firebaseApp } from "./firebase-config.js";
+import {
+    getAnalytics,
+    isSupported
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-analytics.js";
+
+if (await isSupported()) {
+    getAnalytics(firebaseApp);
 }
 </script>
 </body>

@@ -492,25 +492,46 @@ footer {
                 <div class="message message-error" id="formError" role="alert"></div>
                 <div class="message message-info" id="resetMessage" role="status" aria-live="polite"></div>
 
-                <button class="button" type="submit">Sign in <span aria-hidden="true">&#8594;</span></button>
+                <button class="button" id="signinButton" type="submit">Sign in <span aria-hidden="true">&#8594;</span></button>
 
                 <p class="register-prompt">New to May Cross Hub? <a href="register.html">Create an educator account</a></p>
-                <p class="prototype-note">Preview note: connect Firebase Authentication before launch to verify credentials, manage sessions and send password-reset emails.</p>
+                <p class="prototype-note">Firebase Authentication is connected. Only verified email accounts can continue to the matches area.</p>
             </div>
         </form>
 
         <div class="success-state" id="successState" role="status" aria-live="polite">
             <div class="success-icon" aria-hidden="true">&#10003;</div>
-            <h2 tabindex="-1">Sign-in form ready</h2>
-            <p>The details passed browser validation. Once Firebase is connected, this action can securely authenticate the educator and open their dashboard.</p>
-            <a class="button" href="index.html">Return to home</a>
+            <h2 tabindex="-1">You are signed in</h2>
+            <p>Firebase verified your account successfully. You can now continue to the matches area.</p>
+            <a class="button" href="matches.html">View my matches</a>
         </div>
     </section>
 </main>
 
 <footer>&copy; <span id="year"></span> May Cross Hub. Your contact details remain private unless you choose to share them.</footer>
 
-<script>
+<script type="module">
+import { firebaseApp } from "./firebase-config.js";
+import {
+    browserLocalPersistence,
+    browserSessionPersistence,
+    getAuth,
+    sendEmailVerification,
+    sendPasswordResetEmail,
+    setPersistence,
+    signInWithEmailAndPassword,
+    signOut
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+import {
+    doc,
+    getDoc,
+    getFirestore,
+    serverTimestamp,
+    writeBatch
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+
+const auth = getAuth(firebaseApp);
+const db = getFirestore(firebaseApp);
 const form = document.getElementById('signinForm');
 const email = document.getElementById('email');
 const password = document.getElementById('password');
@@ -519,6 +540,8 @@ const forgotPassword = document.getElementById('forgotPassword');
 const formError = document.getElementById('formError');
 const resetMessage = document.getElementById('resetMessage');
 const successState = document.getElementById('successState');
+const signinButton = document.getElementById('signinButton');
+const remember = document.getElementById('remember');
 
 document.getElementById('year').textContent = new Date().getFullYear();
 
@@ -529,6 +552,44 @@ function hideMessages() {
     resetMessage.classList.remove('show');
 }
 
+function signInErrorMessage(error) {
+    const messages = {
+        'auth/invalid-email': 'Enter a valid email address.',
+        'auth/invalid-credential': 'The email address or password is incorrect.',
+        'auth/user-disabled': 'This account has been disabled. Contact May Cross Hub support.',
+        'auth/operation-not-allowed': 'Email and password sign-in is not enabled in Firebase Authentication yet.',
+        'auth/configuration-not-found': 'Firebase Authentication is not configured for this project yet.',
+        'auth/unauthorized-domain': 'This website domain is not authorised in Firebase Authentication.',
+        'auth/network-request-failed': 'Sign-in failed because of a network problem. Please try again.',
+        'auth/too-many-requests': 'Too many attempts were made. Please wait before trying again.'
+    };
+
+    return messages[error.code] || 'Sign-in was unsuccessful. Please try again.';
+}
+
+async function activateVerifiedProfile(user) {
+    const profileRef = doc(db, 'profiles', user.uid);
+    const matchProfileRef = doc(db, 'matchProfiles', user.uid);
+    const profileSnapshot = await getDoc(profileRef);
+
+    if (!profileSnapshot.exists()) return;
+
+    const profile = profileSnapshot.data();
+    const available = profile.privacy?.allowRequests === true
+        && profile.privacy?.showProfessional === true;
+    const batch = writeBatch(db);
+    batch.update(profileRef, {
+        emailVerified: true,
+        available,
+        updatedAt: serverTimestamp()
+    });
+    batch.update(matchProfileRef, {
+        available,
+        updatedAt: serverTimestamp()
+    });
+    await batch.commit();
+}
+
 showPassword.addEventListener('click', () => {
     const isHidden = password.type === 'password';
     password.type = isHidden ? 'text' : 'password';
@@ -536,13 +597,31 @@ showPassword.addEventListener('click', () => {
     showPassword.setAttribute('aria-label', `${isHidden ? 'Hide' : 'Show'} password`);
 });
 
-forgotPassword.addEventListener('click', () => {
+forgotPassword.addEventListener('click', async () => {
     hideMessages();
-    resetMessage.textContent = email.validity.valid
-        ? `Password recovery is ready to be connected for ${email.value}.`
-        : 'Enter your account email first. Password recovery will work after Firebase is connected.';
-    resetMessage.classList.add('show');
-    if (!email.validity.valid) email.focus();
+    if (!email.validity.valid) {
+        email.setAttribute('aria-invalid', 'true');
+        formError.textContent = 'Enter your account email before requesting a password reset.';
+        formError.classList.add('show');
+        email.focus();
+        return;
+    }
+
+    const originalButtonText = forgotPassword.textContent;
+    forgotPassword.disabled = true;
+    forgotPassword.textContent = 'Sending...';
+
+    try {
+        await sendPasswordResetEmail(auth, email.value.trim());
+        resetMessage.textContent = 'If an account is registered for that address, Firebase has sent password-reset instructions.';
+        resetMessage.classList.add('show');
+    } catch (error) {
+        formError.textContent = signInErrorMessage(error);
+        formError.classList.add('show');
+    } finally {
+        forgotPassword.disabled = false;
+        forgotPassword.textContent = originalButtonText;
+    }
 });
 
 form.addEventListener('input', (event) => {
@@ -550,7 +629,7 @@ form.addEventListener('input', (event) => {
     hideMessages();
 });
 
-form.addEventListener('submit', (event) => {
+form.addEventListener('submit', async (event) => {
     event.preventDefault();
     hideMessages();
 
@@ -568,9 +647,52 @@ form.addEventListener('submit', (event) => {
         }
     }
 
-    form.hidden = true;
-    successState.classList.add('show');
-    successState.querySelector('h2').focus({ preventScroll: true });
+    const originalButtonText = signinButton.textContent;
+    signinButton.disabled = true;
+    signinButton.textContent = 'Signing in...';
+
+    try {
+        await setPersistence(
+            auth,
+            remember.checked ? browserLocalPersistence : browserSessionPersistence
+        );
+
+        const credential = await signInWithEmailAndPassword(
+            auth,
+            email.value.trim(),
+            password.value
+        );
+
+        if (!credential.user.emailVerified) {
+            try {
+                await sendEmailVerification(credential.user);
+            } catch (error) {
+                // A recent verification email may already exist or Firebase may rate-limit resends.
+            }
+            await signOut(auth);
+            formError.textContent = 'Verify your email before signing in. A new verification email was requested where possible.';
+            formError.classList.add('show');
+            return;
+        }
+
+        try {
+            await activateVerifiedProfile(credential.user);
+        } catch (error) {
+            console.warn('The profile availability status could not be synchronised.', error);
+        }
+
+        form.hidden = true;
+        successState.classList.add('show');
+        successState.querySelector('h2').focus({ preventScroll: true });
+    } catch (error) {
+        formError.textContent = signInErrorMessage(error);
+        formError.classList.add('show');
+    } finally {
+        if (!form.hidden) {
+            signinButton.disabled = false;
+            signinButton.innerHTML = originalButtonText;
+        }
+    }
 });
 </script>
 </body>
