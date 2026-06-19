@@ -67,3 +67,13 @@ In **Authentication > Templates**, review the sender name, verification email, p
 - `requests/{fromUid_toUid}/messages/{messageId}`: immutable messages available only to the verified participants while the request is accepted.
 
 If Firebase reports that a query needs an index, use the link in the error message to create the suggested composite index, then wait for it to finish building.
+
+## Deleting test users
+
+Deleting a user under **Authentication > Users** does not delete that user's Firestore documents. Before deleting a test user, copy the UID and clean up these paths in **Firestore Database > Data**:
+
+- `matchProfiles/{uid}` to remove the account from recommended matches.
+- `profiles/{uid}` and its `savedMatches` subcollection.
+- Any `requests` documents where `fromUid` or `toUid` equals the deleted UID, including their `messages` subcollections.
+
+If the Authentication user was already deleted, find the old document under `profiles` by its `email` field and use that document ID as the old UID. Firestore subcollections must be deleted separately.

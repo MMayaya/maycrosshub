@@ -1465,8 +1465,10 @@ form.addEventListener('submit', async (event) => {
     try {
         credential = await createUserWithEmailAndPassword(auth, email, password);
         await updateProfile(credential.user, { displayName });
+        await credential.user.getIdToken(true);
 
-        const { privateProfile, matchProfile } = buildProfileDocuments(credential.user.uid, email);
+        const accountEmail = credential.user.email || email;
+        const { privateProfile, matchProfile } = buildProfileDocuments(credential.user.uid, accountEmail);
         const batch = writeBatch(db);
         batch.set(doc(db, 'profiles', credential.user.uid), privateProfile);
         batch.set(doc(db, 'matchProfiles', credential.user.uid), matchProfile);
@@ -1482,6 +1484,7 @@ form.addEventListener('submit', async (event) => {
         successState.querySelector('h2').focus({ preventScroll: true });
         window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error) {
+        console.error('Registration failed.', error);
         if (credential?.user && !profileSaved) {
             const rolledBack = await deleteUser(credential.user)
                 .then(() => true)
