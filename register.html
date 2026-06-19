@@ -964,6 +964,17 @@ function registrationErrorMessage(error) {
         || 'The account could not be created. Please try again.';
 }
 
+function verificationErrorMessage(error) {
+    const messages = {
+        'auth/too-many-requests': 'Firebase has temporarily rate-limited verification emails. Wait before trying again.',
+        'auth/network-request-failed': 'The verification request could not reach Firebase. Check the connection.',
+        'auth/unauthorized-domain': 'This website domain is not authorised in Firebase Authentication.',
+        'auth/operation-not-allowed': 'Email and password authentication is not enabled.'
+    };
+    const code = error?.code || 'unknown-error';
+    return `${messages[code] || 'Firebase could not send the verification email.'} (${code})`;
+}
+
 function listFromInput(value) {
     return value
         .split(/[,;]+/)
@@ -1181,7 +1192,7 @@ form.addEventListener('submit', async (event) => {
                 : 'The account was created but the educator profile could not be saved. Contact support before trying again.');
         } else if (profileSaved) {
             await signOut(auth).catch(() => {});
-            showError('Your account and profile were created, but the verification email could not be sent. Sign in to request another verification email.');
+            showError(`Your account and profile were created, but the verification email was not sent. ${verificationErrorMessage(error)} Use Resend verification on the sign-in page.`);
         } else {
             showError(registrationErrorMessage(error));
         }
