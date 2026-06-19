@@ -1078,13 +1078,6 @@ function bindMatchActions() {
             button.textContent = 'Sending...';
             try {
                 const requestRef = doc(db, 'requests', `${currentUser.uid}_${matchUid}`);
-                const existing = await getDoc(requestRef);
-                if (existing.exists()) {
-                    showToast(`A request already exists with status: ${existing.data().status}.`);
-                    button.textContent = 'Request exists';
-                    return;
-                }
-
                 await setDoc(requestRef, {
                     fromUid: currentUser.uid,
                     toUid: matchUid,
