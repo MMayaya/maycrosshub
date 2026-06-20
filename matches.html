@@ -206,6 +206,20 @@ select:focus-visible {
 
 .route-summary strong { display: block; }
 
+.current-post {
+    padding: 0.7rem 0.8rem;
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: 9px;
+    background: linear-gradient(135deg, #d71920, #9f1116);
+    box-shadow: 0 6px 16px rgba(112, 0, 0, 0.28);
+}
+
+.current-post small { color: #ffe2e2; }
+
+.desired-post {
+    padding: 0.15rem 0.8rem 0;
+}
+
 .route-swap {
     width: 30px;
     height: 30px;
@@ -443,6 +457,15 @@ select:focus-visible {
 .route-box span { display: block; color: #748294; font-size: 0.72rem; font-weight: 750; }
 .route-box strong { display: block; color: #28425f; overflow-wrap: anywhere; }
 
+.route-box.current-area {
+    border-color: #c51820;
+    background: linear-gradient(135deg, #d71920, #9f1116);
+    box-shadow: 0 5px 13px rgba(112, 0, 0, 0.2);
+}
+
+.route-box.current-area span { color: #ffe2e2; }
+.route-box.current-area strong { color: #fff; }
+
 .route-arrow {
     width: 36px;
     height: 36px;
@@ -627,11 +650,15 @@ footer {
         </div>
 
         <div class="route-summary" aria-label="Your preview transfer route">
-            <small>Your current area</small>
-            <strong id="currentRoute">Loading profile...</strong>
+            <div class="current-post">
+                <small>Your current post</small>
+                <strong id="currentRoute">Loading profile...</strong>
+            </div>
             <span class="route-swap" aria-hidden="true">&#8595;</span>
-            <small>Your desired area</small>
-            <strong id="desiredRoute">Loading profile...</strong>
+            <div class="desired-post">
+                <small>Your desired area</small>
+                <strong id="desiredRoute">Loading profile...</strong>
+            </div>
         </div>
     </section>
 
@@ -643,7 +670,7 @@ footer {
     <section class="stats-grid" aria-label="Match summary">
         <article class="stat-card"><strong id="matchTotal">0</strong><span>visible matches</span></article>
         <article class="stat-card"><strong id="strongTotal">0</strong><span>strong matches above 85%</span></article>
-        <article class="stat-card"><strong id="requestTotal">0</strong><span>preview requests staged</span></article>
+        <article class="stat-card"><strong id="requestTotal">0</strong><span>pending requests</span></article>
     </section>
 
     <section class="toolbar" aria-label="Filter matches">
@@ -870,6 +897,7 @@ let cards = [];
 let currentUser = null;
 let privateProfile = null;
 let savedMatchIds = new Set();
+let outgoingRequests = new Map();
 let filterCandidates = [];
 let toastTimer;
 
@@ -919,6 +947,15 @@ function tagsFor(candidate) {
 
 function renderMatchCard(candidate, score) {
     const saved = savedMatchIds.has(candidate.uid);
+    const requestStatus = outgoingRequests.get(candidate.uid)?.status || '';
+    const requestLocked = requestStatus === 'pending' || requestStatus === 'accepted';
+    const requestLabel = requestStatus === 'pending'
+        ? 'Request pending'
+        : requestStatus === 'accepted'
+            ? 'Request accepted'
+            : requestStatus
+                ? 'Send new request'
+                : 'Send request';
     const currentArea = [candidate.currentDistrict, candidate.currentProvince].filter(Boolean).join(', ');
     const desiredArea = [candidate.desiredDistrict, candidate.desiredProvince].filter(Boolean).join(', ');
     const tags = tagsFor(candidate);
@@ -939,7 +976,7 @@ function renderMatchCard(candidate, score) {
                         <span class="pill">Available</span>
                     </div>
                     <div class="route-grid">
-                        <div class="route-box"><span>Their current area</span><strong>${escapeHtml(currentArea || candidate.currentProvince)}</strong></div>
+                        <div class="route-box current-area"><span>Their current area</span><strong>${escapeHtml(currentArea || candidate.currentProvince)}</strong></div>
                         <span class="route-arrow" aria-hidden="true">&#8596;</span>
                         <div class="route-box"><span>They want</span><strong>${escapeHtml(desiredArea || candidate.desiredProvince)}</strong></div>
                     </div>
@@ -949,7 +986,7 @@ function renderMatchCard(candidate, score) {
                 </div>
                 <div class="match-actions">
                     <button class="button button-secondary details-button" type="button" aria-expanded="false">View details</button>
-                    <button class="button request-button" type="button">Send request</button>
+                    <button class="button request-button${requestLocked ? ' button-success' : ''}" type="button"${requestLocked ? ' disabled' : ''}>${requestLabel}</button>
                     <button class="button button-secondary save-button${saved ? ' saved' : ''}" type="button" aria-pressed="${saved}">${saved ? 'Saved' : 'Save match'}</button>
                 </div>
             </div>
@@ -1093,9 +1130,12 @@ function bindMatchActions() {
     });
 
     document.querySelectorAll('.request-button').forEach((button) => {
+        const card = button.closest('.match-card');
+        const matchUid = card.dataset.matchUid;
+        const currentStatus = outgoingRequests.get(matchUid)?.status;
+        if (currentStatus === 'pending' || currentStatus === 'accepted') return;
+
         button.addEventListener('click', async () => {
-            const card = button.closest('.match-card');
-            const matchUid = card.dataset.matchUid;
             const score = Number(card.dataset.score);
             if (!window.confirm('Send this educator a private match request?')) return;
 
@@ -1112,14 +1152,22 @@ function bindMatchActions() {
                     updatedAt: serverTimestamp(),
                     respondedAt: null
                 });
-                button.textContent = 'Request sent';
+                outgoingRequests.set(matchUid, {
+                    id: requestRef.id,
+                    fromUid: currentUser.uid,
+                    toUid: matchUid,
+                    status: 'pending',
+                    matchScore: score
+                });
+                button.textContent = 'Request pending';
                 button.classList.add('button-success');
                 requestTotal.textContent = Number(requestTotal.textContent) + 1;
                 showToast('Match request sent privately.');
             } catch (error) {
-                button.textContent = 'Send request';
+                console.error('Request sending failed.', error);
+                button.textContent = currentStatus ? 'Send new request' : 'Send request';
                 button.disabled = false;
-                showToast('The request could not be sent. Please try again.');
+                showToast('The request could not be sent. Check your connection and try again.');
             }
         });
     });
@@ -1130,8 +1178,12 @@ async function loadSavedMatches(uid) {
     savedMatchIds = new Set(snapshot.docs.map((item) => item.id));
 }
 
-async function loadRequestCount(uid) {
+async function loadOutgoingRequests(uid) {
     const snapshot = await getDocs(query(collection(db, 'requests'), where('fromUid', '==', uid)));
+    outgoingRequests = new Map(snapshot.docs.map((item) => [
+        item.data().toUid,
+        { id: item.id, ...item.data() }
+    ]));
     requestTotal.textContent = snapshot.docs.filter((item) => item.data().status === 'pending').length;
 }
 
@@ -1147,7 +1199,7 @@ async function loadMatches(user) {
     desiredRoute.textContent = [privateProfile.desired?.town, privateProfile.desired?.province].filter(Boolean).join(', ') || 'Not provided';
     profileMenu.innerHTML = `<strong>${escapeHtml(compactAccountName(user, privateProfile))}</strong>Signed in`;
     profileAvatar.textContent = accountInitials(user, privateProfile);
-    await Promise.all([loadSavedMatches(user.uid), loadRequestCount(user.uid)]);
+    await Promise.all([loadSavedMatches(user.uid), loadOutgoingRequests(user.uid)]);
 
     const matchesQuery = query(
         collection(db, 'matchProfiles'),

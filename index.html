@@ -592,12 +592,76 @@ header::before {
 
 .demo-result {
     margin-top: 0.8rem;
-    padding: 0.75rem 0.85rem;
-    border-radius: 8px;
+    padding: 1rem;
+    border-radius: 10px;
     background: #e9f9ee;
     color: #116b36;
     border: 1px solid #bde8c9;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.demo-result[data-status="partial"] {
+    background: #fff8e7;
+    color: #6d4900;
+    border-color: #ffe1a7;
+}
+
+.demo-result[data-status="none"] {
+    background: #fff1f1;
+    color: #8b1e24;
+    border-color: #f0b9bd;
+}
+
+.demo-result-heading {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin-bottom: 0.45rem;
+}
+
+.demo-score {
+    flex: 0 0 auto;
+    padding: 0.24rem 0.55rem;
+    border-radius: 999px;
+    background: currentColor;
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 800;
+}
+
+.demo-explanation { color: #34495e; }
+
+.route-checks {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+    margin-top: 0.8rem;
+}
+
+.route-check {
+    padding: 0.7rem;
+    border: 1px solid #d6e0eb;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.8);
+}
+
+.route-check span {
+    display: block;
+    color: #647487;
+    font-size: 0.78rem;
     font-weight: 700;
+}
+
+.route-check strong { display: block; margin-top: 0.12rem; }
+.route-check.pass strong { color: #116b36; }
+.route-check.fail strong { color: #a1262d; }
+
+.demo-next {
+    margin-top: 0.75rem;
+    padding-top: 0.65rem;
+    border-top: 1px solid rgba(52,73,94,0.16);
+    color: #34495e;
+    font-size: 0.88rem;
 }
 
 .feedback-form {
@@ -651,6 +715,31 @@ header::before {
     font-size: 0.88rem;
     font-weight: 700;
 }
+
+.site-message {
+    position: fixed;
+    top: 18px;
+    left: 50%;
+    z-index: 1000;
+    width: min(92vw, 560px);
+    padding: 0.95rem 1.15rem;
+    transform: translateX(-50%);
+    border: 1px solid #9dd8ae;
+    border-radius: 10px;
+    color: #0d5d2c;
+    background: #e9f9ee;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.2);
+    text-align: center;
+    font-weight: 800;
+}
+
+.site-message.error {
+    border-color: #f2b8b5;
+    color: #a32222;
+    background: #fff1f1;
+}
+
+.site-message[hidden] { display: none !important; }
 
 .cta-panel {
     background: linear-gradient(135deg, #003a75, #004f9f);
@@ -791,6 +880,8 @@ footer {
     .feedback-panel,
     .feedback-form { grid-template-columns: 1fr; }
 
+    .route-checks { grid-template-columns: 1fr; }
+
     .grid-4,
     .steps-grid,
     .data-grid,
@@ -860,6 +951,7 @@ footer {
 </head>
 
 <body>
+<div class="site-message" id="siteMessage" role="status" aria-live="polite" hidden></div>
 <nav aria-label="Main navigation">
     <a href="index.html" class="logo">
         May Cross Hub
@@ -988,7 +1080,7 @@ footer {
     </section>
 
     <section class="match-panel" id="matching" aria-labelledby="matching-title">
-        <h2 class="section-title" id="matching-title">Best Match Logic</h2>
+        <h2 class="section-title" id="matching-title">See Match Logic in Action</h2>
         <p class="section-subtitle">
             A strong match happens when two transfer routes cross: Teacher A is currently in Location 1 and wants Location 2, while Teacher B is currently in Location 2 and wants Location 1. Their subjects, phase, grades, and post level must also be compatible.
         </p>
@@ -1077,10 +1169,27 @@ footer {
                         <option>Western Cape</option>
                     </select>
                 </div>
-                <button class="btn btn-dark" id="checkMatch" type="button">Check</button>
+                <button class="btn btn-dark" id="checkMatch" type="button">Check Route</button>
             </div>
 
-            <div class="demo-result" id="demoResult" role="status" aria-live="polite">A direct reciprocal location match is possible.</div>
+            <div class="demo-result" id="demoResult" data-status="match" role="status" aria-live="polite">
+                <div class="demo-result-heading">
+                    <span class="demo-score" id="demoScore">2/2 checks</span>
+                    <strong id="demoTitle">Direct reciprocal route</strong>
+                </div>
+                <p class="demo-explanation" id="demoExplanation"></p>
+                <div class="route-checks">
+                    <div class="route-check" id="aToBCheck">
+                        <span>Teacher A wants &rarr; Teacher B current</span>
+                        <strong id="aToBText"></strong>
+                    </div>
+                    <div class="route-check" id="bToACheck">
+                        <span>Teacher B wants &rarr; Teacher A current</span>
+                        <strong id="bToAText"></strong>
+                    </div>
+                </div>
+                <p class="demo-next" id="demoNext"></p>
+            </div>
         </div>
     </section>
 
@@ -1157,7 +1266,7 @@ footer {
                 <textarea id="feedbackMessage" name="message" maxlength="2000" required placeholder="Share enough detail for us to understand your feedback."></textarea>
             </div>
             <div class="feedback-actions">
-                <button class="btn btn-primary" type="submit">Send Feedback</button>
+                <button class="btn btn-primary" id="feedbackSubmit" type="submit">Send Feedback</button>
                 <p class="feedback-status" id="feedbackStatus" role="status" aria-live="polite"></p>
             </div>
         </form>
@@ -1235,6 +1344,9 @@ const checkMatch = document.getElementById('checkMatch');
 const year = document.getElementById('year');
 const feedbackForm = document.getElementById('feedbackForm');
 const feedbackStatus = document.getElementById('feedbackStatus');
+const feedbackSubmit = document.getElementById('feedbackSubmit');
+const siteMessage = document.getElementById('siteMessage');
+let siteMessageTimer;
 
 if (year) {
     year.textContent = new Date().getFullYear();
@@ -1254,11 +1366,41 @@ if (navToggle && navLinks) {
     });
 }
 
+function showSiteMessage(message, type = 'success') {
+    window.clearTimeout(siteMessageTimer);
+    siteMessage.textContent = message;
+    siteMessage.classList.toggle('error', type === 'error');
+    siteMessage.hidden = false;
+    siteMessageTimer = window.setTimeout(() => {
+        siteMessage.hidden = true;
+    }, 6000);
+}
+
 if (feedbackForm) {
-    feedbackForm.addEventListener('submit', (event) => {
-        if (feedbackForm.action.includes('YOUR_FORM_ID')) {
-            event.preventDefault();
-            feedbackStatus.textContent = 'Feedback sending will be enabled after the Formspree form ID is added.';
+    feedbackForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        feedbackSubmit.disabled = true;
+        feedbackSubmit.textContent = 'Sending...';
+        feedbackStatus.textContent = '';
+
+        try {
+            const response = await fetch(feedbackForm.action, {
+                method: 'POST',
+                body: new FormData(feedbackForm),
+                headers: { Accept: 'application/json' }
+            });
+
+            if (!response.ok) throw new Error('Feedback submission failed.');
+
+            feedbackForm.reset();
+            showSiteMessage('Message Sent Successfully');
+        } catch (error) {
+            console.error('Feedback submission failed.', error);
+            feedbackStatus.textContent = 'Your feedback could not be sent. Please try again.';
+            showSiteMessage('Message could not be sent', 'error');
+        } finally {
+            feedbackSubmit.disabled = false;
+            feedbackSubmit.textContent = 'Send Feedback';
         }
     });
 }
@@ -1268,15 +1410,50 @@ function updateDemoResult() {
     const aDesired = document.getElementById('aDesired').value;
     const bCurrent = document.getElementById('bCurrent').value;
     const bDesired = document.getElementById('bDesired').value;
-    const isReciprocal = aCurrent === bDesired && aDesired === bCurrent && aCurrent !== aDesired;
+    const aMoves = aCurrent !== aDesired;
+    const bMoves = bCurrent !== bDesired;
+    const aToB = aMoves && aDesired === bCurrent;
+    const bToA = bMoves && bDesired === aCurrent;
+    const passedChecks = Number(aToB) + Number(bToA);
+    const demoScore = document.getElementById('demoScore');
+    const demoTitle = document.getElementById('demoTitle');
+    const demoExplanation = document.getElementById('demoExplanation');
+    const aToBCheck = document.getElementById('aToBCheck');
+    const bToACheck = document.getElementById('bToACheck');
+    const aToBText = document.getElementById('aToBText');
+    const bToAText = document.getElementById('bToAText');
+    const demoNext = document.getElementById('demoNext');
 
-    demoResult.textContent = isReciprocal
-        ? 'A direct reciprocal location match is possible.'
-        : 'This is not a direct reciprocal location match yet.';
+    demoScore.textContent = `${passedChecks}/2 checks`;
+    aToBCheck.className = `route-check ${aToB ? 'pass' : 'fail'}`;
+    bToACheck.className = `route-check ${bToA ? 'pass' : 'fail'}`;
+    aToBText.textContent = aToB
+        ? `Match: ${aDesired}`
+        : `${aDesired} does not match ${bCurrent}`;
+    bToAText.textContent = bToA
+        ? `Match: ${bDesired}`
+        : `${bDesired} does not match ${aCurrent}`;
 
-    demoResult.style.background = isReciprocal ? '#e9f9ee' : '#fff8e7';
-    demoResult.style.color = isReciprocal ? '#116b36' : '#6d4900';
-    demoResult.style.borderColor = isReciprocal ? '#bde8c9' : '#ffe1a7';
+    if (passedChecks === 2) {
+        demoResult.dataset.status = 'match';
+        demoTitle.textContent = 'Direct reciprocal route found';
+        demoExplanation.textContent = `Teacher A can move from ${aCurrent} to ${aDesired}, while Teacher B can move from ${bCurrent} to ${bDesired}. Both destinations cross with the other teacher's current province.`;
+        demoNext.textContent = 'Location check passed. A real match would next compare subjects, phase, grades and post level.';
+    } else if (passedChecks === 1) {
+        demoResult.dataset.status = 'partial';
+        demoTitle.textContent = 'One side of the route matches';
+        demoExplanation.textContent = aToB
+            ? `Teacher A wants ${aDesired}, where Teacher B is currently posted, but Teacher B wants ${bDesired} instead of ${aCurrent}.`
+            : `Teacher B wants ${bDesired}, where Teacher A is currently posted, but Teacher A wants ${aDesired} instead of ${bCurrent}.`;
+        demoNext.textContent = 'This is a partial route, not yet a reciprocal transfer match. Change one destination to complete the cross.';
+    } else {
+        demoResult.dataset.status = 'none';
+        demoTitle.textContent = 'The routes do not cross yet';
+        demoExplanation.textContent = `Teacher A wants ${aDesired}, but Teacher B is in ${bCurrent}. Teacher B wants ${bDesired}, but Teacher A is in ${aCurrent}.`;
+        demoNext.textContent = !aMoves || !bMoves
+            ? 'Each teacher must choose a destination different from their current province.'
+            : 'Try changing the destinations so each teacher wants the other teacher\'s current province.';
+    }
 }
 
 if (checkMatch && demoResult) {
