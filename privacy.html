@@ -93,6 +93,27 @@ summary:focus-visible {
 .nav-links a:hover,
 .nav-links a.active { background: rgba(255,255,255,0.1); color: #fff; }
 
+.nav-account {
+    padding: 0.5rem 0.72rem;
+    border-radius: 999px;
+    color: #fff;
+    background: rgba(255,255,255,0.13);
+    font-size: 0.9rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.nav-signout {
+    padding: 0.5rem 0.72rem;
+    border: 1px solid rgba(255,255,255,0.4);
+    border-radius: 7px;
+    color: #fff;
+    background: transparent;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
 .hero {
     overflow: hidden;
     position: relative;
@@ -500,9 +521,12 @@ footer {
     </a>
     <div class="nav-links">
         <a href="index.html">Home</a>
-        <a href="register.html">Register</a>
-        <a href="signin.html">Sign in</a>
+        <a href="matches.html">Search Matches</a>
+        <a href="signin.html" id="privacySignIn">Sign in</a>
+        <a href="index.html#feedback">Feedback</a>
         <a href="privacy.html" class="active" aria-current="page">Privacy</a>
+        <span class="nav-account" id="privacyAccountName" hidden></span>
+        <button class="nav-signout" id="privacySignOut" type="button" hidden>Sign out</button>
     </div>
 </nav>
 
@@ -680,16 +704,43 @@ footer {
 <footer>
     <div class="footer-links">
         <a href="index.html">Home</a>
-        <a href="register.html">Register</a>
-        <a href="signin.html">Sign in</a>
-        <a href="matches.html">My Matches</a>
+        <a href="matches.html">Search Matches</a>
+        <a href="signin.html" id="privacyFooterSignIn">Sign in</a>
     </div>
     <p>&copy; <span id="year"></span> May Cross Hub. This draft must be completed and reviewed before launch.</p>
 </footer>
 
-<script>
+<script type="module">
+import { firebaseApp } from "./firebase-config.js";
+import { compactAccountName } from "./auth-ui.js";
+import {
+    getAuth,
+    onAuthStateChanged,
+    signOut
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+
 document.getElementById('year').textContent = new Date().getFullYear();
 document.getElementById('printPolicy').addEventListener('click', () => window.print());
+
+const auth = getAuth(firebaseApp);
+const privacySignIn = document.getElementById('privacySignIn');
+const privacyFooterSignIn = document.getElementById('privacyFooterSignIn');
+const privacyAccountName = document.getElementById('privacyAccountName');
+const privacySignOut = document.getElementById('privacySignOut');
+
+privacySignOut.addEventListener('click', async () => {
+    await signOut(auth);
+    window.location.href = 'index.html';
+});
+
+onAuthStateChanged(auth, (user) => {
+    const signedIn = Boolean(user?.emailVerified);
+    privacySignIn.hidden = signedIn;
+    privacyFooterSignIn.hidden = signedIn;
+    privacyAccountName.hidden = !signedIn;
+    privacySignOut.hidden = !signedIn;
+    privacyAccountName.textContent = signedIn ? compactAccountName(user) : '';
+});
 </script>
 </body>
 </html>

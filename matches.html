@@ -270,7 +270,7 @@ select:focus-visible {
 .toolbar {
     padding: 1rem;
     display: grid;
-    grid-template-columns: minmax(210px, 1.4fr) repeat(2, minmax(150px, 0.7fr)) auto;
+    grid-template-columns: minmax(200px, 1.35fr) repeat(3, minmax(140px, 0.7fr)) auto;
     gap: 0.75rem;
     align-items: end;
     border: 1px solid var(--line);
@@ -608,6 +608,7 @@ footer {
         <a href="index.html">Home</a>
         <a href="matches.html" class="active" aria-current="page">My Matches</a>
         <a href="request.html">Requests</a>
+        <a href="index.html#feedback">Feedback</a>
     </div>
 
     <div class="profile-menu" aria-label="Preview educator profile">
@@ -647,8 +648,14 @@ footer {
 
     <section class="toolbar" aria-label="Filter matches">
         <div class="field">
-            <label for="subjectFilter">Search subject or district</label>
-            <input id="subjectFilter" type="search" placeholder="e.g. Mathematics or Tshwane">
+            <label for="subjectFilter">Search by subject</label>
+            <input id="subjectFilter" type="search" placeholder="e.g. Mathematics">
+        </div>
+        <div class="field">
+            <label for="districtFilter">Current district</label>
+            <select id="districtFilter">
+                <option value="all">All districts</option>
+            </select>
         </div>
         <div class="field">
             <label for="provinceFilter">Current province</label>
@@ -819,6 +826,7 @@ footer {
 
 <script type="module">
 import { firebaseApp } from "./firebase-config.js";
+import { accountInitials, compactAccountName } from "./auth-ui.js";
 import {
     getAuth,
     onAuthStateChanged,
@@ -843,6 +851,7 @@ const db = getFirestore(firebaseApp);
 const matchList = document.getElementById('matchList');
 const subjectFilter = document.getElementById('subjectFilter');
 const provinceFilter = document.getElementById('provinceFilter');
+const districtFilter = document.getElementById('districtFilter');
 const strengthFilter = document.getElementById('strengthFilter');
 const clearFilters = document.getElementById('clearFilters');
 const emptyClear = document.getElementById('emptyClear');
@@ -855,11 +864,13 @@ const currentRoute = document.getElementById('currentRoute');
 const desiredRoute = document.getElementById('desiredRoute');
 const toast = document.getElementById('toast');
 const profileMenu = document.querySelector('.profile-menu span');
+const profileAvatar = document.querySelector('.profile-menu .avatar');
 const signOutButton = document.getElementById('signOutButton');
 let cards = [];
 let currentUser = null;
 let privateProfile = null;
 let savedMatchIds = new Set();
+let filterCandidates = [];
 let toastTimer;
 
 document.getElementById('year').textContent = new Date().getFullYear();
@@ -912,9 +923,10 @@ function renderMatchCard(candidate, score) {
     const desiredArea = [candidate.desiredDistrict, candidate.desiredProvince].filter(Boolean).join(', ');
     const tags = tagsFor(candidate);
     const searchText = [currentArea, desiredArea, ...tags].join(' ').toLowerCase();
+    const subjectText = (candidate.subjects || []).join(' ').toLowerCase();
 
     return `
-        <article class="match-card" data-score="${score}" data-province="${escapeHtml(normalise(candidate.currentProvince))}" data-search="${escapeHtml(searchText)}" data-match-uid="${escapeHtml(candidate.uid)}">
+        <article class="match-card" data-score="${score}" data-province="${escapeHtml(normalise(candidate.currentProvince))}" data-district="${escapeHtml(normalise(candidate.currentDistrict))}" data-subjects="${escapeHtml(subjectText)}" data-search="${escapeHtml(searchText)}" data-match-uid="${escapeHtml(candidate.uid)}">
             <div class="match-main">
                 <div class="score-panel">
                     <div class="score-ring" style="--score: ${score}"><strong>${score}%</strong></div>
@@ -965,17 +977,49 @@ function showEmpty(title, message) {
     emptyState.classList.add('show');
 }
 
+function populateDistrictFilter() {
+    const selectedProvince = provinceFilter.value;
+    const previousDistrict = districtFilter.value;
+    const districts = filterCandidates
+        .filter((candidate) => selectedProvince === 'all'
+            || normalise(candidate.currentProvince) === selectedProvince)
+        .map((candidate) => candidate.currentDistrict)
+        .filter(Boolean)
+        .filter((district, index, items) => items.indexOf(district) === index)
+        .sort((a, b) => a.localeCompare(b));
+
+    districtFilter.replaceChildren();
+    const allOption = document.createElement('option');
+    allOption.value = 'all';
+    allOption.textContent = 'All districts';
+    districtFilter.append(allOption);
+
+    districts.forEach((district) => {
+        const option = document.createElement('option');
+        option.value = normalise(district);
+        option.textContent = district;
+        districtFilter.append(option);
+    });
+
+    districtFilter.value = Array.from(districtFilter.options)
+        .some((option) => option.value === previousDistrict)
+        ? previousDistrict
+        : 'all';
+}
+
 function applyFilters() {
-    const query = subjectFilter.value.trim().toLowerCase();
+    const subject = subjectFilter.value.trim().toLowerCase();
     const province = provinceFilter.value;
+    const district = districtFilter.value;
     const minimumScore = Number(strengthFilter.value);
     let visible = 0;
 
     cards.forEach((card) => {
-        const matchesText = !query || card.dataset.search.includes(query);
+        const matchesSubject = !subject || card.dataset.subjects.includes(subject);
         const matchesProvince = province === 'all' || card.dataset.province === province;
+        const matchesDistrict = district === 'all' || card.dataset.district === district;
         const matchesStrength = Number(card.dataset.score) >= minimumScore;
-        const shouldShow = matchesText && matchesProvince && matchesStrength;
+        const shouldShow = matchesSubject && matchesProvince && matchesDistrict && matchesStrength;
         card.hidden = !shouldShow;
         if (shouldShow) visible += 1;
     });
@@ -988,13 +1032,19 @@ function applyFilters() {
 function resetFilters() {
     subjectFilter.value = '';
     provinceFilter.value = 'all';
+    populateDistrictFilter();
+    districtFilter.value = 'all';
     strengthFilter.value = '0';
     applyFilters();
     subjectFilter.focus();
 }
 
 subjectFilter.addEventListener('input', applyFilters);
-provinceFilter.addEventListener('change', applyFilters);
+provinceFilter.addEventListener('change', () => {
+    populateDistrictFilter();
+    applyFilters();
+});
+districtFilter.addEventListener('change', applyFilters);
 strengthFilter.addEventListener('change', applyFilters);
 clearFilters.addEventListener('click', resetFilters);
 emptyClear.addEventListener('click', resetFilters);
@@ -1095,7 +1145,8 @@ async function loadMatches(user) {
     privateProfile = profileSnapshot.data();
     currentRoute.textContent = [privateProfile.current?.district, privateProfile.current?.province].filter(Boolean).join(', ') || 'Not provided';
     desiredRoute.textContent = [privateProfile.desired?.town, privateProfile.desired?.province].filter(Boolean).join(', ') || 'Not provided';
-    profileMenu.innerHTML = `<strong>${escapeHtml(user.displayName || 'Educator')}</strong>${escapeHtml(privateProfile.current?.phase || 'Verified account')}`;
+    profileMenu.innerHTML = `<strong>${escapeHtml(compactAccountName(user, privateProfile))}</strong>Signed in`;
+    profileAvatar.textContent = accountInitials(user, privateProfile);
     await Promise.all([loadSavedMatches(user.uid), loadRequestCount(user.uid)]);
 
     const matchesQuery = query(
@@ -1115,6 +1166,8 @@ async function loadMatches(user) {
     const provinces = [...new Set(matches.map((item) => item.candidate.currentProvince).filter(Boolean))].sort();
     provinceFilter.innerHTML = '<option value="all">All provinces</option>'
         + provinces.map((province) => `<option value="${escapeHtml(normalise(province))}">${escapeHtml(province)}</option>`).join('');
+    filterCandidates = matches.map((item) => item.candidate);
+    populateDistrictFilter();
 
     matchList.innerHTML = matches.map(({ candidate, score }) => renderMatchCard(candidate, score)).join('');
     matchList.hidden = false;
@@ -1140,6 +1193,8 @@ onAuthStateChanged(auth, async (user) => {
     }
 
     currentUser = user;
+    profileMenu.innerHTML = `<strong>${escapeHtml(compactAccountName(user))}</strong>Signed in`;
+    profileAvatar.textContent = accountInitials(user);
     matchList.replaceChildren();
     matchList.hidden = false;
     try {

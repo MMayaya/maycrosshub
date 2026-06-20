@@ -596,6 +596,7 @@ footer {
         <a href="index.html">Home</a>
         <a href="matches.html">My Matches</a>
         <a href="request.html" class="active" aria-current="page">Requests</a>
+        <a href="index.html#feedback">Feedback</a>
     </div>
 
     <div class="profile-menu" aria-label="Preview educator profile">
@@ -773,6 +774,7 @@ footer {
 
 <script type="module">
 import { firebaseApp } from "./firebase-config.js";
+import { accountInitials, compactAccountName } from "./auth-ui.js";
 import {
     getAuth,
     onAuthStateChanged,
@@ -804,6 +806,7 @@ const dialogConfirm = document.getElementById('dialogConfirm');
 const dialogCancel = document.getElementById('dialogCancel');
 const toast = document.getElementById('toast');
 const profileMenu = document.querySelector('.profile-menu span');
+const profileAvatar = document.querySelector('.profile-menu .avatar');
 const signOutButton = document.getElementById('signOutButton');
 let cards = [];
 let activeFilter = 'all';
@@ -1090,12 +1093,15 @@ onAuthStateChanged(auth, async (user) => {
     }
 
     currentUser = user;
+    profileMenu.innerHTML = `<strong>${escapeHtml(compactAccountName(user))}</strong>Signed in`;
+    profileAvatar.textContent = accountInitials(user);
     requestList.replaceChildren();
     requestList.hidden = false;
     try {
         const profileSnapshot = await getDoc(doc(db, 'profiles', user.uid));
-        const phase = profileSnapshot.exists() ? profileSnapshot.data().current?.phase : '';
-        profileMenu.innerHTML = `<strong>${escapeHtml(user.displayName || 'Educator')}</strong>${escapeHtml(phase || 'Verified account')}`;
+        const profile = profileSnapshot.exists() ? profileSnapshot.data() : null;
+        profileMenu.innerHTML = `<strong>${escapeHtml(compactAccountName(user, profile))}</strong>Signed in`;
+        profileAvatar.textContent = accountInitials(user, profile);
         watchRequests(user.uid);
     } catch (error) {
         console.error('Profile loading failed.', error);

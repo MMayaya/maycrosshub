@@ -130,6 +130,26 @@ nav {
     background-color: #0056ff;
 }
 
+.nav-account {
+    padding: 0.45rem 0.7rem;
+    border-radius: 999px;
+    color: #fff;
+    background: rgba(255,255,255,0.13);
+    font-size: 0.9rem;
+    font-weight: 800;
+}
+
+.nav-signout {
+    padding: 0.45rem 0.7rem;
+    border: 1px solid rgba(255,255,255,0.4);
+    border-radius: 6px;
+    color: #fff;
+    background: transparent;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
 header {
     background: linear-gradient(135deg, #004080, #0059b3);
     color: #fff;
@@ -580,101 +600,56 @@ header::before {
     font-weight: 700;
 }
 
-.privacy-panel {
-    background: linear-gradient(135deg, #ff1f1f 0%, #c40000 48%, #850000 100%);
-    color: #ffffff;
-    border-radius: 14px;
-    box-shadow: 0 0 22px rgba(230, 0, 0, 0.35), 0 10px 24px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -26px 42px rgba(0,0,0,0.12);
-    padding: 1.4rem 1.6rem;
-    margin-bottom: 2rem;
-    border: 1px solid rgba(255,255,255,0.32);
-    border-left: 5px solid #ffd6d6;
-    position: relative;
-    overflow: hidden;
-    opacity: 0;
-    animation: fadeInUp 0.8s ease-out 0.38s forwards;
+.feedback-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
 }
 
-.privacy-panel::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 48%;
-    background: linear-gradient(to bottom, rgba(255,255,255,0.28), rgba(255,255,255,0.08), rgba(255,255,255,0));
-    pointer-events: none;
+.feedback-field { min-width: 0; }
+.feedback-field.full { grid-column: 1 / -1; }
+
+.feedback-field label {
+    display: block;
+    margin-bottom: 0.35rem;
+    color: #28425f;
+    font-weight: 700;
 }
 
-.privacy-panel > * {
-    position: relative;
-    z-index: 1;
-}
-
-.privacy-panel .section-title,
-.privacy-panel .section-subtitle {
-    color: #ffffff;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.22);
-}
-
-.privacy-table-wrap {
-    overflow-x: auto;
-    border-radius: 11px;
-    margin-top: 1rem;
-}
-
-.privacy-table {
+.feedback-field input,
+.feedback-field select,
+.feedback-field textarea {
     width: 100%;
-    border-collapse: collapse;
-    min-width: 760px;
-    background: rgba(255,255,255,0.96);
-    color: #333;
-    border-radius: 11px;
-    overflow: hidden;
+    min-height: 46px;
+    padding: 0.7rem 0.8rem;
+    border: 1px solid #bdcee1;
+    border-radius: 8px;
+    color: #1f2d3d;
+    background: #fff;
+    font: inherit;
 }
 
-.privacy-table th,
-.privacy-table td {
-    text-align: left;
-    padding: 0.85rem;
-    border-bottom: 1px solid #ffd8d8;
+.feedback-field textarea { min-height: 130px; resize: vertical; }
+
+.feedback-field input:focus,
+.feedback-field select:focus,
+.feedback-field textarea:focus {
+    border-color: #3385ff;
+    outline: 3px solid rgba(51, 133, 255, 0.16);
 }
 
-.privacy-table th {
-    background: #7a0000;
-    color: #fff;
-}
-
-.privacy-table tr:last-child td { border-bottom: 0; }
-
-.default-pill {
-    display: inline-flex;
+.feedback-actions {
+    display: flex;
     align-items: center;
-    justify-content: center;
-    min-width: 70px;
-    min-height: 30px;
-    padding: 0.25rem 0.55rem;
-    border-radius: 999px;
-    font-weight: 850;
-    font-size: 0.82rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+    grid-column: 1 / -1;
 }
 
-.default-on {
-    background: #e9f9ee;
-    color: #116b36;
-    border: 1px solid #bde8c9;
-}
-
-.default-off {
-    background: #fff1f1;
-    color: #a32222;
-    border: 1px solid #f2c3c3;
-}
-
-.default-later {
-    background: #fff8e7;
+.feedback-status {
     color: #6d4900;
-    border: 1px solid #ffe1a7;
+    font-size: 0.88rem;
+    font-weight: 700;
 }
 
 .cta-panel {
@@ -814,9 +789,7 @@ footer {
     .content-panel,
     .search-panel,
     .feedback-panel,
-    .privacy-panel {
-        padding: 1rem;
-    }
+    .feedback-form { grid-template-columns: 1fr; }
 
     .grid-4,
     .steps-grid,
@@ -878,7 +851,6 @@ footer {
     .step-card,
     .data-card,
     .tech-card,
-    .privacy-panel,
     footer {
         opacity: 1 !important;
         transform: none !important;
@@ -897,10 +869,10 @@ footer {
         <a href="index.html" class="active">Home</a>
         <a href="#how-it-works">How It Works</a>
         <a href="#matching">Matching</a>
-        <a href="#registration">Registration</a>
-        <a href="#privacy">Privacy</a>
-        <a href="signin.html">Sign In</a>
-        <a href="register.html" class="btn-signin">Register</a>
+        <a href="#feedback">Feedback</a>
+        <a href="signin.html" id="navSignIn">Sign In</a>
+        <span class="nav-account" id="navAccountName" hidden></span>
+        <button class="nav-signout" id="navSignOut" type="button" hidden>Sign out</button>
     </div>
 </nav>
 
@@ -923,7 +895,7 @@ footer {
                 A privacy-conscious teacher transfer matching platform where educators can register their current post, desired transfer area, subjects, phase, grades, and preferences to find compatible reciprocal matches.
             </p>
             <div class="hero-actions">
-                <a href="register.html" class="btn btn-primary">Join the Transfer List</a>
+                <a href="register.html" class="btn btn-primary" id="heroAccountAction">Create an Account</a>
                 <a href="#matching" class="btn btn-secondary">See Match Logic</a>
             </div>
         </div>
@@ -934,9 +906,9 @@ footer {
     <div class="hub-toggle-container">
         <div class="hub-toggle">
             <a href="index.html" class="toggle-option active">Cross Hub</a>
-            <a href="register.html" class="toggle-option">Register</a>
-            <a href="matches.html" class="toggle-option">My Matches</a>
+            <a href="matches.html" class="toggle-option">Search a Match</a>
             <a href="request.html" class="toggle-option">Requests</a>
+            <a href="#feedback" class="toggle-option">Feedback</a>
         </div>
     </div>
 
@@ -1154,60 +1126,41 @@ footer {
         </div>
     </section>
 
-    <section class="privacy-panel" id="privacy" aria-labelledby="privacy-title">
-        <h2 class="section-title" id="privacy-title">Privacy Settings</h2>
-        <p class="section-subtitle">
-            These defaults follow a privacy-first approach while still allowing educators to see the professional details needed for matching.
-        </p>
+    <section class="feedback-panel" id="feedback" aria-labelledby="feedback-title">
+        <h2 class="section-title" id="feedback-title">Share Your Feedback</h2>
+        <p class="section-subtitle">Tell us what is working, what is confusing, or what would make May Cross Hub more useful.</p>
 
-        <div class="privacy-table-wrap">
-            <table class="privacy-table">
-                <thead>
-                    <tr>
-                        <th>Privacy option</th>
-                        <th>Recommended default</th>
-                        <th>Why it matters</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Show my full name to matched educators</td>
-                        <td><span class="default-pill default-off">Off</span></td>
-                        <td>Can be revealed after a match request is accepted.</td>
-                    </tr>
-                    <tr>
-                        <td>Show my school name</td>
-                        <td><span class="default-pill default-later">Later</span></td>
-                        <td>Useful for serious matches, but best hidden at first.</td>
-                    </tr>
-                    <tr>
-                        <td>Show my subjects and district</td>
-                        <td><span class="default-pill default-on">On</span></td>
-                        <td>Needed for matching without exposing private contact details.</td>
-                    </tr>
-                    <tr>
-                        <td>Show my cellphone number</td>
-                        <td><span class="default-pill default-off">Off</span></td>
-                        <td>Cellphone numbers should stay private unless the educator chooses otherwise.</td>
-                    </tr>
-                    <tr>
-                        <td>Show my email address</td>
-                        <td><span class="default-pill default-off">Off</span></td>
-                        <td>Match requests can happen inside the platform first.</td>
-                    </tr>
-                    <tr>
-                        <td>Allow educators to send me match requests</td>
-                        <td><span class="default-pill default-on">On</span></td>
-                        <td>Allows compatible educators to start a controlled request.</td>
-                    </tr>
-                    <tr>
-                        <td>Allow admin to contact me about possible matches</td>
-                        <td><span class="default-pill default-on">On</span></td>
-                        <td>Allows admin help where an important match may be missed.</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+        <form class="feedback-form" id="feedbackForm" action="https://formspree.io/f/mwvdevgw" method="POST">
+            <input type="hidden" name="_subject" value="New May Cross Hub feedback">
+            <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" hidden>
+            <div class="feedback-field">
+                <label for="feedbackName">Name</label>
+                <input id="feedbackName" name="name" type="text" autocomplete="name" required>
+            </div>
+            <div class="feedback-field">
+                <label for="feedbackEmail">Email address</label>
+                <input id="feedbackEmail" name="email" type="email" autocomplete="email" required>
+            </div>
+            <div class="feedback-field full">
+                <label for="feedbackType">Feedback type</label>
+                <select id="feedbackType" name="feedback_type" required>
+                    <option value="">Select feedback type</option>
+                    <option>Suggestion</option>
+                    <option>Problem report</option>
+                    <option>Matching experience</option>
+                    <option>Privacy concern</option>
+                    <option>Other</option>
+                </select>
+            </div>
+            <div class="feedback-field full">
+                <label for="feedbackMessage">Message</label>
+                <textarea id="feedbackMessage" name="message" maxlength="2000" required placeholder="Share enough detail for us to understand your feedback."></textarea>
+            </div>
+            <div class="feedback-actions">
+                <button class="btn btn-primary" type="submit">Send Feedback</button>
+                <p class="feedback-status" id="feedbackStatus" role="status" aria-live="polite"></p>
+            </div>
+        </form>
     </section>
 
     <section class="content-panel" id="platform" aria-labelledby="platform-title">
@@ -1234,12 +1187,12 @@ footer {
 
     <section class="cta-panel" aria-labelledby="cta-title">
         <div>
-            <h2 id="cta-title">Ready to look for a reciprocal match?</h2>
+            <h2 id="cta-title">Already have an educator account?</h2>
             <p>
-                Create a verified educator account, save your private profile and activate privacy-controlled matching.
+                Sign in to search compatible reciprocal routes by subject, province and district.
             </p>
         </div>
-        <a href="register.html" class="btn btn-primary">Create Educator Account</a>
+        <a href="matches.html" class="btn btn-primary">Search Matches</a>
     </section>
 </div>
 
@@ -1255,8 +1208,9 @@ footer {
         <div class="footer-links">
             <h4>Quick Links</h4>
             <a href="index.html">Home</a>
-            <a href="register.html">Register</a>
+            <a href="matches.html">Search Matches</a>
             <a href="signin.html">Sign In</a>
+            <a href="#feedback">Feedback</a>
             <a href="privacy.html">Privacy Policy</a>
         </div>
 
@@ -1279,6 +1233,8 @@ const navLinks = document.getElementById('navLinks');
 const demoResult = document.getElementById('demoResult');
 const checkMatch = document.getElementById('checkMatch');
 const year = document.getElementById('year');
+const feedbackForm = document.getElementById('feedbackForm');
+const feedbackStatus = document.getElementById('feedbackStatus');
 
 if (year) {
     year.textContent = new Date().getFullYear();
@@ -1295,6 +1251,15 @@ if (navToggle && navLinks) {
             navLinks.classList.remove('show');
             navToggle.setAttribute('aria-expanded', 'false');
         });
+    });
+}
+
+if (feedbackForm) {
+    feedbackForm.addEventListener('submit', (event) => {
+        if (feedbackForm.action.includes('YOUR_FORM_ID')) {
+            event.preventDefault();
+            feedbackStatus.textContent = 'Feedback sending will be enabled after the Formspree form ID is added.';
+        }
     });
 }
 
@@ -1325,10 +1290,44 @@ if (checkMatch && demoResult) {
 
 <script type="module">
 import { firebaseApp } from "./firebase-config.js";
+import { compactAccountName } from "./auth-ui.js";
 import {
     getAnalytics,
     isSupported
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-analytics.js";
+import {
+    getAuth,
+    onAuthStateChanged,
+    signOut
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+
+const auth = getAuth(firebaseApp);
+const navSignIn = document.getElementById('navSignIn');
+const navAccountName = document.getElementById('navAccountName');
+const navSignOut = document.getElementById('navSignOut');
+const heroAccountAction = document.getElementById('heroAccountAction');
+
+navSignOut.addEventListener('click', async () => {
+    await signOut(auth);
+    window.location.href = 'index.html';
+});
+
+onAuthStateChanged(auth, (user) => {
+    const signedIn = Boolean(user?.emailVerified);
+    navSignIn.hidden = signedIn;
+    navAccountName.hidden = !signedIn;
+    navSignOut.hidden = !signedIn;
+
+    if (signedIn) {
+        navAccountName.textContent = compactAccountName(user);
+        heroAccountAction.href = 'matches.html';
+        heroAccountAction.textContent = 'Search Matches';
+    } else {
+        navAccountName.textContent = '';
+        heroAccountAction.href = 'register.html';
+        heroAccountAction.textContent = 'Create an Account';
+    }
+});
 
 if (await isSupported()) {
     getAnalytics(firebaseApp);
