@@ -7,13 +7,20 @@
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
+  let mchAnalyticsConsent = 'denied';
+  try { mchAnalyticsConsent = localStorage.getItem('mch-analytics-consent') === 'granted' ? 'granted' : 'denied'; } catch (error) {}
+  gtag('consent', 'default', { analytics_storage: mchAnalyticsConsent, ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' });
   gtag('config', 'G-Y2MZ4NKNHS');
 </script>
+<link rel="stylesheet" href="site-core.css">
+<script src="site-core.js" defer></script>
+<script type="module" src="notifications-ui.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="Private conversation between educators with an accepted May Cross Hub match request.">
 <meta name="theme-color" content="#002b5e">
 <title>Private Conversation | May Cross Hub</title>
+<meta name="robots" content="noindex,nofollow">
 
 <style>
 :root {
@@ -358,6 +365,7 @@ footer {
         <span>May Cross Hub</span>
     </a>
     <div class="nav-links">
+        <a href="dashboard.html">Dashboard</a>
         <a href="matches.html">My Matches</a>
         <a href="request.html">Requests</a>
         <a href="profile.html">Profile</a>
@@ -384,6 +392,7 @@ footer {
             <span class="privacy-icon" aria-hidden="true">i</span>
             <span><strong>Keep it professional.</strong> Avoid sharing identity documents, passwords or sensitive personal information. Messages are visible only to the two request participants.</span>
         </aside>
+        <p><button class="button-link" id="safetyButton" type="button">Report or block this educator</button></p>
 
         <section class="messages" id="messageList" aria-label="Conversation messages" aria-live="polite">
             <p class="loading">Loading conversation...</p>
@@ -417,6 +426,7 @@ footer {
 <script type="module">
 import { firebaseApp } from "./firebase-config.js";
 import { compactAccountName } from "./auth-ui.js";
+import { openSafetyDialog, submitSafetyAction } from "./moderation-ui.js";
 import {
     getAuth,
     onAuthStateChanged,
@@ -455,6 +465,7 @@ const accountName = document.getElementById('accountName');
 const signOutButton = document.getElementById('signOutButton');
 let currentUser = null;
 let activeRequest = null;
+let counterpartUid = '';
 let stopMessages = null;
 
 document.getElementById('year').textContent = new Date().getFullYear();
@@ -560,7 +571,7 @@ async function openConversation(user) {
         return;
     }
 
-    const counterpartUid = activeRequest.fromUid === user.uid
+    counterpartUid = activeRequest.fromUid === user.uid
         ? activeRequest.toUid
         : activeRequest.fromUid;
     const counterpartSnapshot = await getDoc(doc(db, 'matchProfiles', counterpartUid));
@@ -599,6 +610,7 @@ messageForm.addEventListener('submit', async (event) => {
         messageText.value = '';
         characterCount.textContent = '0 / 1000';
         messageText.focus();
+        window.mchTrack?.('conversation_message_sent');
     } catch (error) {
         console.error('Message sending failed.', error);
         formError.textContent = error.code === 'permission-denied'
@@ -608,6 +620,27 @@ messageForm.addEventListener('submit', async (event) => {
     } finally {
         sendButton.disabled = false;
         sendButton.textContent = 'Send message';
+    }
+});
+
+document.getElementById('safetyButton').addEventListener('click', async () => {
+    if (!currentUser || !counterpartUid) return;
+    const action = await openSafetyDialog();
+    if (!action) return;
+    try {
+        await submitSafetyAction(db, currentUser.uid, counterpartUid, requestId, action);
+        window.mchTrack?.('safety_action_submitted', { blocked: action.block ? 'yes' : 'no' });
+        if (action.block) {
+            if (stopMessages) stopMessages();
+            showBlocked('Educator blocked', 'This conversation is closed. You can manage your account from the profile page.');
+        } else {
+            formError.textContent = 'Report submitted privately for review.';
+            formError.classList.add('show');
+        }
+    } catch (error) {
+        console.error('Safety action failed.', error);
+        formError.textContent = 'The safety action could not be saved. Please try again.';
+        formError.classList.add('show');
     }
 });
 

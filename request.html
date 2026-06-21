@@ -7,13 +7,20 @@
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
+  let mchAnalyticsConsent = 'denied';
+  try { mchAnalyticsConsent = localStorage.getItem('mch-analytics-consent') === 'granted' ? 'granted' : 'denied'; } catch (error) {}
+  gtag('consent', 'default', { analytics_storage: mchAnalyticsConsent, ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' });
   gtag('config', 'G-Y2MZ4NKNHS');
 </script>
+<link rel="stylesheet" href="site-core.css">
+<script src="site-core.js" defer></script>
+<script type="module" src="notifications-ui.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="Manage incoming and sent educator transfer match requests on May Cross Hub.">
 <meta name="theme-color" content="#002b5e">
 <title>Match Requests | May Cross Hub</title>
+<meta name="robots" content="noindex,nofollow">
 
 <style>
 :root {
@@ -601,7 +608,7 @@ footer {
     </a>
 
     <div class="nav-links">
-        <a href="index.html">Home</a>
+        <a href="dashboard.html">Dashboard</a>
         <a href="matches.html">My Matches</a>
         <a href="request.html" class="active" aria-current="page">Requests</a>
         <a href="profile.html">Profile</a>
@@ -784,6 +791,7 @@ footer {
 <script type="module">
 import { firebaseApp } from "./firebase-config.js";
 import { accountInitials, compactAccountName } from "./auth-ui.js";
+import { openSafetyDialog, submitSafetyAction } from "./moderation-ui.js";
 import {
     getAuth,
     onAuthStateChanged,
@@ -914,10 +922,10 @@ function renderRequestCard(request, counterpart) {
     const searchText = [counterpart.displayCode, currentArea, desiredArea, ...tags].join(' ').toLowerCase();
     const acceptedNote = status === 'accepted'
         ? '<p class="accepted-panel"><strong>Next step:</strong> continue inside the platform. Contact details remain hidden.</p>'
-        : '<p class="request-note">Review the reciprocal route and professional information before responding.</p>';
+        : `<p class="request-note"><strong>Introduction:</strong> ${escapeHtml(request.introMessage || 'No introductory message was included.')}</p>`;
 
     return `
-        <article class="request-card" data-status="${status}" data-search="${escapeHtml(searchText)}" data-request-id="${escapeHtml(request.id)}">
+        <article class="request-card" data-status="${status}" data-search="${escapeHtml(searchText)}" data-request-id="${escapeHtml(request.id)}" data-counterpart-uid="${escapeHtml(counterpart.uid || '')}">
             <div class="request-card-head">
                 <div class="request-identity">
                     <span class="request-avatar" aria-hidden="true">${status === 'incoming' ? 'IN' : status === 'sent' ? 'OUT' : 'OK'}</span>
@@ -935,7 +943,7 @@ function renderRequestCard(request, counterpart) {
                     </div>
                     ${acceptedNote}
                 </div>
-                <div class="request-actions">${requestActions(status)}</div>
+                <div class="request-actions">${requestActions(status)}<button class="button button-secondary" type="button" data-safety>Report / block</button></div>
             </div>
         </article>`;
 }
@@ -992,6 +1000,25 @@ function bindCardActions(card) {
             window.location.href = `conversation.html?request=${requestId}`;
         });
     });
+
+    card.querySelector('[data-safety]')?.addEventListener('click', async () => {
+        const counterpartUid = card.dataset.counterpartUid;
+        if (!counterpartUid) {
+            showToast('This educator profile is no longer available.');
+            return;
+        }
+        const action = await openSafetyDialog();
+        if (!action) return;
+        try {
+            await submitSafetyAction(db, currentUser.uid, counterpartUid, card.dataset.requestId, action);
+            showToast(action.block ? 'Safety choice saved. The educator is now blocked.' : 'Report submitted for review.');
+            if (action.block) card.hidden = true;
+            window.mchTrack?.('safety_action_submitted', { blocked: action.block ? 'yes' : 'no' });
+        } catch (error) {
+            console.error('Safety action failed.', error);
+            showToast('The safety action could not be saved. Please try again.');
+        }
+    });
 }
 
 tabs.forEach((tab) => {
@@ -1034,6 +1061,7 @@ dialogConfirm.addEventListener('click', async () => {
         showToast(pendingAction === 'accept'
             ? 'Request accepted. Contact details remain hidden.'
             : 'Request status updated.');
+        window.mchTrack?.('request_status_changed', { status: nextStatus });
     } catch (error) {
         showToast('The request could not be updated. Please try again.');
     } finally {

@@ -7,13 +7,19 @@
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
+  let mchAnalyticsConsent = 'denied';
+  try { mchAnalyticsConsent = localStorage.getItem('mch-analytics-consent') === 'granted' ? 'granted' : 'denied'; } catch (error) {}
+  gtag('consent', 'default', { analytics_storage: mchAnalyticsConsent, ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' });
   gtag('config', 'G-Y2MZ4NKNHS');
 </script>
+<link rel="stylesheet" href="site-core.css">
+<script src="site-core.js" defer></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="Sign in to May Cross Hub to view your educator transfer profile, matches and requests.">
 <meta name="theme-color" content="#002b5e">
 <title>Sign In | May Cross Hub</title>
+<link rel="canonical" href="https://maycrosshub.co.za/signin.html">
 
 <style>
 :root {
@@ -488,7 +494,7 @@ footer {
             <div class="success-icon" aria-hidden="true">&#10003;</div>
             <h2 tabindex="-1">You are signed in</h2>
             <p>Your account was verified successfully. You can now continue to the matches area.</p>
-            <a class="button" href="matches.html">View my matches</a>
+            <a class="button" href="dashboard.html">Open my dashboard</a>
         </div>
     </section>
 </main>
@@ -531,7 +537,7 @@ document.getElementById('year').textContent = new Date().getFullYear();
 
 auth.authStateReady().then(() => {
     if (auth.currentUser?.emailVerified) {
-        window.location.replace('matches.html');
+        window.location.replace('dashboard.html');
     }
 });
 
@@ -573,21 +579,29 @@ function verificationErrorMessage(error) {
 async function activateVerifiedProfile(user) {
     const profileRef = doc(db, 'profiles', user.uid);
     const matchProfileRef = doc(db, 'matchProfiles', user.uid);
-    const profileSnapshot = await getDoc(profileRef);
+    const [profileSnapshot, moderationSnapshot] = await Promise.all([
+        getDoc(profileRef),
+        getDoc(doc(db, 'moderation', user.uid))
+    ]);
 
     if (!profileSnapshot.exists()) return;
 
     const profile = profileSnapshot.data();
-    const available = profile.privacy?.allowRequests === true
+    const available = moderationSnapshot.data()?.status !== 'suspended'
+        && profile.paused !== true
+        && profile.privacy?.allowRequests === true
         && profile.privacy?.showProfessional === true;
     const batch = writeBatch(db);
     batch.update(profileRef, {
         emailVerified: true,
         available,
+        paused: profile.paused === true,
+        lastActiveAt: serverTimestamp(),
         updatedAt: serverTimestamp()
     });
     batch.update(matchProfileRef, {
         available,
+        lastActiveAt: serverTimestamp(),
         updatedAt: serverTimestamp()
     });
     await batch.commit();
@@ -704,7 +718,8 @@ form.addEventListener('submit', async (event) => {
         }
 
         try {
-            await activateVerifiedProfile(credential.user);
+        await activateVerifiedProfile(credential.user);
+        window.mchTrack?.('login_completed');
         } catch (error) {
             console.warn('The profile availability status could not be synchronised.', error);
         }

@@ -14,11 +14,16 @@ service cloud.firestore {
       return signedIn() && request.auth.uid == uid;
     }
 
+    function admin() {
+      return signedIn() && request.auth.token.admin == true;
+    }
+
     function validPrivateProfile(uid) {
       return request.resource.data.keys().hasOnly([
           'uid', 'firstName', 'lastName', 'email', 'phone',
           'current', 'desired', 'privacy', 'available',
-          'emailVerified', 'createdAt', 'updatedAt'
+          'emailVerified', 'paused', 'lastActiveAt',
+          'createdAt', 'updatedAt'
         ])
         && request.resource.data.uid == uid
         && request.resource.data.email == request.auth.token.email;
@@ -29,7 +34,7 @@ service cloud.firestore {
           'uid', 'displayCode', 'currentProvince', 'currentDistrict',
           'desiredProvince', 'desiredDistrict', 'desiredTown',
           'phase', 'grades', 'subjects', 'postLevel', 'nearby',
-          'available', 'createdAt', 'updatedAt'
+          'available', 'lastActiveAt', 'createdAt', 'updatedAt'
         ])
         && request.resource.data.uid == uid
         && request.resource.data.displayCode is string
@@ -48,9 +53,9 @@ service cloud.firestore {
 
     match /profiles/{uid} {
       allow create: if owner(uid) && validPrivateProfile(uid);
-      allow read: if owner(uid);
+      allow read: if owner(uid) || admin();
       allow update: if owner(uid) && validPrivateProfile(uid);
-      allow delete: if owner(uid);
+      allow delete: if false;
 
       match /savedMatches/{matchUid} {
         allow read: if owner(uid);
@@ -61,12 +66,31 @@ service cloud.firestore {
           && request.resource.data.matchUid == matchUid;
         allow delete: if verified() && request.auth.uid == uid;
       }
+
+      match /blockedUsers/{blockedUid} {
+        allow read: if owner(uid);
+        allow create, update: if verified()
+          && request.auth.uid == uid
+          && blockedUid != uid
+          && request.resource.data.keys().hasOnly(['ownerUid', 'blockedUid', 'createdAt'])
+          && request.resource.data.ownerUid == uid
+          && request.resource.data.blockedUid == blockedUid
+          && request.resource.data.createdAt == request.time;
+        allow delete: if verified() && request.auth.uid == uid;
+      }
     }
 
     match /matchProfiles/{uid} {
       allow read: if verified();
-      allow create, update: if owner(uid) && validMatchProfile(uid);
-      allow delete: if owner(uid);
+      allow create, update: if owner(uid)
+        && validMatchProfile(uid)
+        && (!exists(/databases/$(database)/documents/moderation/$(uid))
+          || get(/databases/$(database)/documents/moderation/$(uid)).data.status != 'suspended'
+          || request.resource.data.available == false);
+      allow delete: if false;
+      allow update: if admin()
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['available', 'updatedAt']);
     }
 
     function requestParticipant(data) {
@@ -78,16 +102,24 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/requests/$(requestId)).data;
     }
 
+    function requestIsBlocked(data) {
+      return exists(/databases/$(database)/documents/profiles/$(data.fromUid)/blockedUsers/$(data.toUid))
+        || exists(/databases/$(database)/documents/profiles/$(data.toUid)/blockedUsers/$(data.fromUid));
+    }
+
     function validRequestData() {
       return request.resource.data.keys().hasOnly([
           'fromUid', 'toUid', 'status', 'matchScore',
-          'createdAt', 'updatedAt', 'respondedAt'
+          'introMessage', 'createdAt', 'updatedAt', 'respondedAt'
         ])
         && request.resource.data.fromUid is string
         && request.resource.data.toUid is string
         && request.resource.data.matchScore is int
         && request.resource.data.matchScore >= 0
-        && request.resource.data.matchScore <= 100;
+        && request.resource.data.matchScore <= 100
+        && (!('introMessage' in request.resource.data)
+          || (request.resource.data.introMessage is string
+            && request.resource.data.introMessage.size() <= 500));
     }
 
     function validRequestTransition() {
@@ -118,22 +150,13 @@ service cloud.firestore {
         && request.resource.data.status == 'pending'
         && request.resource.data.respondedAt == null
         && request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['status', 'matchScore', 'createdAt', 'updatedAt', 'respondedAt'])
+          .hasOnly(['status', 'matchScore', 'introMessage', 'createdAt', 'updatedAt', 'respondedAt'])
         && exists(/databases/$(database)/documents/matchProfiles/$(resource.data.toUid))
         && get(/databases/$(database)/documents/matchProfiles/$(resource.data.toUid)).data.available == true;
     }
 
     match /requests/{requestId} {
-      allow create: if verified()
-        && validRequestData()
-        && request.resource.data.fromUid == request.auth.uid
-        && request.resource.data.toUid != request.auth.uid
-        && request.resource.data.status == 'pending'
-        && request.resource.data.respondedAt == null
-        && requestId == request.auth.uid + '_' + request.resource.data.toUid
-        && exists(/databases/$(database)/documents/profiles/$(request.auth.uid))
-        && exists(/databases/$(database)/documents/matchProfiles/$(request.resource.data.toUid))
-        && get(/databases/$(database)/documents/matchProfiles/$(request.resource.data.toUid)).data.available == true;
+      allow create: if false;
 
       allow read: if verified() && requestParticipant(resource.data);
 
@@ -147,11 +170,13 @@ service cloud.firestore {
       match /messages/{messageId} {
         allow read: if verified()
           && requestData(requestId).status == 'accepted'
-          && requestParticipant(requestData(requestId));
+          && requestParticipant(requestData(requestId))
+          && !requestIsBlocked(requestData(requestId));
 
         allow create: if verified()
           && requestData(requestId).status == 'accepted'
           && requestParticipant(requestData(requestId))
+          && !requestIsBlocked(requestData(requestId))
           && request.resource.data.keys().hasOnly([
               'senderUid', 'text', 'createdAt'
             ])
@@ -163,6 +188,46 @@ service cloud.firestore {
 
         allow update, delete: if false;
       }
+    }
+
+    match /reports/{reportId} {
+      allow create: if verified()
+        && request.resource.data.keys().hasOnly([
+          'reporterUid', 'reportedUid', 'requestId', 'reason',
+          'details', 'status', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.reporterUid == request.auth.uid
+        && request.resource.data.reportedUid is string
+        && request.resource.data.reportedUid != request.auth.uid
+        && request.resource.data.requestId is string
+        && request.resource.data.reason is string
+        && request.resource.data.details is string
+        && request.resource.data.details.size() <= 1000
+        && request.resource.data.status == 'open'
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+      allow read: if admin() || (verified() && resource.data.reporterUid == request.auth.uid);
+      allow update: if admin()
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['status', 'updatedAt']);
+      allow delete: if admin();
+    }
+
+    match /moderation/{uid} {
+      allow read: if admin() || owner(uid);
+      allow create, update, delete: if admin();
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if verified() && resource.data.recipientUid == request.auth.uid;
+      allow update: if verified()
+        && resource.data.recipientUid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+      allow create, delete: if false;
+    }
+
+    match /mail/{mailId} {
+      allow read, write: if false;
     }
   }
 }

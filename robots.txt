@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /dashboard.html
+Disallow: /profile.html
+Disallow: /matches.html
+Disallow: /request.html
+Disallow: /conversation.html
+
+Sitemap: https://maycrosshub.co.za/sitemap.xml

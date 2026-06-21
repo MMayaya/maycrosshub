@@ -7,8 +7,13 @@
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
+  let mchAnalyticsConsent = 'denied';
+  try { mchAnalyticsConsent = localStorage.getItem('mch-analytics-consent') === 'granted' ? 'granted' : 'denied'; } catch (error) {}
+  gtag('consent', 'default', { analytics_storage: mchAnalyticsConsent, ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' });
   gtag('config', 'G-Y2MZ4NKNHS');
 </script>
+<link rel="stylesheet" href="site-core.css">
+<script src="site-core.js" defer></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="May Cross Hub helps educators find reciprocal teacher transfer matches based on current post details, desired location, subjects, phase, grades, post level, and privacy preferences.">
@@ -17,6 +22,8 @@
 <meta property="og:title" content="May Cross Hub | Teacher Transfer Matching">
 <meta property="og:description" content="A privacy-conscious transfer matching platform for educators looking for reciprocal post swaps.">
 <meta property="og:type" content="website">
+<meta property="og:image" content="https://maycrosshub.co.za/maycross.png">
+<link rel="canonical" href="https://maycrosshub.co.za/">
 <title>May Cross Hub | Teacher Transfer Matching</title>
 
 <style>
@@ -971,6 +978,7 @@ footer {
         <a href="#matching">Matching</a>
         <a href="#feedback">Feedback</a>
         <a href="signin.html" id="navSignIn">Sign In</a>
+        <a href="dashboard.html" id="navDashboard" hidden>Dashboard</a>
         <a href="profile.html" id="navProfile" hidden>Profile</a>
         <span class="nav-account" id="navAccountName" hidden></span>
         <button class="nav-signout" id="navSignOut" type="button" hidden>Sign out</button>
@@ -1401,6 +1409,7 @@ if (feedbackForm) {
 
             if (!response.ok) throw new Error('Feedback submission failed.');
 
+            window.mchTrack?.('feedback_submitted', { feedback_type: document.getElementById('feedbackType').value || 'unknown' });
             feedbackForm.reset();
             showSiteMessage('Message Sent Successfully');
         } catch (error) {
@@ -1478,10 +1487,6 @@ if (checkMatch && demoResult) {
 import { firebaseApp } from "./firebase-config.js";
 import { compactAccountName } from "./auth-ui.js";
 import {
-    getAnalytics,
-    isSupported
-} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-analytics.js";
-import {
     getAuth,
     onAuthStateChanged,
     signOut
@@ -1489,6 +1494,7 @@ import {
 
 const auth = getAuth(firebaseApp);
 const navSignIn = document.getElementById('navSignIn');
+const navDashboard = document.getElementById('navDashboard');
 const navProfile = document.getElementById('navProfile');
 const navAccountName = document.getElementById('navAccountName');
 const navSignOut = document.getElementById('navSignOut');
@@ -1502,14 +1508,15 @@ navSignOut.addEventListener('click', async () => {
 onAuthStateChanged(auth, (user) => {
     const signedIn = Boolean(user?.emailVerified);
     navSignIn.hidden = signedIn;
+    navDashboard.hidden = !signedIn;
     navProfile.hidden = !signedIn;
     navAccountName.hidden = !signedIn;
     navSignOut.hidden = !signedIn;
 
     if (signedIn) {
         navAccountName.textContent = compactAccountName(user);
-        heroAccountAction.href = 'matches.html';
-        heroAccountAction.textContent = 'Search Matches';
+        heroAccountAction.href = 'dashboard.html';
+        heroAccountAction.textContent = 'Open Dashboard';
     } else {
         navAccountName.textContent = '';
         heroAccountAction.href = 'register.html';
@@ -1517,9 +1524,6 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-if (await isSupported()) {
-    getAnalytics(firebaseApp);
-}
 </script>
 </body>
 </html>

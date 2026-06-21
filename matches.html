@@ -7,13 +7,20 @@
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
+  let mchAnalyticsConsent = 'denied';
+  try { mchAnalyticsConsent = localStorage.getItem('mch-analytics-consent') === 'granted' ? 'granted' : 'denied'; } catch (error) {}
+  gtag('consent', 'default', { analytics_storage: mchAnalyticsConsent, ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' });
   gtag('config', 'G-Y2MZ4NKNHS');
 </script>
+<link rel="stylesheet" href="site-core.css">
+<script src="site-core.js" defer></script>
+<script type="module" src="notifications-ui.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="Review reciprocal educator transfer matches on May Cross Hub.">
 <meta name="theme-color" content="#002b5e">
 <title>My Matches | May Cross Hub</title>
+<meta name="robots" content="noindex,nofollow">
 
 <style>
 :root {
@@ -581,6 +588,22 @@ select:focus-visible {
 
 .toast.show { opacity: 1; transform: translateY(0); }
 
+.request-dialog {
+    width: min(92vw, 560px);
+    margin: auto;
+    padding: 1.25rem;
+    border: 0;
+    border-radius: 12px;
+    color: var(--ink);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.request-dialog::backdrop { background: rgba(0,25,55,0.7); }
+.request-dialog h2 { color: var(--navy); }
+.request-dialog p { margin: 0.35rem 0 0.8rem; color: var(--muted); }
+.request-dialog label { display: block; margin-bottom: 0.3rem; font-weight: 750; }
+.request-dialog textarea { width: 100%; min-height: 110px; padding: 0.7rem; border: 1px solid #b8c9dc; border-radius: 8px; resize: vertical; }
+.request-dialog .dialog-actions { display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 1rem; }
+
 footer {
     margin-top: 2rem;
     padding: 1.4rem 1rem;
@@ -636,7 +659,7 @@ footer {
     </a>
 
     <div class="nav-links">
-        <a href="index.html">Home</a>
+        <a href="dashboard.html">Dashboard</a>
         <a href="matches.html" class="active" aria-current="page">My Matches</a>
         <a href="request.html">Requests</a>
         <a href="profile.html">Profile</a>
@@ -847,6 +870,7 @@ footer {
             </div>
         </article>
     </section>
+    <p style="text-align:center;margin:1rem 0"><button class="button button-secondary" id="loadMoreMatches" type="button" hidden>Load More Matches</button></p>
 
     <section class="empty-state" id="emptyState" aria-live="polite">
         <h3>No matches fit these filters</h3>
@@ -858,11 +882,24 @@ footer {
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<dialog class="request-dialog" id="requestDialog" aria-labelledby="requestDialogTitle">
+    <h2 id="requestDialogTitle">Send private match request</h2>
+    <p>Add a short professional introduction. Do not include contact details or sensitive personal information.</p>
+    <label for="requestIntroduction">Introduction <span>(optional)</span></label>
+    <textarea id="requestIntroduction" maxlength="500" placeholder="For example: I am interested in discussing this reciprocal route and our subject alignment."></textarea>
+    <p id="requestDialogStatus" role="alert"></p>
+    <div class="dialog-actions">
+        <button class="button button-secondary" id="requestDialogCancel" type="button">Cancel</button>
+        <button class="button" id="requestDialogSend" type="button">Send Request</button>
+    </div>
+</dialog>
+
 <footer>&copy; <span id="year"></span> May Cross Hub. Match discovery does not replace official departmental transfer procedures.</footer>
 
 <script type="module">
 import { firebaseApp } from "./firebase-config.js";
 import { accountInitials, compactAccountName } from "./auth-ui.js";
+import { openSafetyDialog, submitSafetyAction } from "./moderation-ui.js";
 import {
     getAuth,
     onAuthStateChanged,
@@ -879,11 +916,17 @@ import {
     query,
     serverTimestamp,
     setDoc,
+    startAfter,
     where
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+import {
+    getFunctions,
+    httpsCallable
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-functions.js";
 
 const auth = getAuth(firebaseApp);
 const db = getFirestore(firebaseApp);
+const functions = getFunctions(firebaseApp);
 const matchList = document.getElementById('matchList');
 const subjectFilter = document.getElementById('subjectFilter');
 const provinceFilter = document.getElementById('provinceFilter');
@@ -902,13 +945,18 @@ const toast = document.getElementById('toast');
 const profileMenu = document.querySelector('.profile-menu span');
 const profileAvatar = document.querySelector('.profile-menu .avatar');
 const signOutButton = document.getElementById('signOutButton');
+const loadMoreMatches = document.getElementById('loadMoreMatches');
 let cards = [];
 let currentUser = null;
 let privateProfile = null;
 let savedMatchIds = new Set();
+let blockedMatchIds = new Set();
 let outgoingRequests = new Map();
 let filterCandidates = [];
+let loadedMatches = [];
+let lastMatchDocument = null;
 let toastTimer;
+let pendingRequestContext = null;
 
 document.getElementById('year').textContent = new Date().getFullYear();
 signOutButton.addEventListener('click', async () => {
@@ -929,20 +977,41 @@ function normalise(value) {
     return String(value ?? '').trim().toLowerCase();
 }
 
+function isRecentlyActive(timestamp) {
+    if (!timestamp?.toDate) return true;
+    const ninetyDays = 90 * 24 * 60 * 60 * 1000;
+    return Date.now() - timestamp.toDate().getTime() <= ninetyDays;
+}
+
+function lastActiveLabel(timestamp) {
+    if (!timestamp?.toDate) return 'Recently active';
+    const days = Math.max(0, Math.floor((Date.now() - timestamp.toDate().getTime()) / 86400000));
+    if (days === 0) return 'Active today';
+    if (days === 1) return 'Active yesterday';
+    return `Active ${days} days ago`;
+}
+
 function calculateScore(candidate) {
-    let score = 60;
+    let location = 60;
     const desiredDistrict = normalise(privateProfile.desired?.district);
     const currentDistrict = normalise(privateProfile.current?.district);
 
-    if (desiredDistrict && desiredDistrict === normalise(candidate.currentDistrict)) score += 10;
-    if (currentDistrict && currentDistrict === normalise(candidate.desiredDistrict)) score += 10;
-    if (normalise(privateProfile.current?.phase) === normalise(candidate.phase)) score += 8;
-    if (normalise(privateProfile.current?.postLevel) === normalise(candidate.postLevel)) score += 4;
+    if (desiredDistrict && desiredDistrict === normalise(candidate.currentDistrict)) location += 10;
+    if (currentDistrict && currentDistrict === normalise(candidate.desiredDistrict)) location += 10;
+    const phase = normalise(privateProfile.current?.phase) === normalise(candidate.phase) ? 8 : 0;
+    const postLevel = normalise(privateProfile.current?.postLevel) === normalise(candidate.postLevel) ? 4 : 0;
 
     const ownSubjects = new Set((privateProfile.current?.subjects || []).map(normalise));
     const subjectOverlap = (candidate.subjects || []).filter((subject) => ownSubjects.has(normalise(subject))).length;
-    score += Math.min(subjectOverlap * 4, 8);
-    return Math.min(score, 100);
+    const subjects = Math.min(subjectOverlap * 4, 8);
+    return {
+        total: Math.min(location + phase + postLevel + subjects, 100),
+        location,
+        phase,
+        postLevel,
+        subjects,
+        subjectOverlap
+    };
 }
 
 function tagsFor(candidate) {
@@ -954,7 +1023,8 @@ function tagsFor(candidate) {
     ].filter(Boolean);
 }
 
-function renderMatchCard(candidate, score) {
+function renderMatchCard(candidate, breakdown) {
+    const score = breakdown.total;
     const saved = savedMatchIds.has(candidate.uid);
     const requestStatus = outgoingRequests.get(candidate.uid)?.status || '';
     const requestLocked = requestStatus === 'pending' || requestStatus === 'accepted';
@@ -983,6 +1053,7 @@ function renderMatchCard(candidate, score) {
                         <h3>${escapeHtml(candidate.displayCode || `MCH-${candidate.uid.slice(0, 6).toUpperCase()}`)}</h3>
                         <span class="pill pill-direct">Reciprocal province</span>
                         <span class="pill">Available</span>
+                        <span class="pill">${escapeHtml(lastActiveLabel(candidate.lastActiveAt))}</span>
                     </div>
                     <div class="route-grid">
                         <div class="route-box current-area"><span>Their current area</span><strong>${escapeHtml(currentArea || candidate.currentProvince)}</strong></div>
@@ -997,15 +1068,16 @@ function renderMatchCard(candidate, score) {
                     <button class="button button-secondary details-button" type="button" aria-expanded="false">View details</button>
                     <button class="button request-button${requestLocked ? ' button-success' : ''}" type="button"${requestLocked ? ' disabled' : ''}>${requestLabel}</button>
                     <button class="button button-secondary save-button${saved ? ' saved' : ''}" type="button" aria-pressed="${saved}">${saved ? 'Saved' : 'Save match'}</button>
+                    <button class="button button-secondary safety-button" type="button">Report / block</button>
                 </div>
             </div>
             <div class="match-details">
                 <div class="detail-grid">
-                    <div class="detail-item"><span>Location fit</span><strong>Reciprocal province route</strong></div>
-                    <div class="detail-item"><span>Professional fit</span><strong>${escapeHtml(tags.slice(0, 3).join(', ') || 'Review required')}</strong></div>
-                    <div class="detail-item"><span>Nearby areas</span><strong>${candidate.nearby ? 'Accepted' : 'Not selected'}</strong></div>
+                    <div class="detail-item"><span>Location route</span><strong>${breakdown.location}/80 points</strong></div>
+                    <div class="detail-item"><span>Subject alignment</span><strong>${breakdown.subjects}/8 points (${breakdown.subjectOverlap} shared)</strong></div>
+                    <div class="detail-item"><span>Phase and post</span><strong>${breakdown.phase + breakdown.postLevel}/12 points</strong></div>
                 </div>
-                <p class="details-note">This document contains no direct contact details or exact school name.</p>
+                <p class="details-note">The score explains professional and reciprocal-route alignment only. It does not guarantee approval of a transfer.</p>
             </div>
         </article>`;
 }
@@ -1103,6 +1175,7 @@ function bindMatchActions() {
             const isOpen = details.classList.toggle('show');
             button.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
             button.textContent = isOpen ? 'Hide details' : 'View details';
+            if (isOpen) window.mchTrack?.('match_details_viewed', { match_score: Number(card.dataset.score) });
         });
     });
 
@@ -1130,6 +1203,7 @@ function bindMatchActions() {
                 button.classList.toggle('saved', !isSaved);
                 button.textContent = isSaved ? 'Save match' : 'Saved';
                 showToast(isSaved ? 'Match removed from saved matches.' : 'Match saved securely.');
+                window.mchTrack?.(isSaved ? 'saved_match_removed' : 'match_saved');
             } catch (error) {
                 showToast('The saved-match update failed. Please try again.');
             } finally {
@@ -1144,47 +1218,81 @@ function bindMatchActions() {
         const currentStatus = outgoingRequests.get(matchUid)?.status;
         if (currentStatus === 'pending' || currentStatus === 'accepted') return;
 
-        button.addEventListener('click', async () => {
-            const score = Number(card.dataset.score);
-            if (!window.confirm('Send this educator a private match request?')) return;
+        button.addEventListener('click', () => {
+            pendingRequestContext = { button, card, matchUid, currentStatus, score: Number(card.dataset.score) };
+            document.getElementById('requestIntroduction').value = '';
+            document.getElementById('requestDialogStatus').textContent = '';
+            document.getElementById('requestDialog').showModal();
+        });
+    });
 
-            button.disabled = true;
-            button.textContent = 'Sending...';
+    document.querySelectorAll('.safety-button').forEach((button) => {
+        button.addEventListener('click', async () => {
+            const card = button.closest('.match-card');
+            const matchUid = card.dataset.matchUid;
+            const action = await openSafetyDialog();
+            if (!action) return;
             try {
-                const requestRef = doc(db, 'requests', `${currentUser.uid}_${matchUid}`);
-                await setDoc(requestRef, {
-                    fromUid: currentUser.uid,
-                    toUid: matchUid,
-                    status: 'pending',
-                    matchScore: score,
-                    createdAt: serverTimestamp(),
-                    updatedAt: serverTimestamp(),
-                    respondedAt: null
-                });
-                outgoingRequests.set(matchUid, {
-                    id: requestRef.id,
-                    fromUid: currentUser.uid,
-                    toUid: matchUid,
-                    status: 'pending',
-                    matchScore: score
-                });
-                button.textContent = 'Request pending';
-                button.classList.add('button-success');
-                requestTotal.textContent = Number(requestTotal.textContent) + 1;
-                showToast('Match request sent privately.');
+                await submitSafetyAction(db, currentUser.uid, matchUid, '', action);
+                if (action.block) {
+                    blockedMatchIds.add(matchUid);
+                    card.remove();
+                    cards = Array.from(document.querySelectorAll('.match-card'));
+                    applyFilters();
+                }
+                showToast(action.block ? 'Educator blocked and removed from your matches.' : 'Report submitted privately.');
+                window.mchTrack?.('safety_action_submitted', { blocked: action.block ? 'yes' : 'no' });
             } catch (error) {
-                console.error('Request sending failed.', error);
-                button.textContent = currentStatus ? 'Send new request' : 'Send request';
-                button.disabled = false;
-                showToast('The request could not be sent. Check your connection and try again.');
+                console.error('Safety action failed.', error);
+                showToast('The safety action could not be saved. Please try again.');
             }
         });
     });
 }
 
+document.getElementById('requestDialogCancel').addEventListener('click', () => {
+    document.getElementById('requestDialog').close();
+    pendingRequestContext = null;
+});
+
+document.getElementById('requestDialogSend').addEventListener('click', async () => {
+    if (!pendingRequestContext) return;
+    const { button, matchUid, currentStatus, score } = pendingRequestContext;
+    const introduction = document.getElementById('requestIntroduction').value.trim();
+    const sendButton = document.getElementById('requestDialogSend');
+    sendButton.disabled = true;
+    sendButton.textContent = 'Sending...';
+    try {
+        const response = await httpsCallable(functions, 'sendMatchRequest')({ toUid: matchUid, matchScore: score, introMessage: introduction });
+        const requestId = response.data.requestId;
+        outgoingRequests.set(matchUid, { id: requestId, fromUid: currentUser.uid, toUid: matchUid, status: 'pending', matchScore: score, introMessage: introduction });
+        button.textContent = 'Request pending';
+        button.classList.add('button-success');
+        button.disabled = true;
+        requestTotal.textContent = Number(requestTotal.textContent) + 1;
+        document.getElementById('requestDialog').close();
+        showToast('Match request sent privately.');
+        window.mchTrack?.('match_request_sent', { match_score: score });
+        pendingRequestContext = null;
+    } catch (error) {
+        console.error('Request sending failed.', error);
+        button.textContent = currentStatus ? 'Send new request' : 'Send request';
+        button.disabled = false;
+        document.getElementById('requestDialogStatus').textContent = 'The request could not be sent. Check your connection and try again.';
+    } finally {
+        sendButton.disabled = false;
+        sendButton.textContent = 'Send Request';
+    }
+});
+
 async function loadSavedMatches(uid) {
     const snapshot = await getDocs(collection(db, 'profiles', uid, 'savedMatches'));
     savedMatchIds = new Set(snapshot.docs.map((item) => item.id));
+}
+
+async function loadBlockedMatches(uid) {
+    const snapshot = await getDocs(collection(db, 'profiles', uid, 'blockedUsers'));
+    blockedMatchIds = new Set(snapshot.docs.map((item) => item.id));
 }
 
 async function loadOutgoingRequests(uid) {
@@ -1195,6 +1303,57 @@ async function loadOutgoingRequests(uid) {
     ]));
     requestTotal.textContent = snapshot.docs.filter((item) => item.data().status === 'pending').length;
 }
+
+function renderLoadedMatches() {
+    loadedMatches.sort((a, b) => b.breakdown.total - a.breakdown.total);
+    const selectedProvince = provinceFilter.value;
+    const provinces = [...new Set(loadedMatches.map((item) => item.candidate.currentProvince).filter(Boolean))].sort();
+    provinceFilter.innerHTML = '<option value="all">All provinces</option>'
+        + provinces.map((province) => `<option value="${escapeHtml(normalise(province))}">${escapeHtml(province)}</option>`).join('');
+    provinceFilter.value = Array.from(provinceFilter.options).some((option) => option.value === selectedProvince) ? selectedProvince : 'all';
+    filterCandidates = loadedMatches.map((item) => item.candidate);
+    populateDistrictFilter();
+    matchList.innerHTML = loadedMatches.map(({ candidate, breakdown }) => renderMatchCard(candidate, breakdown)).join('');
+    matchList.hidden = false;
+    cards = Array.from(document.querySelectorAll('.match-card'));
+    strongTotal.textContent = loadedMatches.filter((item) => item.breakdown.total >= 85).length;
+    bindMatchActions();
+    applyFilters();
+}
+
+async function loadNextMatchPage() {
+    loadMoreMatches.disabled = true;
+    loadMoreMatches.textContent = 'Loading...';
+    const constraints = [
+        where('currentProvince', '==', privateProfile.desired?.province || ''),
+        where('desiredProvince', '==', privateProfile.current?.province || ''),
+        where('available', '==', true)
+    ];
+    if (lastMatchDocument) constraints.push(startAfter(lastMatchDocument));
+    constraints.push(limit(20));
+    const snapshot = await getDocs(query(collection(db, 'matchProfiles'), ...constraints));
+    if (snapshot.docs.length) lastMatchDocument = snapshot.docs[snapshot.docs.length - 1];
+    const existingIds = new Set(loadedMatches.map((item) => item.candidate.uid));
+    const nextMatches = snapshot.docs
+        .filter((item) => item.id !== currentUser.uid && !blockedMatchIds.has(item.id) && !existingIds.has(item.id))
+        .map((item) => ({ ...item.data(), uid: item.id }))
+        .filter((candidate) => isRecentlyActive(candidate.lastActiveAt))
+        .map((candidate) => ({ candidate, breakdown: calculateScore(candidate) }));
+    loadedMatches.push(...nextMatches);
+    renderLoadedMatches();
+    loadMoreMatches.hidden = snapshot.size < 20;
+    loadMoreMatches.disabled = false;
+    loadMoreMatches.textContent = 'Load More Matches';
+}
+
+loadMoreMatches.addEventListener('click', () => {
+    loadNextMatchPage().catch((error) => {
+        console.error('More matches could not be loaded.', error);
+        showToast('More matches could not be loaded. Please try again.');
+        loadMoreMatches.disabled = false;
+        loadMoreMatches.textContent = 'Try Again';
+    });
+});
 
 async function loadMatches(user) {
     const profileSnapshot = await getDoc(doc(db, 'profiles', user.uid));
@@ -1208,36 +1367,13 @@ async function loadMatches(user) {
     desiredRoute.textContent = [privateProfile.desired?.town, privateProfile.desired?.province].filter(Boolean).join(', ') || 'Not provided';
     profileMenu.innerHTML = `<strong>${escapeHtml(compactAccountName(user, privateProfile))}</strong>Signed in`;
     profileAvatar.textContent = accountInitials(user, privateProfile);
-    await Promise.all([loadSavedMatches(user.uid), loadOutgoingRequests(user.uid)]);
+    await Promise.all([loadSavedMatches(user.uid), loadBlockedMatches(user.uid), loadOutgoingRequests(user.uid)]);
 
-    const matchesQuery = query(
-        collection(db, 'matchProfiles'),
-        where('currentProvince', '==', privateProfile.desired?.province || ''),
-        where('desiredProvince', '==', privateProfile.current?.province || ''),
-        where('available', '==', true),
-        limit(50)
-    );
-    const snapshot = await getDocs(matchesQuery);
-    const matches = snapshot.docs
-        .filter((item) => item.id !== user.uid)
-        .map((item) => ({ ...item.data(), uid: item.id }))
-        .map((candidate) => ({ candidate, score: calculateScore(candidate) }))
-        .sort((a, b) => b.score - a.score);
+    loadedMatches = [];
+    lastMatchDocument = null;
+    await loadNextMatchPage();
 
-    const provinces = [...new Set(matches.map((item) => item.candidate.currentProvince).filter(Boolean))].sort();
-    provinceFilter.innerHTML = '<option value="all">All provinces</option>'
-        + provinces.map((province) => `<option value="${escapeHtml(normalise(province))}">${escapeHtml(province)}</option>`).join('');
-    filterCandidates = matches.map((item) => item.candidate);
-    populateDistrictFilter();
-
-    matchList.innerHTML = matches.map(({ candidate, score }) => renderMatchCard(candidate, score)).join('');
-    matchList.hidden = false;
-    cards = Array.from(document.querySelectorAll('.match-card'));
-    strongTotal.textContent = matches.filter((item) => item.score >= 85).length;
-    bindMatchActions();
-    applyFilters();
-
-    if (!matches.length) {
+    if (!loadedMatches.length) {
         showEmpty('No reciprocal matches yet', 'Your verified profile is active. New compatible educators will appear here automatically.');
     }
 }

@@ -7,13 +7,19 @@
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
+  let mchAnalyticsConsent = 'denied';
+  try { mchAnalyticsConsent = localStorage.getItem('mch-analytics-consent') === 'granted' ? 'granted' : 'denied'; } catch (error) {}
+  gtag('consent', 'default', { analytics_storage: mchAnalyticsConsent, ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' });
   gtag('config', 'G-Y2MZ4NKNHS');
 </script>
+<link rel="stylesheet" href="site-core.css">
+<script src="site-core.js" defer></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="Create a May Cross Hub educator account and add your reciprocal transfer preferences.">
 <meta name="theme-color" content="#002b5e">
 <title>Create Account | May Cross Hub</title>
+<link rel="canonical" href="https://maycrosshub.co.za/register.html">
 
 <style>
 :root {
@@ -957,6 +963,10 @@ footer {
                                 <span class="switch"><input type="checkbox" name="allowRequests" checked><span class="slider"></span></span>
                             </label>
                             <label class="switch-row">
+                                <span><strong>Email me about platform activity</strong><span>Receive request and conversation notifications by email.</span></span>
+                                <span class="switch"><input type="checkbox" name="emailNotifications" checked><span class="slider"></span></span>
+                            </label>
+                            <label class="switch-row">
                                 <span><strong>Show my school name</strong><span>Keep this private until you are ready.</span></span>
                                 <span class="switch"><input type="checkbox" name="showSchool"><span class="slider"></span></span>
                             </label>
@@ -973,7 +983,7 @@ footer {
 
                         <label class="consent">
                             <input id="consent" name="consent" type="checkbox" required>
-                            <span>I confirm that the information is accurate and consent to it being used for transfer matching in line with the <a href="privacy.html">privacy policy</a>.</span>
+                            <span>I confirm that the information is accurate and agree to the <a href="terms.html">Terms of Use</a>, <a href="guidelines.html">Community Guidelines</a>, and processing described in the <a href="privacy.html">Privacy Policy</a>.</span>
                         </label>
                     </section>
 
@@ -1313,11 +1323,14 @@ function buildProfileDocuments(uid, email) {
         privacy: {
             showProfessional,
             allowRequests,
+            emailNotifications: form.elements.emailNotifications.checked,
             showSchool: form.elements.showSchool.checked,
             showContact: form.elements.showContact.checked
         },
         available: false,
         emailVerified: false,
+        paused: false,
+        lastActiveAt: serverTimestamp(),
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
     };
@@ -1336,6 +1349,7 @@ function buildProfileDocuments(uid, email) {
         postLevel: showProfessional ? privateProfile.current.postLevel : '',
         nearby,
         available: false,
+        lastActiveAt: serverTimestamp(),
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
     };
@@ -1484,6 +1498,7 @@ form.addEventListener('submit', async (event) => {
         profileSaved = true;
 
         await sendEmailVerification(credential.user);
+        window.mchTrack?.('sign_up_completed');
         await signOut(auth);
 
         form.hidden = true;

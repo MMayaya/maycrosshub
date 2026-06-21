@@ -7,13 +7,20 @@
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
+  let mchAnalyticsConsent = 'denied';
+  try { mchAnalyticsConsent = localStorage.getItem('mch-analytics-consent') === 'granted' ? 'granted' : 'denied'; } catch (error) {}
+  gtag('consent', 'default', { analytics_storage: mchAnalyticsConsent, ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' });
   gtag('config', 'G-Y2MZ4NKNHS');
 </script>
+<link rel="stylesheet" href="site-core.css">
+<script src="site-core.js" defer></script>
+<script type="module" src="notifications-ui.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="Review and update your May Cross Hub educator profile and transfer preferences.">
 <meta name="theme-color" content="#002b5e">
 <title>My Profile | May Cross Hub</title>
+<meta name="robots" content="noindex,nofollow">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -231,6 +238,27 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
     background: rgba(255,255,255,0.96);
     box-shadow: 0 -5px 22px rgba(31,45,61,0.09);
 }
+.danger-zone { border-color: #efc2c5; background: #fffafa; }
+.danger-zone .section-number { background: #a92129; }
+.danger-actions { display: flex; flex-wrap: wrap; gap: 0.7rem; }
+.blocked-list { display: grid; gap: 0.5rem; margin-top: 1rem; }
+.blocked-row { display: flex; justify-content: space-between; align-items: center; gap: 0.7rem; padding: 0.7rem; border: 1px solid #e0e7ef; border-radius: 8px; background: #fff; }
+.button-danger { color: #fff; background: #a92129; }
+.button-danger:hover { background: #85171e; }
+.delete-dialog {
+    width: min(92vw, 520px);
+    margin: auto;
+    padding: 1.3rem;
+    border: 0;
+    border-radius: 12px;
+    color: var(--ink);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.delete-dialog::backdrop { background: rgba(0,25,55,0.7); }
+.delete-dialog h2 { color: #8b1e24; }
+.delete-dialog p { margin: 0.6rem 0 1rem; }
+.delete-dialog input { width: 100%; min-height: 44px; padding: 0.65rem; border: 1px solid #bdcbd9; border-radius: 7px; }
+.delete-dialog .actions { margin-top: 1rem; }
 .form-status { color: var(--red); font-size: 0.88rem; font-weight: 700; }
 .actions { display: flex; gap: 0.65rem; margin-left: auto; }
 .button {
@@ -282,7 +310,7 @@ footer { padding: 1.5rem 1rem 2.5rem; color: #69798b; text-align: center; font-s
 <nav class="site-nav" aria-label="Main navigation">
     <a class="brand" href="index.html">May Cross Hub</a>
     <div class="nav-links">
-        <a href="index.html">Home</a>
+        <a href="dashboard.html">Dashboard</a>
         <a href="matches.html">My Matches</a>
         <a href="request.html">Requests</a>
         <a href="profile.html" class="active" aria-current="page">Profile</a>
@@ -374,11 +402,27 @@ footer { padding: 1.5rem 1rem 2.5rem; color: #69798b; text-align: center; font-s
                 <div><h2 id="privacyTitle">Privacy and availability</h2><p>Turning either of the first two settings off removes your profile from active match results.</p></div>
             </div>
             <div class="privacy-grid">
+                <label class="privacy-option"><input id="profilePaused" type="checkbox"><span><strong>Pause my match profile</strong><span>Hide your profile and stop new requests without deleting your account.</span></span></label>
                 <label class="privacy-option"><input id="showProfessional" type="checkbox"><span><strong>Show subjects and district</strong><span>Needed to create a useful searchable match profile.</span></span></label>
                 <label class="privacy-option"><input id="allowRequests" type="checkbox"><span><strong>Allow match requests</strong><span>Other verified educators may send you a private request.</span></span></label>
+                <label class="privacy-option"><input id="emailNotifications" type="checkbox"><span><strong>Email activity notifications</strong><span>Receive email for requests, accepted matches, messages and saved-match reminders.</span></span></label>
                 <label class="privacy-option"><input id="showSchool" type="checkbox"><span><strong>Allow school sharing later</strong><span>Your school remains absent from public match cards.</span></span></label>
                 <label class="privacy-option"><input id="showContact" type="checkbox"><span><strong>Allow contact sharing later</strong><span>Your contact details remain absent from public match cards.</span></span></label>
             </div>
+        </section>
+
+        <section class="form-section danger-zone" aria-labelledby="accountControlTitle">
+            <div class="section-heading">
+                <span class="section-number">5</span>
+                <div><h2 id="accountControlTitle">Account controls</h2><p>Download a copy of your information or permanently remove your account and associated platform data.</p></div>
+            </div>
+            <div class="danger-actions">
+                <button class="button button-secondary" id="passwordResetButton" type="button">Send Password Reset</button>
+                <button class="button button-secondary" id="exportButton" type="button">Download My Data</button>
+                <button class="button button-danger" id="deleteButton" type="button">Delete Account</button>
+            </div>
+            <h3 style="margin-top:1.2rem">Blocked educators</h3>
+            <div class="blocked-list" id="blockedList"><p class="helper">Loading blocked educators...</p></div>
         </section>
 
         <div class="form-footer">
@@ -391,6 +435,18 @@ footer { padding: 1.5rem 1rem 2.5rem; color: #69798b; text-align: center; font-s
     </form>
 </main>
 
+<dialog class="delete-dialog" id="deleteDialog" aria-labelledby="deleteTitle">
+    <h2 id="deleteTitle">Permanently delete account?</h2>
+    <p>This removes your profile, match listing, requests, conversations and login. This cannot be undone. Type <strong>DELETE</strong> to confirm.</p>
+    <label for="deleteConfirmation">Confirmation</label>
+    <input id="deleteConfirmation" type="text" autocomplete="off">
+    <p class="form-status" id="deleteStatus" role="alert"></p>
+    <div class="actions">
+        <button class="button button-secondary" id="deleteCancel" type="button">Keep Account</button>
+        <button class="button button-danger" id="deleteConfirm" type="button">Delete Permanently</button>
+    </div>
+</dialog>
+
 <footer>&copy; <span id="year"></span> May Cross Hub. Keep your profile accurate for better reciprocal matches.</footer>
 
 <script type="module">
@@ -399,19 +455,30 @@ import { accountInitials, compactAccountName } from "./auth-ui.js";
 import {
     getAuth,
     onAuthStateChanged,
+    sendPasswordResetEmail,
     signOut,
     updateProfile
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
 import {
+    collection,
+    deleteDoc,
     doc,
     getDoc,
+    getDocs,
     getFirestore,
+    query,
     serverTimestamp,
+    where,
     writeBatch
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+import {
+    getFunctions,
+    httpsCallable
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-functions.js";
 
 const auth = getAuth(firebaseApp);
 const db = getFirestore(firebaseApp);
+const functions = getFunctions(firebaseApp);
 const form = document.getElementById('profileForm');
 const loadingPanel = document.getElementById('loadingPanel');
 const formStatus = document.getElementById('formStatus');
@@ -432,6 +499,7 @@ const subjectList = document.getElementById('subjectList');
 let currentUser = null;
 let privateProfile = null;
 let publicProfile = null;
+let accountSuspended = false;
 let selectedGrades = [];
 let selectedSubjects = [];
 let messageTimer;
@@ -542,7 +610,12 @@ function setFormError(message, target = null) {
 }
 
 function updateVisibilityPreview() {
-    const visible = document.getElementById('showProfessional').checked
+    if (accountSuspended) {
+        visibilityStatus.textContent = 'Suspended from matching';
+        return;
+    }
+    const visible = !document.getElementById('profilePaused').checked
+        && document.getElementById('showProfessional').checked
         && document.getElementById('allowRequests').checked;
     visibilityStatus.textContent = visible ? 'Visible to matches' : 'Hidden from matches';
 }
@@ -589,6 +662,7 @@ subjectSelect.addEventListener('change', () => {
 });
 document.getElementById('showProfessional').addEventListener('change', updateVisibilityPreview);
 document.getElementById('allowRequests').addEventListener('change', updateVisibilityPreview);
+document.getElementById('profilePaused').addEventListener('change', updateVisibilityPreview);
 
 function populateForm(profile) {
     document.getElementById('firstName').value = profile.firstName || '';
@@ -614,9 +688,49 @@ function populateForm(profile) {
     document.getElementById('reason').value = profile.desired?.reason || '';
     document.getElementById('showProfessional').checked = profile.privacy?.showProfessional === true;
     document.getElementById('allowRequests').checked = profile.privacy?.allowRequests === true;
+    document.getElementById('emailNotifications').checked = profile.privacy?.emailNotifications !== false;
+    document.getElementById('profilePaused').checked = profile.paused === true;
     document.getElementById('showSchool').checked = profile.privacy?.showSchool === true;
     document.getElementById('showContact').checked = profile.privacy?.showContact === true;
     updateVisibilityPreview();
+}
+
+async function loadBlockedEducators() {
+    const blockedList = document.getElementById('blockedList');
+    const snapshot = await getDocs(collection(db, 'profiles', currentUser.uid, 'blockedUsers'));
+    if (!snapshot.size) {
+        blockedList.innerHTML = '<p class="helper">You have not blocked any educators.</p>';
+        return;
+    }
+    const rows = await Promise.all(snapshot.docs.map(async (item) => {
+        const matchProfile = await getDoc(doc(db, 'matchProfiles', item.id));
+        return { uid: item.id, label: matchProfile.data()?.displayCode || 'Private educator' };
+    }));
+    blockedList.replaceChildren();
+    rows.forEach((row) => {
+        const container = document.createElement('div');
+        const label = document.createElement('strong');
+        const button = document.createElement('button');
+        container.className = 'blocked-row';
+        label.textContent = row.label;
+        button.className = 'button button-secondary';
+        button.type = 'button';
+        button.textContent = 'Unblock';
+        button.addEventListener('click', async () => {
+            button.disabled = true;
+            try {
+                await deleteDoc(doc(db, 'profiles', currentUser.uid, 'blockedUsers', row.uid));
+                container.remove();
+                if (!blockedList.children.length) blockedList.innerHTML = '<p class="helper">You have not blocked any educators.</p>';
+                showMessage('Educator unblocked. Future matches may include this profile again.');
+            } catch (error) {
+                button.disabled = false;
+                showMessage('The educator could not be unblocked. Please try again.', 'error');
+            }
+        });
+        container.append(label, button);
+        blockedList.append(container);
+    });
 }
 
 form.addEventListener('input', (event) => {
@@ -641,8 +755,9 @@ form.addEventListener('submit', async (event) => {
     const lastName = document.getElementById('lastName').value.trim();
     const showProfessional = document.getElementById('showProfessional').checked;
     const allowRequests = document.getElementById('allowRequests').checked;
+    const paused = document.getElementById('profilePaused').checked;
     const nearby = document.getElementById('nearby').value === 'Yes';
-    const available = currentUser.emailVerified && showProfessional && allowRequests;
+    const available = currentUser.emailVerified && !accountSuspended && !paused && showProfessional && allowRequests;
     const current = {
         school: document.getElementById('currentSchool').value.trim(),
         province: currentProvince.value,
@@ -665,6 +780,7 @@ form.addEventListener('submit', async (event) => {
     const privacy = {
         showProfessional,
         allowRequests,
+        emailNotifications: document.getElementById('emailNotifications').checked,
         showSchool: document.getElementById('showSchool').checked,
         showContact: document.getElementById('showContact').checked
     };
@@ -680,6 +796,8 @@ form.addEventListener('submit', async (event) => {
         privacy,
         available,
         emailVerified: currentUser.emailVerified,
+        paused,
+        lastActiveAt: privateProfile.lastActiveAt || serverTimestamp(),
         createdAt: privateProfile.createdAt || serverTimestamp(),
         updatedAt: serverTimestamp()
     };
@@ -697,6 +815,7 @@ form.addEventListener('submit', async (event) => {
         postLevel: showProfessional ? current.postLevel : '',
         nearby,
         available,
+        lastActiveAt: publicProfile?.lastActiveAt || privateProfile.lastActiveAt || serverTimestamp(),
         createdAt: publicProfile?.createdAt || privateProfile.createdAt || serverTimestamp(),
         updatedAt: serverTimestamp()
     };
@@ -715,6 +834,7 @@ form.addEventListener('submit', async (event) => {
         accountAvatar.textContent = accountInitials(currentUser, updatedPrivateProfile);
         updateVisibilityPreview();
         showMessage('Profile updated successfully. Your match results will use the new information.');
+        window.mchTrack?.('profile_updated', { match_visibility: available ? 'visible' : 'hidden' });
     } catch (error) {
         console.error('Profile update failed.', error);
         const message = error.code === 'permission-denied'
@@ -725,6 +845,100 @@ form.addEventListener('submit', async (event) => {
     } finally {
         saveButton.disabled = false;
         saveButton.textContent = 'Save Profile';
+    }
+});
+
+function serialiseValue(value) {
+    if (value?.toDate) return value.toDate().toISOString();
+    if (Array.isArray(value)) return value.map(serialiseValue);
+    if (value && typeof value === 'object') {
+        return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, serialiseValue(item)]));
+    }
+    return value;
+}
+
+document.getElementById('exportButton').addEventListener('click', async () => {
+    const exportButton = document.getElementById('exportButton');
+    exportButton.disabled = true;
+    exportButton.textContent = 'Preparing...';
+    try {
+        const [incoming, outgoing] = await Promise.all([
+            getDocs(query(collection(db, 'requests'), where('toUid', '==', currentUser.uid))),
+            getDocs(query(collection(db, 'requests'), where('fromUid', '==', currentUser.uid)))
+        ]);
+        const requests = new Map([...incoming.docs, ...outgoing.docs].map((item) => [item.id, { id: item.id, ...item.data() }]));
+        const conversations = {};
+        await Promise.all(Array.from(requests.values()).map(async (request) => {
+            if (request.status !== 'accepted') return;
+            const messages = await getDocs(collection(db, 'requests', request.id, 'messages'));
+            conversations[request.id] = messages.docs.map((item) => ({ id: item.id, ...item.data() }));
+        }));
+        const payload = serialiseValue({
+            exportedAt: new Date().toISOString(),
+            account: { uid: currentUser.uid, email: currentUser.email, emailVerified: currentUser.emailVerified },
+            privateProfile,
+            matchProfile: publicProfile,
+            requests: Array.from(requests.values()),
+            conversations
+        });
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `may-cross-hub-data-${new Date().toISOString().slice(0, 10)}.json`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+        showMessage('Your account data download is ready.');
+        window.mchTrack?.('account_data_exported');
+    } catch (error) {
+        console.error('Data export failed.', error);
+        showMessage('Your data could not be downloaded. Please try again.', 'error');
+    } finally {
+        exportButton.disabled = false;
+        exportButton.textContent = 'Download My Data';
+    }
+});
+
+document.getElementById('passwordResetButton').addEventListener('click', async () => {
+    const button = document.getElementById('passwordResetButton');
+    button.disabled = true;
+    try {
+        await sendPasswordResetEmail(auth, currentUser.email);
+        showMessage('Password reset email sent. Check your inbox and spam folder.');
+    } catch (error) {
+        console.error('Password reset request failed.', error);
+        showMessage('The password reset email could not be sent. Please try again.', 'error');
+    } finally {
+        button.disabled = false;
+    }
+});
+
+const deleteDialog = document.getElementById('deleteDialog');
+const deleteConfirmation = document.getElementById('deleteConfirmation');
+const deleteStatus = document.getElementById('deleteStatus');
+document.getElementById('deleteButton').addEventListener('click', () => {
+    deleteConfirmation.value = '';
+    deleteStatus.textContent = '';
+    deleteDialog.showModal();
+    deleteConfirmation.focus();
+});
+document.getElementById('deleteCancel').addEventListener('click', () => deleteDialog.close());
+document.getElementById('deleteConfirm').addEventListener('click', async () => {
+    if (deleteConfirmation.value !== 'DELETE') {
+        deleteStatus.textContent = 'Type DELETE exactly to confirm.';
+        deleteConfirmation.focus();
+        return;
+    }
+    const button = document.getElementById('deleteConfirm');
+    button.disabled = true;
+    button.textContent = 'Deleting...';
+    try {
+        await httpsCallable(functions, 'deleteOwnAccount')();
+        window.location.replace('index.html?account=deleted');
+    } catch (error) {
+        console.error('Account deletion failed.', error);
+        deleteStatus.textContent = 'The account could not be deleted. Please contact support.';
+        button.disabled = false;
+        button.textContent = 'Delete Permanently';
     }
 });
 
@@ -742,9 +956,10 @@ onAuthStateChanged(auth, async (user) => {
     accountName.textContent = compactAccountName(user);
     accountAvatar.textContent = accountInitials(user);
     try {
-        const [privateSnapshot, publicSnapshot] = await Promise.all([
+        const [privateSnapshot, publicSnapshot, moderationSnapshot] = await Promise.all([
             getDoc(doc(db, 'profiles', user.uid)),
-            getDoc(doc(db, 'matchProfiles', user.uid))
+            getDoc(doc(db, 'matchProfiles', user.uid)),
+            getDoc(doc(db, 'moderation', user.uid))
         ]);
         if (!privateSnapshot.exists()) {
             loadingPanel.textContent = 'Your educator profile was not found. Please contact support before editing.';
@@ -753,7 +968,10 @@ onAuthStateChanged(auth, async (user) => {
         }
         privateProfile = privateSnapshot.data();
         publicProfile = publicSnapshot.exists() ? publicSnapshot.data() : null;
+        accountSuspended = moderationSnapshot.data()?.status === 'suspended';
         populateForm(privateProfile);
+        await loadBlockedEducators();
+        if (accountSuspended) showMessage('Your profile is suspended from match results. You may update your details, but matching remains unavailable until the safety review is resolved.', 'error');
         accountName.textContent = compactAccountName(user, privateProfile);
         accountAvatar.textContent = accountInitials(user, privateProfile);
         loadingPanel.hidden = true;

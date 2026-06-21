@@ -7,13 +7,19 @@
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
+  let mchAnalyticsConsent = 'denied';
+  try { mchAnalyticsConsent = localStorage.getItem('mch-analytics-consent') === 'granted' ? 'granted' : 'denied'; } catch (error) {}
+  gtag('consent', 'default', { analytics_storage: mchAnalyticsConsent, ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' });
   gtag('config', 'G-Y2MZ4NKNHS');
 </script>
+<link rel="stylesheet" href="site-core.css">
+<script src="site-core.js" defer></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="Privacy policy and privacy controls for May Cross Hub educator transfer matching.">
 <meta name="theme-color" content="#002b5e">
 <title>Privacy Policy | May Cross Hub</title>
+<link rel="canonical" href="https://maycrosshub.co.za/privacy.html">
 
 <style>
 :root {
@@ -531,6 +537,7 @@ footer {
         <a href="index.html">Home</a>
         <a href="matches.html">Search Matches</a>
         <a href="signin.html" id="privacySignIn">Sign in</a>
+        <a href="dashboard.html" id="privacyDashboard" hidden>Dashboard</a>
         <a href="profile.html" id="privacyProfile" hidden>Profile</a>
         <a href="index.html#feedback">Feedback</a>
         <a href="privacy.html" class="active" aria-current="page">Privacy</a>
@@ -632,8 +639,16 @@ footer {
             <p class="callout">Privacy settings must be enforced by database security rules, not only hidden on the page. Interface controls alone do not protect stored information.</p>
         </section>
 
-        <section class="policy-section" id="sharing" aria-labelledby="sharing-title">
+        <section class="policy-section" id="analytics" aria-labelledby="analytics-title">
             <span class="section-number" aria-hidden="true">5</span>
+            <h2 id="analytics-title">Service providers, analytics and cookies</h2>
+            <p>May Cross Hub uses Firebase Authentication and Cloud Firestore to provide accounts, profiles, matching, requests and conversations. Formspree processes information submitted through the feedback form. Google Analytics is optional and helps measure page use and completed platform actions.</p>
+            <p>Analytics storage is denied by default and is enabled only after the visitor selects <strong>Accept analytics</strong>. May Cross Hub must not send names, email addresses, phone numbers, message contents or exact school details to Analytics.</p>
+            <p><button class="button" type="button" data-reset-consent>Review analytics choice</button></p>
+        </section>
+
+        <section class="policy-section" id="sharing" aria-labelledby="sharing-title">
+            <span class="section-number" aria-hidden="true">6</span>
             <h2 id="sharing-title">Sharing, service providers and transfers</h2>
             <p>May Cross Hub should not sell personal information. Information should be shared only where needed for the service, where the educator has chosen to reveal it, where a contracted provider processes it securely, or where disclosure is required or permitted by law.</p>
 
@@ -691,13 +706,13 @@ footer {
         <section class="policy-section" id="contact" aria-labelledby="contact-title">
             <span class="section-number" aria-hidden="true">8</span>
             <h2 id="contact-title">Contact, complaints and official resources</h2>
-            <p>Privacy questions and requests should first be sent to the operator responsible for May Cross Hub. Accurate contact and Information Officer details must be published before any real personal information is collected.</p>
+            <p>Privacy questions and requests should first be submitted to the May Cross Hub privacy contact. Select <strong>Privacy concern</strong> on the feedback form so the request can be identified and handled separately from ordinary feedback.</p>
 
             <div class="contact-card">
-                <p><strong>Responsible party:</strong><span class="pending">Add before launch</span></p>
-                <p><strong>Information Officer:</strong><span class="pending">Appoint and register</span></p>
-                <p><strong>Privacy email:</strong><span class="pending">Add monitored address</span></p>
-                <p><strong>Physical or postal address:</strong><span class="pending">Add before launch</span></p>
+                <p><strong>Responsible party:</strong><span>May Cross Hub, operated by Mzwamadoda Mayaya</span></p>
+                <p><strong>Privacy contact:</strong><span>Mzwamadoda Mayaya</span></p>
+                <p><strong>Privacy request channel:</strong><span><a href="index.html#feedback">May Cross Hub feedback and privacy form</a></span></p>
+                <p><strong>Service location:</strong><span>South Africa</span></p>
             </div>
 
             <p>Educators may also contact or complain to South Africa's Information Regulator. Users should consult the regulator's current website for official forms, contact details and procedures.</p>
@@ -733,6 +748,7 @@ document.getElementById('printPolicy').addEventListener('click', () => window.pr
 
 const auth = getAuth(firebaseApp);
 const privacySignIn = document.getElementById('privacySignIn');
+const privacyDashboard = document.getElementById('privacyDashboard');
 const privacyProfile = document.getElementById('privacyProfile');
 const privacyFooterSignIn = document.getElementById('privacyFooterSignIn');
 const privacyAccountName = document.getElementById('privacyAccountName');
@@ -746,6 +762,7 @@ privacySignOut.addEventListener('click', async () => {
 onAuthStateChanged(auth, (user) => {
     const signedIn = Boolean(user?.emailVerified);
     privacySignIn.hidden = signedIn;
+    privacyDashboard.hidden = !signedIn;
     privacyProfile.hidden = !signedIn;
     privacyFooterSignIn.hidden = signedIn;
     privacyAccountName.hidden = !signedIn;
