@@ -14,7 +14,7 @@
 </script>
 <link rel="stylesheet" href="site-core.css">
 <script src="site-core.js" defer></script>
-<script type="module" src="notifications-ui.js"></script>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="Review reciprocal educator transfer matches on May Cross Hub.">
@@ -917,16 +917,13 @@ import {
     serverTimestamp,
     setDoc,
     startAfter,
+    updateDoc,
     where
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
-import {
-    getFunctions,
-    httpsCallable
-} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-functions.js";
 
 const auth = getAuth(firebaseApp);
 const db = getFirestore(firebaseApp);
-const functions = getFunctions(firebaseApp);
+
 const matchList = document.getElementById('matchList');
 const subjectFilter = document.getElementById('subjectFilter');
 const provinceFilter = document.getElementById('provinceFilter');
@@ -1263,8 +1260,23 @@ document.getElementById('requestDialogSend').addEventListener('click', async () 
     sendButton.disabled = true;
     sendButton.textContent = 'Sending...';
     try {
-        const response = await httpsCallable(functions, 'sendMatchRequest')({ toUid: matchUid, matchScore: score, introMessage: introduction });
-        const requestId = response.data.requestId;
+        const requestId = currentUser.uid + '_' + matchUid;
+        const requestRef = doc(db, 'requests', requestId);
+        const requestData = {
+            fromUid: currentUser.uid,
+            toUid: matchUid,
+            status: 'pending',
+            matchScore: score,
+            introMessage: introduction,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+            respondedAt: null
+        };
+        if (['declined', 'cancelled', 'archived'].includes(currentStatus)) {
+            await updateDoc(requestRef, requestData);
+        } else {
+            await setDoc(requestRef, requestData);
+        }
         outgoingRequests.set(matchUid, { id: requestId, fromUid: currentUser.uid, toUid: matchUid, status: 'pending', matchScore: score, introMessage: introduction });
         button.textContent = 'Request pending';
         button.classList.add('button-success');

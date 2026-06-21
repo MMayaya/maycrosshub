@@ -962,10 +962,7 @@ footer {
                                 <span><strong>Allow educators to send match requests</strong><span>Requests remain inside May Cross Hub.</span></span>
                                 <span class="switch"><input type="checkbox" name="allowRequests" checked><span class="slider"></span></span>
                             </label>
-                            <label class="switch-row">
-                                <span><strong>Email me about platform activity</strong><span>Receive request and conversation notifications by email.</span></span>
-                                <span class="switch"><input type="checkbox" name="emailNotifications" checked><span class="slider"></span></span>
-                            </label>
+
                             <label class="switch-row">
                                 <span><strong>Show my school name</strong><span>Keep this private until you are ready.</span></span>
                                 <span class="switch"><input type="checkbox" name="showSchool"><span class="slider"></span></span>
@@ -1323,7 +1320,7 @@ function buildProfileDocuments(uid, email) {
         privacy: {
             showProfessional,
             allowRequests,
-            emailNotifications: form.elements.emailNotifications.checked,
+
             showSchool: form.elements.showSchool.checked,
             showContact: form.elements.showContact.checked
         },

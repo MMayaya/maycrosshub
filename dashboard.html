@@ -18,17 +18,85 @@
 <nav class="site-nav"><a class="brand" href="index.html">May Cross Hub</a><div class="nav-links"><a class="active" href="dashboard.html">Dashboard</a><a href="matches.html">Matches</a><a href="request.html">Requests</a><a href="profile.html">Profile</a><a href="index.html#feedback">Feedback</a></div><button class="signout" id="signOutButton" type="button">Sign out</button></nav>
 <main class="shell">
 <section class="hero"><div><p>Welcome back</p><h1 id="welcomeName">Your matching dashboard</h1><p>Review new activity, keep your educator profile accurate and continue your reciprocal transfer conversations.</p></div><div class="hero-actions"><a class="button button-light" href="matches.html">Find Matches</a><a class="button button-light" href="profile.html">Edit Profile</a></div></section>
-<section class="grid" aria-label="Account summary"><article class="stat"><strong id="matchCount">0</strong><span>available reciprocal profiles</span></article><article class="stat"><strong id="incomingCount">0</strong><span>incoming requests</span></article><article class="stat"><strong id="unreadCount">0</strong><span>unread notifications</span></article><article class="stat"><strong id="savedCount">0</strong><span>saved matches</span></article></section>
+<section class="grid" aria-label="Account summary"><article class="stat"><strong id="matchCount">0</strong><span>available reciprocal profiles</span></article><article class="stat"><strong id="incomingCount">0</strong><span>incoming requests</span></article><article class="stat"><strong id="activeCount">0</strong><span>active requests</span></article><article class="stat"><strong id="savedCount">0</strong><span>saved matches</span></article></section>
 <div class="content-grid"><section class="panel"><div class="panel-heading"><h2>Profile readiness</h2><span class="visibility" id="visibilityBadge">Checking...</span></div><p><strong id="completenessText">0% complete</strong></p><div class="progress" aria-hidden="true"><span id="completenessBar" style="width:0%"></span></div><ul class="suggestions" id="suggestions"></ul></section><section class="panel"><div class="panel-heading"><h2>Recent activity</h2><a href="request.html">View requests</a></div><div class="notification-list" id="notificationList"><p class="empty">Loading activity...</p></div></section></div>
-<p class="empty" id="dashboardStatus" role="status"></p><p><a id="adminLink" href="admin.html" hidden>Open moderation dashboard</a></p>
+<p class="empty" id="dashboardStatus" role="status"></p>
 </main>
 <footer>&copy; <span id="year"></span> May Cross Hub.</footer>
-<script type="module" src="notifications-ui.js"></script>
+
 <script type="module">
-import{firebaseApp}from'./firebase-config.js';import{compactAccountName}from'./auth-ui.js';import{getAuth,onAuthStateChanged,signOut}from'https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js';import{collection,doc,getDoc,getDocs,getFirestore,limit,onSnapshot,query,updateDoc,where}from'https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js';
+import { firebaseApp } from './firebase-config.js';
+import { compactAccountName } from './auth-ui.js';
+import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js';
+import { collection, doc, getDoc, getDocs, getFirestore, limit, query, where } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js';
 const auth=getAuth(firebaseApp),db=getFirestore(firebaseApp);document.getElementById('year').textContent=new Date().getFullYear();document.getElementById('signOutButton').addEventListener('click',async()=>{await signOut(auth);location.replace('signin.html');});
 function profileReview(profile){const checks=[['Add your full name',profile.firstName&&profile.lastName],['Add a cellphone number',profile.phone],['Complete current post details',profile.current?.school&&profile.current?.district&&profile.current?.province],['Add grades taught',profile.current?.grades?.length],['Add qualified subjects',profile.current?.subjects?.length],['Complete desired transfer area',profile.desired?.province&&profile.desired?.district&&profile.desired?.town],['Allow professional matching',profile.privacy?.showProfessional],['Allow match requests',profile.privacy?.allowRequests]];const passed=checks.filter(([,ok])=>ok).length;return{percent:Math.round(passed/checks.length*100),missing:checks.filter(([,ok])=>!ok).map(([label])=>label)};}
-function renderNotifications(snapshot){const docs=snapshot.docs.sort((a,b)=>(b.data().createdAt?.seconds||0)-(a.data().createdAt?.seconds||0));const unread=docs.filter(item=>item.data().read===false);document.getElementById('unreadCount').textContent=unread.length;const list=document.getElementById('notificationList');if(!docs.length){list.innerHTML='<p class="empty">No activity yet. New requests and messages will appear here.</p>';return;}list.innerHTML=docs.slice(0,8).map(item=>{const n=item.data();return`<a class="notification${n.read?'':' unread'}" data-id="${item.id}" href="${n.link||'request.html'}"><strong>${n.title||'Platform update'}</strong><span>${n.body||''}</span></a>`;}).join('');list.querySelectorAll('a').forEach(link=>link.addEventListener('click',()=>updateDoc(doc(db,'notifications',link.dataset.id),{read:true}).catch(()=>{})));}
-onAuthStateChanged(auth,async user=>{if(!user?.emailVerified){location.replace('signin.html');return;}try{const profileSnapshot=await getDoc(doc(db,'profiles',user.uid));if(!profileSnapshot.exists())throw Error('Profile missing');const profile=profileSnapshot.data();document.getElementById('welcomeName').textContent=`Welcome, ${compactAccountName(user,profile)}`;const review=profileReview(profile);document.getElementById('completenessText').textContent=`${review.percent}% complete`;document.getElementById('completenessBar').style.width=`${review.percent}%`;document.getElementById('suggestions').innerHTML=(review.missing.length?review.missing:['Your profile contains the main matching details.']).map(item=>`<li>${item}</li>`).join('');const visible=profile.available===true&&!profile.paused;const badge=document.getElementById('visibilityBadge');badge.textContent=visible?'Visible to matches':'Matching paused';badge.classList.toggle('paused',!visible);const [incoming,saved,matches,token]=await Promise.all([getDocs(query(collection(db,'requests'),where('toUid','==',user.uid))),getDocs(collection(db,'profiles',user.uid,'savedMatches')),getDocs(query(collection(db,'matchProfiles'),where('currentProvince','==',profile.desired?.province||''),where('desiredProvince','==',profile.current?.province||''),where('available','==',true),limit(50))),user.getIdTokenResult()]);document.getElementById('incomingCount').textContent=incoming.docs.filter(item=>item.data().status==='pending').length;document.getElementById('savedCount').textContent=saved.size;document.getElementById('matchCount').textContent=matches.docs.filter(item=>item.id!==user.uid).length;document.getElementById('adminLink').hidden=token.claims.admin!==true;onSnapshot(query(collection(db,'notifications'),where('recipientUid','==',user.uid)),renderNotifications,error=>{console.error(error);document.getElementById('notificationList').innerHTML='<p class="empty">Activity could not be loaded.</p>';});}catch(error){console.error(error);document.getElementById('dashboardStatus').textContent='Your dashboard could not be loaded. Refresh the page or contact support.';}});
+function renderRequestActivity(items, uid) {
+    const ordered = items.sort((a, b) => (b.data().createdAt?.seconds || 0) - (a.data().createdAt?.seconds || 0));
+    const active = ordered.filter((item) => ['pending', 'accepted'].includes(item.data().status));
+    document.getElementById('activeCount').textContent = active.length;
+    const list = document.getElementById('notificationList');
+    if (!ordered.length) {
+        list.innerHTML = '<p class="empty">No request activity yet. Your sent and received requests will appear here.</p>';
+        return;
+    }
+    const statusLabels = {
+        pending: 'Pending response',
+        accepted: 'Accepted - conversation available',
+        declined: 'Declined',
+        cancelled: 'Cancelled',
+        archived: 'Archived'
+    };
+    list.innerHTML = ordered.slice(0, 8).map((item) => {
+        const request = item.data();
+        const direction = request.fromUid === uid ? 'Request you sent' : 'Request received';
+        const label = statusLabels[request.status] || 'Request updated';
+        const link = request.status === 'accepted'
+            ? 'conversation.html?request=' + encodeURIComponent(item.id)
+            : 'request.html';
+        return '<a class="notification" href="' + link + '"><strong>' + direction + '</strong><span>' + label + '</span></a>';
+    }).join('');
+}
+onAuthStateChanged(auth, async (user) => {
+    if (!user?.emailVerified) {
+        location.replace('signin.html');
+        return;
+    }
+    try {
+        const profileSnapshot = await getDoc(doc(db, 'profiles', user.uid));
+        if (!profileSnapshot.exists()) throw Error('Profile missing');
+        const profile = profileSnapshot.data();
+        document.getElementById('welcomeName').textContent = 'Welcome, ' + compactAccountName(user, profile);
+        const review = profileReview(profile);
+        document.getElementById('completenessText').textContent = review.percent + '% complete';
+        document.getElementById('completenessBar').style.width = review.percent + '%';
+        document.getElementById('suggestions').innerHTML = (review.missing.length ? review.missing : ['Your profile contains the main matching details.'])
+            .map((item) => '<li>' + item + '</li>').join('');
+        const visible = profile.available === true && !profile.paused;
+        const badge = document.getElementById('visibilityBadge');
+        badge.textContent = visible ? 'Visible to matches' : 'Matching paused';
+        badge.classList.toggle('paused', !visible);
+
+        const [incoming, outgoing, saved, matches] = await Promise.all([
+            getDocs(query(collection(db, 'requests'), where('toUid', '==', user.uid))),
+            getDocs(query(collection(db, 'requests'), where('fromUid', '==', user.uid))),
+            getDocs(collection(db, 'profiles', user.uid, 'savedMatches')),
+            getDocs(query(
+                collection(db, 'matchProfiles'),
+                where('currentProvince', '==', profile.desired?.province || ''),
+                where('desiredProvince', '==', profile.current?.province || ''),
+                where('available', '==', true),
+                limit(50)
+            ))
+        ]);
+        document.getElementById('incomingCount').textContent = incoming.docs.filter((item) => item.data().status === 'pending').length;
+        document.getElementById('savedCount').textContent = saved.size;
+        document.getElementById('matchCount').textContent = matches.docs.filter((item) => item.id !== user.uid).length;
+        renderRequestActivity([...incoming.docs, ...outgoing.docs], user.uid);
+    } catch (error) {
+        console.error(error);
+        document.getElementById('dashboardStatus').textContent = 'Your dashboard could not be loaded. Refresh the page or contact support.';
+    }
+});
 </script>
 </body></html>

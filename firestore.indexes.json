@@ -1,30 +1,4 @@
 {
-  "indexes": [
-    {
-      "collectionGroup": "requests",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "fromUid", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "ASCENDING" }
-      ]
-    }
-  ],
-  "fieldOverrides": [
-    {
-      "collectionGroup": "blockedUsers",
-      "fieldPath": "blockedUid",
-      "indexes": [
-        { "order": "ASCENDING", "queryScope": "COLLECTION_GROUP" },
-        { "order": "DESCENDING", "queryScope": "COLLECTION_GROUP" }
-      ]
-    },
-    {
-      "collectionGroup": "savedMatches",
-      "fieldPath": "ownerUid",
-      "indexes": [
-        { "order": "ASCENDING", "queryScope": "COLLECTION_GROUP" },
-        { "order": "DESCENDING", "queryScope": "COLLECTION_GROUP" }
-      ]
-    }
-  ]
+  "indexes": [],
+  "fieldOverrides": []
 }

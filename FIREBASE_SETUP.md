@@ -1,156 +1,82 @@
-# May Cross Hub Firebase Setup
+# May Cross Hub: Spark setup
 
-The website code is connected to Firebase Authentication and Cloud Firestore. Complete these Firebase Console steps before using it publicly.
+This version is designed for the Firebase Spark plan. It does not use Cloud Functions, scheduled jobs, Firebase Extensions or server-generated email notifications.
 
 ## 1. Enable email and password authentication
 
-1. Open the Firebase Console and select the `maycrosshub` project.
-2. Open **Authentication** and select **Get started** if prompted.
-3. Open **Sign-in method**.
-4. Enable **Email/Password**. Email-link sign-in is not required.
+1. Open Firebase Console and select maycrosshub.
+2. Open **Authentication > Sign-in method**.
+3. Enable **Email/Password**.
+4. Under **Authentication > Settings > Authorized domains**, add the live domain and any local domain used for testing.
+5. Review the verification-email and password-reset templates under **Authentication > Templates**.
 
-## 2. Add authorised domains
-
-In **Authentication > Settings > Authorised domains**, add every domain that will host the site, including the GitHub Pages or Firebase Hosting domain.
-
-Use a local web server for development. ES modules should not be tested by double-clicking the HTML files with a `file://` address.
-
-## 3. Create Cloud Firestore
-
-1. Open **Firestore Database**.
-2. Select **Create database**.
-3. Choose a permanent database location appropriate for the project.
-4. Start with production restrictions, then publish the supplied `firestore.rules` file immediately.
-
-Do not leave Firestore in open test mode.
-
-## 4. Publish the security rules
-
-The rules are in `firestore.rules`.
-
-Console method:
+## 2. Publish Firestore rules
 
 1. Open **Firestore Database > Rules**.
-2. Replace the editor contents with `firestore.rules`.
-3. Select **Publish**.
+2. Replace the editor contents with the contents of firestore.rules.
+3. Click **Publish**.
 
-CLI method, after installing and signing in to the Firebase CLI:
+These rules allow verified users to manage their own profiles, saved matches and blocks. They also allow deterministic match requests between active profiles and participant-only conversations.
 
-```text
-firebase use maycrosshub
-firebase deploy --only firestore:rules
-```
+The current website does not require a composite Firestore index. firestore.indexes.json is retained as an empty configuration file for future use.
 
-The included `firebase.json` points the CLI to the rule and index files.
+## 3. Publish the website
 
-## 5. Configure email templates
+Push the contents of this folder to the GitHub repository used by the May Cross Hub custom domain. GitHub Pages can publish the static HTML, CSS, JavaScript and image files without Firebase CLI access.
 
-In **Authentication > Templates**, review the sender name, verification email, password-reset email, action URL and support email before launch.
+Do not upload service-account JSON files, passwords, private keys or Firebase Admin SDK credentials.
 
-## 6. Test the complete flow
+## 4. Test the complete user journey
 
 1. Register educator A and verify the email.
-2. Register educator B with the opposite current and desired provinces and verify the email.
-3. Sign in as educator A and confirm educator B appears under My Matches.
-4. Send a match request.
-5. Sign in as educator B and accept the request.
-6. Open the conversation from both accounts and exchange a test message.
-7. Confirm neither educator can open a conversation for a pending or unrelated request.
-8. Confirm neither educator can read the other's private profile document.
+2. Register educator B with a reciprocal current and desired location and verify the email.
+3. Confirm that both accounts can sign in and find each other.
+4. Send, accept, decline, cancel and resend a request.
+5. Open an accepted request conversation and exchange messages.
+6. Save and remove matches.
+7. Block an educator and confirm they disappear from matching and conversation access.
+8. Submit feedback and an account-deletion request.
 
-## Firestore structure
+## 5. Account-deletion requests
 
-- `profiles/{uid}`: owner-only contact, school and complete transfer profile.
-- `profiles/{uid}/savedMatches/{matchUid}`: owner-only saved matches.
-- `matchProfiles/{uid}`: sanitised matching fields readable by verified educators.
-- `requests/{fromUid_toUid}`: participant-only match request and status.
-- `requests/{fromUid_toUid}/messages/{messageId}`: immutable messages available only to the verified participants while the request is accepted.
-- `notifications/{notificationId}`: server-created in-app activity for one recipient.
-- `reports/{reportId}`: private safety reports reviewed by an administrator.
-- `moderation/{uid}`: administrator-controlled profile suspension state.
-- `mail/{mailId}`: server-created email jobs for the Trigger Email extension.
+The profile page sends account-deletion requests through the existing Formspree endpoint. The operator must verify the request and remove the data manually.
 
-If Firebase reports that a query needs an index, use the link in the error message to create the suggested composite index, then wait for it to finish building.
+For the requested Firebase UID:
 
-## Deleting test users
+1. Delete message documents under every affected requests/{requestId}/messages subcollection.
+2. Delete request documents where fromUid or toUid matches the UID.
+3. Delete documents under profiles/{uid}/savedMatches and profiles/{uid}/blockedUsers.
+4. Delete profiles/{uid} and matchProfiles/{uid}.
+5. Review and remove related reports or moderation records where legally appropriate.
+6. Open **Authentication > Users** and delete the Authentication account.
 
-After the functions are deployed, use **Delete Account** on `profile.html` whenever possible. The `deleteOwnAccount` callable removes the Authentication account and related Firestore documents. The `cleanupDeletedUser` trigger also runs when an administrator deletes a user under **Authentication > Users**.
+Deleting only the Authentication user is not enough. The Firestore profile and match profile must also be deleted or the educator may continue appearing in results.
 
-Before those functions are deployed, Authentication deletion alone will still leave Firestore documents and manual cleanup is required.
-# Launch completion checklist
+## 6. Safety reports
 
-The website code now includes account cleanup, reporting, blocking, moderation, notifications, email hooks, App Check support, analytics consent and hosting configuration. The following console steps are required before those server-backed features become active.
+Reports continue to be written to the private reports collection and blocks continue to work immediately. Without the paid backend, the operator must review reports directly in Firestore Console. There is no automatic report email or administrator dashboard.
 
-## 1. Upgrade and deploy the backend
+## 7. Analytics and privacy
 
-Cloud Functions and the Trigger Email extension require the Blaze billing plan. Set a small budget alert in Google Cloud before deployment.
+Google Analytics remains consent-based and does not require Cloud Functions. Necessary Firebase Authentication browser storage remains enabled so users can stay signed in. Formspree continues to process feedback and deletion-request submissions.
 
-```powershell
-npm --prefix functions install
-firebase login
-firebase use maycrosshub
-firebase deploy --only firestore:rules,firestore:indexes,functions,hosting
-```
+## Spark limitations
 
-When deployment asks for `ADMIN_EMAIL`, enter the email address that should access `admin.html`. Sign in with that account and open `admin.html` once; the protected `claimAdmin` function will add the administrator custom claim.
+This version does not include:
 
-When deployment asks for `BACKUP_BUCKET`, enter a dedicated Cloud Storage bucket name. Create that bucket in a suitable region first, apply a retention policy, and grant the Functions service account permission to run Firestore exports and write to the bucket. The `dailyFirestoreBackup` function runs at 02:00 Africa/Johannesburg time.
+- Server-side hourly request rate limiting.
+- Automatic account and related-data cleanup.
+- In-app notification generation.
+- Request, acceptance or message notification emails.
+- Weekly saved-match reminders.
+- Scheduled Firestore backups.
+- Automatic administrator claims or the moderation dashboard.
+- Automatic safety-report emails.
 
-## 2. Configure App Check
+## Local verification
 
-1. Open Google Cloud Console for project `maycrosshub`.
-2. Create a reCAPTCHA Enterprise website key for `maycrosshub.co.za` and `www.maycrosshub.co.za` if the `www` address is used.
-3. Paste the site key into `appCheckSiteKey` in `firebase-config.js`.
-4. Deploy the website and confirm valid App Check requests appear in Firebase Console.
-5. After monitoring, enable enforcement for Firestore and callable Cloud Functions. Enable Authentication enforcement only if it is offered for the project's configured authentication service.
-6. Change all callable functions in `functions/index.js` from `enforceAppCheck: false` to `enforceAppCheck: true`, then redeploy functions.
+Run this command in the project folder:
 
-Do not enable enforcement before the site key is deployed, because account deletion and administrator setup would be rejected.
+    node --experimental-vm-modules tests/site-checks.mjs
 
-## 3. Enable notification email delivery
-
-1. In Firebase Extensions, install **Trigger Email**.
-2. Use `mail` as the email documents collection.
-3. Configure a verified SMTP provider and a sender such as `notifications@maycrosshub.co.za`.
-4. Add SPF and DKIM records supplied by the mail provider.
-5. Test a new request, accepted request and conversation message with two accounts.
-
-The platform still provides in-app notifications if email delivery is unavailable.
-
-## 4. Brand Authentication emails
-
-In Firebase Authentication templates:
-
-1. Set the sender name to **May Cross Hub**.
-2. Use the custom action domain where Firebase permits it.
-3. Rewrite verification and password-reset messages in plain, professional language.
-4. Confirm every link returns users to `maycrosshub.co.za`.
-
-## 5. Complete operational details
-
-1. Confirm that the Formspree inbox for Privacy concern submissions is actively monitored.
-2. Confirm the responsible party and privacy-contact wording in `privacy.html` with an appropriate South African privacy adviser.
-3. Complete any Information Officer registration required for the operator.
-4. Configure scheduled Firestore exports or another tested backup process.
-5. Create Google Cloud budget and function-error alerts.
-
-## 6. Release test
-
-Use at least three verified test accounts and test:
-
-- Registration, verification, sign-in persistence and password reset.
-- Profile editing, pausing, exporting and permanent deletion.
-- Exact and partial matches, filters, saved matches and Load More Matches.
-- New, accepted, declined, cancelled, archived and resent requests.
-- Introductory request messages and accepted conversations.
-- Blocking, reporting, moderation and hidden profiles.
-- In-app and email notifications.
-- Analytics accepted and denied states without sending personal information.
-- Chrome, Edge, Firefox and mobile widths, including keyboard-only use.
-
-Run the static release checks with:
-
-```powershell
-node --experimental-vm-modules tests/site-checks.mjs
-node --check functions/index.js
-```
+A passing result checks HTML scripts, local links, duplicate IDs, analytics IDs, JSON syntax and Firestore rule braces.

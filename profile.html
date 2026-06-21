@@ -14,7 +14,7 @@
 </script>
 <link rel="stylesheet" href="site-core.css">
 <script src="site-core.js" defer></script>
-<script type="module" src="notifications-ui.js"></script>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="Review and update your May Cross Hub educator profile and transfer preferences.">
@@ -405,7 +405,7 @@ footer { padding: 1.5rem 1rem 2.5rem; color: #69798b; text-align: center; font-s
                 <label class="privacy-option"><input id="profilePaused" type="checkbox"><span><strong>Pause my match profile</strong><span>Hide your profile and stop new requests without deleting your account.</span></span></label>
                 <label class="privacy-option"><input id="showProfessional" type="checkbox"><span><strong>Show subjects and district</strong><span>Needed to create a useful searchable match profile.</span></span></label>
                 <label class="privacy-option"><input id="allowRequests" type="checkbox"><span><strong>Allow match requests</strong><span>Other verified educators may send you a private request.</span></span></label>
-                <label class="privacy-option"><input id="emailNotifications" type="checkbox"><span><strong>Email activity notifications</strong><span>Receive email for requests, accepted matches, messages and saved-match reminders.</span></span></label>
+
                 <label class="privacy-option"><input id="showSchool" type="checkbox"><span><strong>Allow school sharing later</strong><span>Your school remains absent from public match cards.</span></span></label>
                 <label class="privacy-option"><input id="showContact" type="checkbox"><span><strong>Allow contact sharing later</strong><span>Your contact details remain absent from public match cards.</span></span></label>
             </div>
@@ -414,12 +414,12 @@ footer { padding: 1.5rem 1rem 2.5rem; color: #69798b; text-align: center; font-s
         <section class="form-section danger-zone" aria-labelledby="accountControlTitle">
             <div class="section-heading">
                 <span class="section-number">5</span>
-                <div><h2 id="accountControlTitle">Account controls</h2><p>Download a copy of your information or permanently remove your account and associated platform data.</p></div>
+                <div><h2 id="accountControlTitle">Account controls</h2><p>Download your information or submit a verified request for permanent account deletion.</p></div>
             </div>
             <div class="danger-actions">
                 <button class="button button-secondary" id="passwordResetButton" type="button">Send Password Reset</button>
                 <button class="button button-secondary" id="exportButton" type="button">Download My Data</button>
-                <button class="button button-danger" id="deleteButton" type="button">Delete Account</button>
+                <button class="button button-danger" id="deleteButton" type="button">Request Account Deletion</button>
             </div>
             <h3 style="margin-top:1.2rem">Blocked educators</h3>
             <div class="blocked-list" id="blockedList"><p class="helper">Loading blocked educators...</p></div>
@@ -436,14 +436,14 @@ footer { padding: 1.5rem 1rem 2.5rem; color: #69798b; text-align: center; font-s
 </main>
 
 <dialog class="delete-dialog" id="deleteDialog" aria-labelledby="deleteTitle">
-    <h2 id="deleteTitle">Permanently delete account?</h2>
-    <p>This removes your profile, match listing, requests, conversations and login. This cannot be undone. Type <strong>DELETE</strong> to confirm.</p>
+    <h2 id="deleteTitle">Request permanent account deletion</h2>
+    <p>This sends a private request to the May Cross Hub operator. Your identity will be checked before your Firebase account and associated records are removed manually. Type <strong>DELETE</strong> to confirm.</p>
     <label for="deleteConfirmation">Confirmation</label>
     <input id="deleteConfirmation" type="text" autocomplete="off">
     <p class="form-status" id="deleteStatus" role="alert"></p>
     <div class="actions">
         <button class="button button-secondary" id="deleteCancel" type="button">Keep Account</button>
-        <button class="button button-danger" id="deleteConfirm" type="button">Delete Permanently</button>
+        <button class="button button-danger" id="deleteConfirm" type="button">Send Deletion Request</button>
     </div>
 </dialog>
 
@@ -471,14 +471,10 @@ import {
     where,
     writeBatch
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
-import {
-    getFunctions,
-    httpsCallable
-} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-functions.js";
 
 const auth = getAuth(firebaseApp);
 const db = getFirestore(firebaseApp);
-const functions = getFunctions(firebaseApp);
+
 const form = document.getElementById('profileForm');
 const loadingPanel = document.getElementById('loadingPanel');
 const formStatus = document.getElementById('formStatus');
@@ -688,7 +684,7 @@ function populateForm(profile) {
     document.getElementById('reason').value = profile.desired?.reason || '';
     document.getElementById('showProfessional').checked = profile.privacy?.showProfessional === true;
     document.getElementById('allowRequests').checked = profile.privacy?.allowRequests === true;
-    document.getElementById('emailNotifications').checked = profile.privacy?.emailNotifications !== false;
+
     document.getElementById('profilePaused').checked = profile.paused === true;
     document.getElementById('showSchool').checked = profile.privacy?.showSchool === true;
     document.getElementById('showContact').checked = profile.privacy?.showContact === true;
@@ -780,7 +776,7 @@ form.addEventListener('submit', async (event) => {
     const privacy = {
         showProfessional,
         allowRequests,
-        emailNotifications: document.getElementById('emailNotifications').checked,
+
         showSchool: document.getElementById('showSchool').checked,
         showContact: document.getElementById('showContact').checked
     };
@@ -917,7 +913,11 @@ const deleteConfirmation = document.getElementById('deleteConfirmation');
 const deleteStatus = document.getElementById('deleteStatus');
 document.getElementById('deleteButton').addEventListener('click', () => {
     deleteConfirmation.value = '';
+    deleteConfirmation.disabled = false;
     deleteStatus.textContent = '';
+    const confirmButton = document.getElementById('deleteConfirm');
+    confirmButton.disabled = false;
+    confirmButton.textContent = 'Send Deletion Request';
     deleteDialog.showModal();
     deleteConfirmation.focus();
 });
@@ -930,15 +930,29 @@ document.getElementById('deleteConfirm').addEventListener('click', async () => {
     }
     const button = document.getElementById('deleteConfirm');
     button.disabled = true;
-    button.textContent = 'Deleting...';
+    button.textContent = 'Sending...';
     try {
-        await httpsCallable(functions, 'deleteOwnAccount')();
-        window.location.replace('index.html?account=deleted');
+        const payload = new FormData();
+        payload.append('_subject', 'May Cross Hub account deletion request');
+        payload.append('request_type', 'Account deletion');
+        payload.append('email', currentUser.email || '');
+        payload.append('firebase_uid', currentUser.uid);
+        payload.append('message', 'The signed-in educator requested permanent deletion of their May Cross Hub account and associated data.');
+        const response = await fetch('https://formspree.io/f/mwvdevgw', {
+            method: 'POST',
+            body: payload,
+            headers: { Accept: 'application/json' }
+        });
+        if (!response.ok) throw new Error('Deletion request submission failed.');
+        window.mchTrack?.('account_deletion_requested');
+        deleteStatus.textContent = 'Your deletion request was sent. The operator will verify and process it.';
+        button.textContent = 'Request Sent';
+        deleteConfirmation.disabled = true;
     } catch (error) {
-        console.error('Account deletion failed.', error);
-        deleteStatus.textContent = 'The account could not be deleted. Please contact support.';
+        console.error('Account deletion request failed.', error);
+        deleteStatus.textContent = 'The request could not be sent. Use the Privacy concern option on the feedback form.';
         button.disabled = false;
-        button.textContent = 'Delete Permanently';
+        button.textContent = 'Send Deletion Request';
     }
 });
 

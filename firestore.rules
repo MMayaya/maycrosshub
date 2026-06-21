@@ -14,9 +14,6 @@ service cloud.firestore {
       return signedIn() && request.auth.uid == uid;
     }
 
-    function admin() {
-      return signedIn() && request.auth.token.admin == true;
-    }
 
     function validPrivateProfile(uid) {
       return request.resource.data.keys().hasOnly([
@@ -53,7 +50,7 @@ service cloud.firestore {
 
     match /profiles/{uid} {
       allow create: if owner(uid) && validPrivateProfile(uid);
-      allow read: if owner(uid) || admin();
+      allow read: if owner(uid);
       allow update: if owner(uid) && validPrivateProfile(uid);
       allow delete: if false;
 
@@ -88,9 +85,7 @@ service cloud.firestore {
           || get(/databases/$(database)/documents/moderation/$(uid)).data.status != 'suspended'
           || request.resource.data.available == false);
       allow delete: if false;
-      allow update: if admin()
-        && request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['available', 'updatedAt']);
+
     }
 
     function requestParticipant(data) {
@@ -141,7 +136,8 @@ service cloud.firestore {
     function validRequestStatusUpdate() {
       return request.resource.data.diff(resource.data).affectedKeys()
           .hasOnly(['status', 'updatedAt', 'respondedAt'])
-        && validRequestTransition();
+        && validRequestTransition()
+        && (request.resource.data.status != 'accepted' || !requestIsBlocked(resource.data));
     }
 
     function validRequestResend() {
@@ -151,12 +147,42 @@ service cloud.firestore {
         && request.resource.data.respondedAt == null
         && request.resource.data.diff(resource.data).affectedKeys()
           .hasOnly(['status', 'matchScore', 'introMessage', 'createdAt', 'updatedAt', 'respondedAt'])
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && exists(/databases/$(database)/documents/profiles/$(request.auth.uid))
+        && get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.available == true
         && exists(/databases/$(database)/documents/matchProfiles/$(resource.data.toUid))
-        && get(/databases/$(database)/documents/matchProfiles/$(resource.data.toUid)).data.available == true;
+        && get(/databases/$(database)/documents/matchProfiles/$(resource.data.toUid)).data.available == true
+        && get(/databases/$(database)/documents/matchProfiles/$(resource.data.toUid)).data.lastActiveAt is timestamp
+        && get(/databases/$(database)/documents/matchProfiles/$(resource.data.toUid)).data.lastActiveAt >= request.time - duration.value(90, 'd')
+        && !requestIsBlocked(resource.data)
+        && (!exists(/databases/$(database)/documents/moderation/$(request.auth.uid))
+          || get(/databases/$(database)/documents/moderation/$(request.auth.uid)).data.status != 'suspended')
+        && (!exists(/databases/$(database)/documents/moderation/$(resource.data.toUid))
+          || get(/databases/$(database)/documents/moderation/$(resource.data.toUid)).data.status != 'suspended');
     }
 
     match /requests/{requestId} {
-      allow create: if false;
+      allow create: if verified()
+        && validRequestData()
+        && request.resource.data.fromUid == request.auth.uid
+        && request.resource.data.toUid != request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.respondedAt == null
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && requestId == request.auth.uid + '_' + request.resource.data.toUid
+        && exists(/databases/$(database)/documents/profiles/$(request.auth.uid))
+        && get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.available == true
+        && exists(/databases/$(database)/documents/matchProfiles/$(request.resource.data.toUid))
+        && get(/databases/$(database)/documents/matchProfiles/$(request.resource.data.toUid)).data.available == true
+        && get(/databases/$(database)/documents/matchProfiles/$(request.resource.data.toUid)).data.lastActiveAt is timestamp
+        && get(/databases/$(database)/documents/matchProfiles/$(request.resource.data.toUid)).data.lastActiveAt >= request.time - duration.value(90, 'd')
+        && !requestIsBlocked(request.resource.data)
+        && (!exists(/databases/$(database)/documents/moderation/$(request.auth.uid))
+          || get(/databases/$(database)/documents/moderation/$(request.auth.uid)).data.status != 'suspended')
+        && (!exists(/databases/$(database)/documents/moderation/$(request.resource.data.toUid))
+          || get(/databases/$(database)/documents/moderation/$(request.resource.data.toUid)).data.status != 'suspended');
 
       allow read: if verified() && requestParticipant(resource.data);
 
@@ -206,28 +232,13 @@ service cloud.firestore {
         && request.resource.data.status == 'open'
         && request.resource.data.createdAt == request.time
         && request.resource.data.updatedAt == request.time;
-      allow read: if admin() || (verified() && resource.data.reporterUid == request.auth.uid);
-      allow update: if admin()
-        && request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['status', 'updatedAt']);
-      allow delete: if admin();
+      allow read: if verified() && resource.data.reporterUid == request.auth.uid;
+      allow update, delete: if false;
     }
 
     match /moderation/{uid} {
-      allow read: if admin() || owner(uid);
-      allow create, update, delete: if admin();
-    }
-
-    match /notifications/{notificationId} {
-      allow read: if verified() && resource.data.recipientUid == request.auth.uid;
-      allow update: if verified()
-        && resource.data.recipientUid == request.auth.uid
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
-      allow create, delete: if false;
-    }
-
-    match /mail/{mailId} {
-      allow read, write: if false;
+      allow read: if owner(uid);
+      allow create, update, delete: if false;
     }
   }
 }

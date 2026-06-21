@@ -6,6 +6,9 @@ const root = path.resolve(import.meta.dirname, '..');
 const htmlFiles = fs.readdirSync(root).filter((name) => name.endsWith('.html')).sort();
 const failures = [];
 
+for (const removedPath of ['admin.html', 'notifications-ui.js', 'functions']) {
+    if (fs.existsSync(path.join(root, removedPath))) fail('paid backend artifact remains: ' + removedPath);
+}
 function fail(message) { failures.push(message); }
 
 for (const file of htmlFiles) {
@@ -17,6 +20,8 @@ for (const file of htmlFiles) {
     if (!html.includes('G-Y2MZ4NKNHS')) fail(`${file}: missing analytics measurement ID`);
     if (html.includes('G-BKG9ZMV3YX')) fail(`${file}: old analytics ID remains`);
     if (!html.includes('site-core.css') || !html.includes('site-core.js')) fail(`${file}: shared accessibility/consent assets missing`);
+    if (/firebase-functions|httpsCallable|getFunctions/.test(html)) fail(file + ': paid Cloud Functions dependency remains');
+    if (/notifications-ui\.js|admin\.html/.test(html)) fail(file + ': removed backend interface remains linked');
 
     const inlineScripts = [...html.matchAll(/<script\b(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)]
         .map((match) => match[1]).filter((script) => script.trim());
@@ -27,7 +32,7 @@ for (const file of htmlFiles) {
 
     for (const match of html.matchAll(/href="([^"#?]+)(?:[?#][^"]*)?"/g)) {
         const target = match[1];
-        if (/^(https?:|mailto:|tel:)/.test(target) || target === '/' || target.includes('${')) continue;
+        if (/^(https?:|mailto:|tel:)/.test(target) || target === '/' || target.includes(' + ') || target.includes('${')) continue;
         if (!fs.existsSync(path.join(root, target))) fail(`${file}: missing linked file ${target}`);
     }
 }
