@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Review and update your May Cross Hub educator profile and transfer preferences.">
+<meta name="theme-color" content="#002b5e">
+<title>My Profile | May Cross Hub</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+    --navy: #002b5e;
+    --blue: #0057a8;
+    --blue-dark: #003f7d;
+    --red: #d71920;
+    --green: #11723b;
+    --ink: #1f2d3d;
+    --muted: #647487;
+    --line: #d9e3ee;
+    --surface: #fff;
+    --page: #f2f6fa;
+}
+html { scroll-behavior: smooth; }
+body {
+    min-height: 100vh;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--ink);
+    background: var(--page);
+    line-height: 1.55;
+}
+button, input, select, textarea { font: inherit; }
+a { color: inherit; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible {
+    outline: 3px solid #72aef0;
+    outline-offset: 2px;
+}
+.site-nav {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    min-height: 70px;
+    display: flex;
+    align-items: center;
+    gap: 1.4rem;
+    padding: 0.75rem clamp(1rem, 4vw, 3rem);
+    color: #fff;
+    background: var(--navy);
+    box-shadow: 0 4px 15px rgba(0, 20, 48, 0.22);
+}
+.brand { text-decoration: none; font-size: 1.15rem; font-weight: 850; white-space: nowrap; }
+.nav-links { display: flex; align-items: center; gap: 0.25rem; margin-left: auto; }
+.nav-links a {
+    padding: 0.55rem 0.72rem;
+    border-radius: 7px;
+    color: #dceaff;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+.nav-links a:hover, .nav-links a.active { color: #fff; background: rgba(255,255,255,0.11); }
+.account-area { display: flex; align-items: center; gap: 0.65rem; }
+.account-copy { color: #c9ddf7; font-size: 0.78rem; line-height: 1.25; }
+.account-copy strong { display: block; color: #fff; font-size: 0.88rem; }
+.avatar {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    color: var(--blue);
+    background: #dceaff;
+    font-size: 0.76rem;
+    font-weight: 850;
+}
+.signout-button {
+    border: 1px solid rgba(255,255,255,0.45);
+    border-radius: 7px;
+    padding: 0.5rem 0.7rem;
+    color: #fff;
+    background: transparent;
+    cursor: pointer;
+    font-weight: 700;
+}
+.page-message {
+    position: fixed;
+    top: 82px;
+    left: 50%;
+    z-index: 30;
+    transform: translateX(-50%);
+    width: min(92vw, 680px);
+    padding: 0.85rem 1rem;
+    border: 1px solid #99d6b3;
+    border-radius: 9px;
+    color: #0b5d2d;
+    background: #e9f9ef;
+    box-shadow: 0 9px 28px rgba(0,0,0,0.16);
+    text-align: center;
+    font-weight: 750;
+}
+.page-message.error { color: #901b23; background: #fff0f1; border-color: #efb6ba; }
+.page-shell { width: min(1160px, calc(100% - 2rem)); margin: 0 auto; padding: 2rem 0 3.5rem; }
+.profile-hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: clamp(1.35rem, 4vw, 2.2rem);
+    border-radius: 16px;
+    color: #fff;
+    background: linear-gradient(135deg, var(--navy), #075baa);
+    box-shadow: 0 13px 30px rgba(0,43,94,0.18);
+}
+.eyebrow { color: #b9d7ff; font-size: 0.78rem; font-weight: 850; letter-spacing: 0.08em; text-transform: uppercase; }
+.profile-hero h1 { margin-top: 0.25rem; font-size: clamp(1.8rem, 5vw, 2.65rem); }
+.profile-hero p:last-child { max-width: 680px; margin-top: 0.45rem; color: #dfecff; }
+.visibility-card {
+    flex: 0 0 210px;
+    padding: 1rem;
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 11px;
+    background: rgba(255,255,255,0.1);
+}
+.visibility-card span { display: block; color: #cfe2ff; font-size: 0.77rem; font-weight: 750; }
+.visibility-card strong { display: block; margin-top: 0.2rem; font-size: 1.05rem; }
+.profile-form { margin-top: 1.4rem; }
+.form-section {
+    margin-bottom: 1rem;
+    padding: clamp(1.1rem, 3vw, 1.6rem);
+    border: 1px solid var(--line);
+    border-radius: 13px;
+    background: var(--surface);
+    box-shadow: 0 7px 22px rgba(21,55,92,0.06);
+}
+.section-heading { display: flex; align-items: start; gap: 0.8rem; margin-bottom: 1.15rem; }
+.section-number {
+    width: 30px;
+    height: 30px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    color: #fff;
+    background: var(--blue);
+    font-weight: 850;
+}
+.section-heading h2 { color: var(--navy); font-size: 1.25rem; }
+.section-heading p { color: var(--muted); font-size: 0.9rem; }
+.field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.field.full { grid-column: 1 / -1; }
+.field label, .group-label { display: block; margin-bottom: 0.35rem; color: #304a67; font-size: 0.88rem; font-weight: 750; }
+.field input, .field select, .field textarea {
+    width: 100%;
+    min-height: 46px;
+    padding: 0.68rem 0.75rem;
+    border: 1px solid #b9cadd;
+    border-radius: 8px;
+    color: var(--ink);
+    background: #fff;
+}
+.field input[readonly] { color: #657486; background: #eef3f7; cursor: not-allowed; }
+.field textarea { min-height: 100px; resize: vertical; }
+.field input[aria-invalid="true"], .field select[aria-invalid="true"] { border-color: var(--red); box-shadow: 0 0 0 2px rgba(215,25,32,0.1); }
+.helper { margin-top: 0.32rem; color: var(--muted); font-size: 0.8rem; }
+.multi-entry-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.6rem; }
+.add-button {
+    min-height: 46px;
+    padding: 0.65rem 0.9rem;
+    border: 1px solid var(--blue);
+    border-radius: 8px;
+    color: var(--blue);
+    background: #edf6ff;
+    cursor: pointer;
+    font-weight: 750;
+}
+.selected-items { display: flex; flex-wrap: wrap; gap: 0.42rem; margin-top: 0.6rem; }
+.item-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.42rem 0.35rem 0.62rem;
+    border: 1px solid #b8d2ee;
+    border-radius: 999px;
+    color: #174e84;
+    background: #eef7ff;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+.item-chip button {
+    width: 23px;
+    height: 23px;
+    border: 0;
+    border-radius: 50%;
+    color: #8d2027;
+    background: #fff;
+    cursor: pointer;
+    font-weight: 900;
+}
+.privacy-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+.privacy-option {
+    display: flex;
+    align-items: start;
+    gap: 0.65rem;
+    padding: 0.85rem;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: #f8fbfe;
+    cursor: pointer;
+}
+.privacy-option input { width: 18px; height: 18px; margin-top: 0.15rem; accent-color: var(--blue); }
+.privacy-option strong { display: block; color: #29445f; }
+.privacy-option span span { display: block; margin-top: 0.15rem; color: var(--muted); font-size: 0.82rem; }
+.form-footer {
+    position: sticky;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding: 1rem;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: rgba(255,255,255,0.96);
+    box-shadow: 0 -5px 22px rgba(31,45,61,0.09);
+}
+.form-status { color: var(--red); font-size: 0.88rem; font-weight: 700; }
+.actions { display: flex; gap: 0.65rem; margin-left: auto; }
+.button {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.65rem 1rem;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    text-decoration: none;
+    cursor: pointer;
+    font-weight: 800;
+}
+.button-primary { color: #fff; background: var(--blue); }
+.button-primary:hover { background: var(--blue-dark); }
+.button-secondary { color: var(--blue); border-color: #abc6e4; background: #fff; }
+.button:disabled { opacity: 0.65; cursor: wait; }
+.loading-panel {
+    margin-top: 1.4rem;
+    padding: 3rem 1rem;
+    border-radius: 12px;
+    color: var(--muted);
+    background: #fff;
+    text-align: center;
+}
+footer { padding: 1.5rem 1rem 2.5rem; color: #69798b; text-align: center; font-size: 0.85rem; }
+@media (max-width: 900px) {
+    .site-nav { flex-wrap: wrap; }
+    .nav-links { order: 3; width: 100%; overflow-x: auto; margin-left: 0; }
+    .account-copy { display: none; }
+    .profile-hero { align-items: start; flex-direction: column; }
+    .visibility-card { width: 100%; flex-basis: auto; }
+}
+@media (max-width: 680px) {
+    .page-shell { width: min(100% - 1rem, 1160px); padding-top: 0.8rem; }
+    .field-grid, .privacy-grid { grid-template-columns: 1fr; }
+    .field.full { grid-column: auto; }
+    .multi-entry-row { grid-template-columns: 1fr; }
+    .form-footer { align-items: stretch; flex-direction: column; }
+    .actions { width: 100%; margin-left: 0; }
+    .actions .button { flex: 1; }
+    .avatar { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="page-message" id="pageMessage" role="status" aria-live="polite" hidden></div>
+<nav class="site-nav" aria-label="Main navigation">
+    <a class="brand" href="index.html">May Cross Hub</a>
+    <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="matches.html">My Matches</a>
+        <a href="request.html">Requests</a>
+        <a href="profile.html" class="active" aria-current="page">Profile</a>
+        <a href="index.html#feedback">Feedback</a>
+    </div>
+    <div class="account-area">
+        <span class="account-copy"><strong id="accountName">Signed in</strong>My profile</span>
+        <span class="avatar" id="accountAvatar" aria-hidden="true">MC</span>
+        <button class="signout-button" id="signOutButton" type="button">Sign out</button>
+    </div>
+</nav>
+
+<main class="page-shell">
+    <header class="profile-hero">
+        <div>
+            <p class="eyebrow">Your educator account</p>
+            <h1>Edit your profile</h1>
+            <p>Keep your current post, destination and professional information accurate so May Cross Hub can recommend useful reciprocal matches.</p>
+        </div>
+        <div class="visibility-card">
+            <span>Match visibility</span>
+            <strong id="visibilityStatus">Loading...</strong>
+        </div>
+    </header>
+
+    <div class="loading-panel" id="loadingPanel">Loading your educator profile...</div>
+
+    <form class="profile-form" id="profileForm" hidden>
+        <section class="form-section" aria-labelledby="personalTitle">
+            <div class="section-heading">
+                <span class="section-number">1</span>
+                <div><h2 id="personalTitle">Personal details</h2><p>Your email is linked to your sign-in account and cannot be changed here.</p></div>
+            </div>
+            <div class="field-grid">
+                <div class="field"><label for="firstName">First name</label><input id="firstName" type="text" autocomplete="given-name" required></div>
+                <div class="field"><label for="lastName">Surname</label><input id="lastName" type="text" autocomplete="family-name" required></div>
+                <div class="field"><label for="email">Email address</label><input id="email" type="email" readonly></div>
+                <div class="field"><label for="phone">Cellphone number</label><input id="phone" type="tel" autocomplete="tel" pattern="[0-9+() -]{7,20}" required></div>
+            </div>
+        </section>
+
+        <section class="form-section" aria-labelledby="currentTitle">
+            <div class="section-heading">
+                <span class="section-number">2</span>
+                <div><h2 id="currentTitle">Current post</h2><p>Professional information is used to compare suitable transfer partners.</p></div>
+            </div>
+            <div class="field-grid">
+                <div class="field full"><label for="currentSchool">Current school</label><input id="currentSchool" type="text" autocomplete="organization" required></div>
+                <div class="field"><label for="currentProvince">Province</label><select id="currentProvince" required><option value="">Select province</option></select></div>
+                <div class="field"><label for="currentDistrict">District</label><select id="currentDistrict" required disabled><option value="">Select province first</option></select></div>
+                <div class="field"><label for="circuit">Circuit or ward <span class="helper">(optional)</span></label><input id="circuit" type="text"></div>
+                <div class="field"><label for="quintile">School quintile</label><select id="quintile" required><option value="">Select quintile</option><option value="1">Quintile 1</option><option value="2">Quintile 2</option><option value="3">Quintile 3</option><option value="4">Quintile 4</option><option value="5">Quintile 5</option></select></div>
+                <div class="field"><label for="phase">Teaching phase</label><select id="phase" required><option value="">Select phase</option><option>Foundation</option><option>Intermediate</option><option>Senior</option><option>FET</option></select></div>
+                <div class="field"><label for="postLevel">Post level or role</label><select id="postLevel" required><option value="">Select role</option><option>Post Level 1 Educator</option><option>Departmental Head</option><option>Deputy Principal</option><option>Principal</option><option>Other</option></select></div>
+                <div class="field full">
+                    <label for="gradeInput">Grades taught</label>
+                    <div class="multi-entry-row"><input id="gradeInput" type="text" maxlength="2" placeholder="Enter R or 1 to 12"><button class="add-button" id="addGradeButton" type="button">Add grade</button></div>
+                    <div class="selected-items" id="gradeList" aria-live="polite"></div>
+                    <p class="helper">Add grades individually. Select the remove button on a grade to delete it.</p>
+                </div>
+                <div class="field full">
+                    <label for="subjectSelect">Qualified subjects</label>
+                    <div class="multi-entry-row"><select id="subjectSelect"><option value="">Select a subject</option></select><button class="add-button" id="addSubjectButton" type="button">Add subject</button></div>
+                    <input id="otherSubject" type="text" maxlength="80" placeholder="Enter the subject name" hidden>
+                    <div class="selected-items" id="subjectList" aria-live="polite"></div>
+                    <p class="helper">Choose Other subject when the subject is not in the list.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="form-section" aria-labelledby="destinationTitle">
+            <div class="section-heading">
+                <span class="section-number">3</span>
+                <div><h2 id="destinationTitle">Desired transfer</h2><p>Update the province, district and area where you would like to move.</p></div>
+            </div>
+            <div class="field-grid">
+                <div class="field"><label for="desiredProvince">Desired province</label><select id="desiredProvince" required><option value="">Select province</option></select></div>
+                <div class="field"><label for="desiredDistrict">Desired district</label><select id="desiredDistrict" required disabled><option value="">Select province first</option></select></div>
+                <div class="field"><label for="desiredTown">Desired town or area</label><input id="desiredTown" type="text" required></div>
+                <div class="field"><label for="preferredSchool">Preferred school <span class="helper">(optional)</span></label><input id="preferredSchool" type="text"></div>
+                <div class="field"><label for="nearby">Consider nearby areas?</label><select id="nearby" required><option value="Yes">Yes</option><option value="No">No</option></select></div>
+                <div class="field full"><label for="reason">Reason for transfer <span class="helper">(optional)</span></label><textarea id="reason" maxlength="500" placeholder="Share only what you are comfortable disclosing."></textarea></div>
+            </div>
+        </section>
+
+        <section class="form-section" aria-labelledby="privacyTitle">
+            <div class="section-heading">
+                <span class="section-number">4</span>
+                <div><h2 id="privacyTitle">Privacy and availability</h2><p>Turning either of the first two settings off removes your profile from active match results.</p></div>
+            </div>
+            <div class="privacy-grid">
+                <label class="privacy-option"><input id="showProfessional" type="checkbox"><span><strong>Show subjects and district</strong><span>Needed to create a useful searchable match profile.</span></span></label>
+                <label class="privacy-option"><input id="allowRequests" type="checkbox"><span><strong>Allow match requests</strong><span>Other verified educators may send you a private request.</span></span></label>
+                <label class="privacy-option"><input id="showSchool" type="checkbox"><span><strong>Allow school sharing later</strong><span>Your school remains absent from public match cards.</span></span></label>
+                <label class="privacy-option"><input id="showContact" type="checkbox"><span><strong>Allow contact sharing later</strong><span>Your contact details remain absent from public match cards.</span></span></label>
+            </div>
+        </section>
+
+        <div class="form-footer">
+            <p class="form-status" id="formStatus" role="alert"></p>
+            <div class="actions">
+                <a class="button button-secondary" href="matches.html">Cancel</a>
+                <button class="button button-primary" id="saveButton" type="submit">Save Profile</button>
+            </div>
+        </div>
+    </form>
+</main>
+
+<footer>&copy; <span id="year"></span> May Cross Hub. Keep your profile accurate for better reciprocal matches.</footer>
+
+<script type="module">
+import { firebaseApp } from "./firebase-config.js";
+import { accountInitials, compactAccountName } from "./auth-ui.js";
+import {
+    getAuth,
+    onAuthStateChanged,
+    signOut,
+    updateProfile
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+import {
+    doc,
+    getDoc,
+    getFirestore,
+    serverTimestamp,
+    writeBatch
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+
+const auth = getAuth(firebaseApp);
+const db = getFirestore(firebaseApp);
+const form = document.getElementById('profileForm');
+const loadingPanel = document.getElementById('loadingPanel');
+const formStatus = document.getElementById('formStatus');
+const saveButton = document.getElementById('saveButton');
+const pageMessage = document.getElementById('pageMessage');
+const visibilityStatus = document.getElementById('visibilityStatus');
+const accountName = document.getElementById('accountName');
+const accountAvatar = document.getElementById('accountAvatar');
+const currentProvince = document.getElementById('currentProvince');
+const currentDistrict = document.getElementById('currentDistrict');
+const desiredProvince = document.getElementById('desiredProvince');
+const desiredDistrict = document.getElementById('desiredDistrict');
+const gradeInput = document.getElementById('gradeInput');
+const gradeList = document.getElementById('gradeList');
+const subjectSelect = document.getElementById('subjectSelect');
+const otherSubject = document.getElementById('otherSubject');
+const subjectList = document.getElementById('subjectList');
+let currentUser = null;
+let privateProfile = null;
+let publicProfile = null;
+let selectedGrades = [];
+let selectedSubjects = [];
+let messageTimer;
+
+const DISTRICTS_BY_PROVINCE = Object.freeze({
+    'Eastern Cape': ['Alfred Nzo East', 'Alfred Nzo West', 'Amathole East', 'Amathole West', 'Buffalo City Metro', 'Chris Hani East', 'Chris Hani West', 'Joe Gqabi', 'Nelson Mandela Bay Metro', 'OR Tambo Coastal', 'OR Tambo Inland', 'Sarah Baartman'],
+    'Free State': ['Fezile Dabi', 'Lejweleputswa', 'Motheo', 'Thabo Mofutsanyana', 'Xhariep'],
+    'Gauteng': ['Ekurhuleni North', 'Ekurhuleni South', 'Gauteng East', 'Gauteng North', 'Gauteng West', 'Johannesburg Central', 'Johannesburg East', 'Johannesburg North', 'Johannesburg South', 'Johannesburg West', 'Sedibeng East', 'Sedibeng West', 'Tshwane North', 'Tshwane South', 'Tshwane West'],
+    'KwaZulu-Natal': ['Amajuba', 'Harry Gwala', 'iLembe', 'King Cetshwayo', 'Pinetown', 'Ugu', 'uMgungundlovu', 'uMkhanyakude', 'uMlazi', 'uMzinyathi', 'uThukela', 'Zululand'],
+    'Limpopo': ['Capricorn Ladana', 'Capricorn South', 'Mogalakwena', 'Mopani East', 'Mopani West', 'Sekhukhune', 'Sekhukhune East/Riba Cross', 'Vhembe East', 'Vhembe West', 'Waterberg'],
+    'Mpumalanga': ['Ehlanzeni', 'Gert Sibande', 'Nkangala'],
+    'North West': ['Bojanala', 'Dr Kenneth Kaunda', 'Dr Ruth Segomotsi Mompati', 'Ngaka Modiri Molema'],
+    'Northern Cape': ['Frances Baard', 'John Taolo Gaetsewe', 'Namakwa', 'Pixley ka Seme', 'ZF Mgcawu'],
+    'Western Cape': ['Cape Winelands', 'Eden and Central Karoo', 'Metro Central', 'Metro East', 'Metro North', 'Metro South', 'Overberg', 'West Coast']
+});
+
+const SUBJECTS = [
+    'Accounting', 'Afrikaans', 'Agricultural Management Practices', 'Agricultural Sciences',
+    'Agricultural Technology', 'Business Studies', 'Civil Technology', 'Coding and Robotics',
+    'Computer Applications Technology', 'Consumer Studies', 'Creative Arts', 'Dance Studies',
+    'Design', 'Dramatic Arts', 'Economics', 'Economic and Management Sciences',
+    'Electrical Technology', 'Engineering Graphics and Design', 'English', 'Geography', 'History',
+    'Hospitality Studies', 'Information Technology', 'isiNdebele', 'isiXhosa', 'isiZulu',
+    'Life Orientation', 'Life Sciences', 'Life Skills', 'Mathematical Literacy', 'Mathematics',
+    'Mechanical Technology', 'Music', 'Natural Sciences', 'Natural Sciences and Technology',
+    'Physical Sciences', 'Religion Studies', 'Sepedi', 'Sesotho', 'Setswana', 'siSwati',
+    'Social Sciences', 'South African Sign Language', 'Technical Mathematics',
+    'Technical Sciences', 'Technology', 'Tourism', 'Tshivenda', 'Visual Arts', 'X' + 'itsonga'
+];
+
+document.getElementById('year').textContent = new Date().getFullYear();
+
+Object.keys(DISTRICTS_BY_PROVINCE).forEach((province) => {
+    [currentProvince, desiredProvince].forEach((select) => {
+        const option = document.createElement('option');
+        option.value = province;
+        option.textContent = province;
+        select.append(option);
+    });
+});
+
+SUBJECTS.forEach((subject) => {
+    const option = document.createElement('option');
+    option.value = subject;
+    option.textContent = subject;
+    subjectSelect.append(option);
+});
+const otherOption = document.createElement('option');
+otherOption.value = 'Other';
+otherOption.textContent = 'Other subject';
+subjectSelect.append(otherOption);
+
+function populateDistricts(provinceSelect, districtSelect, selectedValue = '') {
+    const districts = DISTRICTS_BY_PROVINCE[provinceSelect.value] || [];
+    districtSelect.replaceChildren();
+    const prompt = document.createElement('option');
+    prompt.value = '';
+    prompt.textContent = districts.length ? 'Select district' : 'Select province first';
+    districtSelect.append(prompt);
+    districts.forEach((district) => {
+        const option = document.createElement('option');
+        option.value = district;
+        option.textContent = district;
+        districtSelect.append(option);
+    });
+    districtSelect.disabled = districts.length === 0;
+    districtSelect.value = districts.includes(selectedValue) ? selectedValue : '';
+}
+
+currentProvince.addEventListener('change', () => populateDistricts(currentProvince, currentDistrict));
+desiredProvince.addEventListener('change', () => populateDistricts(desiredProvince, desiredDistrict));
+
+function renderItems(container, values, label) {
+    container.replaceChildren();
+    values.forEach((value) => {
+        const chip = document.createElement('span');
+        chip.className = 'item-chip';
+        chip.append(document.createTextNode(value));
+        const removeButton = document.createElement('button');
+        removeButton.type = 'button';
+        removeButton.textContent = '\u00d7';
+        removeButton.setAttribute('aria-label', `Remove ${label} ${value}`);
+        removeButton.addEventListener('click', () => {
+            const index = values.indexOf(value);
+            if (index !== -1) values.splice(index, 1);
+            renderItems(container, values, label);
+            form.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+        chip.append(removeButton);
+        container.append(chip);
+    });
+}
+
+function showMessage(message, type = 'success') {
+    window.clearTimeout(messageTimer);
+    pageMessage.textContent = message;
+    pageMessage.classList.toggle('error', type === 'error');
+    pageMessage.hidden = false;
+    messageTimer = window.setTimeout(() => { pageMessage.hidden = true; }, 6000);
+}
+
+function setFormError(message, target = null) {
+    formStatus.textContent = message;
+    if (target) {
+        target.setAttribute('aria-invalid', 'true');
+        target.focus();
+    }
+}
+
+function updateVisibilityPreview() {
+    const visible = document.getElementById('showProfessional').checked
+        && document.getElementById('allowRequests').checked;
+    visibilityStatus.textContent = visible ? 'Visible to matches' : 'Hidden from matches';
+}
+
+function addGrade() {
+    const rawValue = gradeInput.value.trim().toUpperCase();
+    const number = Number(rawValue);
+    const grade = rawValue === 'R' ? 'R' : String(number);
+    const valid = rawValue === 'R' || (/^\d{1,2}$/.test(rawValue) && number >= 1 && number <= 12);
+    if (!valid) {
+        setFormError('Enter grade R or a number from 1 to 12.', gradeInput);
+        return;
+    }
+    if (!selectedGrades.includes(grade)) selectedGrades.push(grade);
+    selectedGrades.sort((a, b) => a === 'R' ? -1 : b === 'R' ? 1 : Number(a) - Number(b));
+    gradeInput.value = '';
+    formStatus.textContent = '';
+    gradeInput.removeAttribute('aria-invalid');
+    renderItems(gradeList, selectedGrades, 'grade');
+}
+
+function addSubject() {
+    const subject = subjectSelect.value === 'Other' ? otherSubject.value.trim() : subjectSelect.value;
+    if (!subject) {
+        setFormError(subjectSelect.value === 'Other' ? 'Enter the other subject name.' : 'Select a subject to add.', subjectSelect.value === 'Other' ? otherSubject : subjectSelect);
+        return;
+    }
+    if (!selectedSubjects.some((item) => item.toLowerCase() === subject.toLowerCase())) selectedSubjects.push(subject);
+    selectedSubjects.sort((a, b) => a.localeCompare(b));
+    subjectSelect.value = '';
+    otherSubject.value = '';
+    otherSubject.hidden = true;
+    formStatus.textContent = '';
+    renderItems(subjectList, selectedSubjects, 'subject');
+}
+
+document.getElementById('addGradeButton').addEventListener('click', addGrade);
+document.getElementById('addSubjectButton').addEventListener('click', addSubject);
+gradeInput.addEventListener('keydown', (event) => { if (event.key === 'Enter') { event.preventDefault(); addGrade(); } });
+otherSubject.addEventListener('keydown', (event) => { if (event.key === 'Enter') { event.preventDefault(); addSubject(); } });
+subjectSelect.addEventListener('change', () => {
+    otherSubject.hidden = subjectSelect.value !== 'Other';
+    if (!otherSubject.hidden) otherSubject.focus();
+});
+document.getElementById('showProfessional').addEventListener('change', updateVisibilityPreview);
+document.getElementById('allowRequests').addEventListener('change', updateVisibilityPreview);
+
+function populateForm(profile) {
+    document.getElementById('firstName').value = profile.firstName || '';
+    document.getElementById('lastName').value = profile.lastName || '';
+    document.getElementById('email').value = currentUser.email || profile.email || '';
+    document.getElementById('phone').value = profile.phone || '';
+    document.getElementById('currentSchool').value = profile.current?.school || '';
+    currentProvince.value = profile.current?.province || '';
+    populateDistricts(currentProvince, currentDistrict, profile.current?.district || '');
+    document.getElementById('circuit').value = profile.current?.circuit || '';
+    document.getElementById('quintile').value = profile.current?.quintile || '';
+    document.getElementById('phase').value = profile.current?.phase || '';
+    document.getElementById('postLevel').value = profile.current?.postLevel || '';
+    selectedGrades = [...(profile.current?.grades || [])];
+    selectedSubjects = [...(profile.current?.subjects || [])];
+    renderItems(gradeList, selectedGrades, 'grade');
+    renderItems(subjectList, selectedSubjects, 'subject');
+    desiredProvince.value = profile.desired?.province || '';
+    populateDistricts(desiredProvince, desiredDistrict, profile.desired?.district || '');
+    document.getElementById('desiredTown').value = profile.desired?.town || '';
+    document.getElementById('preferredSchool').value = profile.desired?.preferredSchool || '';
+    document.getElementById('nearby').value = profile.desired?.nearby === false ? 'No' : 'Yes';
+    document.getElementById('reason').value = profile.desired?.reason || '';
+    document.getElementById('showProfessional').checked = profile.privacy?.showProfessional === true;
+    document.getElementById('allowRequests').checked = profile.privacy?.allowRequests === true;
+    document.getElementById('showSchool').checked = profile.privacy?.showSchool === true;
+    document.getElementById('showContact').checked = profile.privacy?.showContact === true;
+    updateVisibilityPreview();
+}
+
+form.addEventListener('input', (event) => {
+    event.target.removeAttribute('aria-invalid');
+    formStatus.textContent = '';
+});
+
+form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    formStatus.textContent = '';
+    if (!form.reportValidity()) return;
+    if (!selectedGrades.length) {
+        setFormError('Add at least one grade taught.', gradeInput);
+        return;
+    }
+    if (!selectedSubjects.length) {
+        setFormError('Add at least one qualified subject.', subjectSelect);
+        return;
+    }
+
+    const firstName = document.getElementById('firstName').value.trim();
+    const lastName = document.getElementById('lastName').value.trim();
+    const showProfessional = document.getElementById('showProfessional').checked;
+    const allowRequests = document.getElementById('allowRequests').checked;
+    const nearby = document.getElementById('nearby').value === 'Yes';
+    const available = currentUser.emailVerified && showProfessional && allowRequests;
+    const current = {
+        school: document.getElementById('currentSchool').value.trim(),
+        province: currentProvince.value,
+        district: currentDistrict.value,
+        circuit: document.getElementById('circuit').value.trim(),
+        quintile: document.getElementById('quintile').value,
+        phase: document.getElementById('phase').value,
+        grades: [...selectedGrades],
+        subjects: [...selectedSubjects],
+        postLevel: document.getElementById('postLevel').value
+    };
+    const desired = {
+        province: desiredProvince.value,
+        district: desiredDistrict.value,
+        town: document.getElementById('desiredTown').value.trim(),
+        preferredSchool: document.getElementById('preferredSchool').value.trim(),
+        nearby,
+        reason: document.getElementById('reason').value.trim()
+    };
+    const privacy = {
+        showProfessional,
+        allowRequests,
+        showSchool: document.getElementById('showSchool').checked,
+        showContact: document.getElementById('showContact').checked
+    };
+
+    const updatedPrivateProfile = {
+        uid: currentUser.uid,
+        firstName,
+        lastName,
+        email: currentUser.email || privateProfile.email,
+        phone: document.getElementById('phone').value.trim(),
+        current,
+        desired,
+        privacy,
+        available,
+        emailVerified: currentUser.emailVerified,
+        createdAt: privateProfile.createdAt || serverTimestamp(),
+        updatedAt: serverTimestamp()
+    };
+    const updatedPublicProfile = {
+        uid: currentUser.uid,
+        displayCode: publicProfile?.displayCode || `MCH-${currentUser.uid.slice(0, 6).toUpperCase()}`,
+        currentProvince: current.province,
+        currentDistrict: showProfessional ? current.district : '',
+        desiredProvince: desired.province,
+        desiredDistrict: showProfessional ? desired.district : '',
+        desiredTown: showProfessional ? desired.town : '',
+        phase: showProfessional ? current.phase : '',
+        grades: showProfessional ? current.grades : [],
+        subjects: showProfessional ? current.subjects : [],
+        postLevel: showProfessional ? current.postLevel : '',
+        nearby,
+        available,
+        createdAt: publicProfile?.createdAt || privateProfile.createdAt || serverTimestamp(),
+        updatedAt: serverTimestamp()
+    };
+
+    saveButton.disabled = true;
+    saveButton.textContent = 'Saving...';
+    try {
+        const batch = writeBatch(db);
+        batch.set(doc(db, 'profiles', currentUser.uid), updatedPrivateProfile);
+        batch.set(doc(db, 'matchProfiles', currentUser.uid), updatedPublicProfile);
+        await batch.commit();
+        await updateProfile(currentUser, { displayName: `${firstName} ${lastName}`.trim() });
+        privateProfile = { ...updatedPrivateProfile, createdAt: privateProfile.createdAt };
+        publicProfile = { ...updatedPublicProfile, createdAt: publicProfile?.createdAt };
+        accountName.textContent = compactAccountName(currentUser, updatedPrivateProfile);
+        accountAvatar.textContent = accountInitials(currentUser, updatedPrivateProfile);
+        updateVisibilityPreview();
+        showMessage('Profile updated successfully. Your match results will use the new information.');
+    } catch (error) {
+        console.error('Profile update failed.', error);
+        const message = error.code === 'permission-denied'
+            ? 'The profile update was rejected. Publish the latest Firestore rules and try again.'
+            : 'Your profile could not be updated. Check your connection and try again.';
+        setFormError(message);
+        showMessage(message, 'error');
+    } finally {
+        saveButton.disabled = false;
+        saveButton.textContent = 'Save Profile';
+    }
+});
+
+document.getElementById('signOutButton').addEventListener('click', async () => {
+    await signOut(auth);
+    window.location.replace('signin.html');
+});
+
+onAuthStateChanged(auth, async (user) => {
+    if (!user || !user.emailVerified) {
+        window.location.replace('signin.html');
+        return;
+    }
+    currentUser = user;
+    accountName.textContent = compactAccountName(user);
+    accountAvatar.textContent = accountInitials(user);
+    try {
+        const [privateSnapshot, publicSnapshot] = await Promise.all([
+            getDoc(doc(db, 'profiles', user.uid)),
+            getDoc(doc(db, 'matchProfiles', user.uid))
+        ]);
+        if (!privateSnapshot.exists()) {
+            loadingPanel.textContent = 'Your educator profile was not found. Please contact support before editing.';
+            visibilityStatus.textContent = 'Profile unavailable';
+            return;
+        }
+        privateProfile = privateSnapshot.data();
+        publicProfile = publicSnapshot.exists() ? publicSnapshot.data() : null;
+        populateForm(privateProfile);
+        accountName.textContent = compactAccountName(user, privateProfile);
+        accountAvatar.textContent = accountInitials(user, privateProfile);
+        loadingPanel.hidden = true;
+        form.hidden = false;
+    } catch (error) {
+        console.error('Profile loading failed.', error);
+        loadingPanel.textContent = 'Your profile could not be loaded. Refresh the page and try again.';
+        visibilityStatus.textContent = 'Unable to load';
+    }
+});
+</script>
+</body>
+</html>

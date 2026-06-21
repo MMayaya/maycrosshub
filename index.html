@@ -963,6 +963,7 @@ footer {
         <a href="#matching">Matching</a>
         <a href="#feedback">Feedback</a>
         <a href="signin.html" id="navSignIn">Sign In</a>
+        <a href="profile.html" id="navProfile" hidden>Profile</a>
         <span class="nav-account" id="navAccountName" hidden></span>
         <button class="nav-signout" id="navSignOut" type="button" hidden>Sign out</button>
     </div>
@@ -1480,6 +1481,7 @@ import {
 
 const auth = getAuth(firebaseApp);
 const navSignIn = document.getElementById('navSignIn');
+const navProfile = document.getElementById('navProfile');
 const navAccountName = document.getElementById('navAccountName');
 const navSignOut = document.getElementById('navSignOut');
 const heroAccountAction = document.getElementById('heroAccountAction');
@@ -1492,6 +1494,7 @@ navSignOut.addEventListener('click', async () => {
 onAuthStateChanged(auth, (user) => {
     const signedIn = Boolean(user?.emailVerified);
     navSignIn.hidden = signedIn;
+    navProfile.hidden = !signedIn;
     navAccountName.hidden = !signedIn;
     navSignOut.hidden = !signedIn;
 

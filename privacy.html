@@ -523,6 +523,7 @@ footer {
         <a href="index.html">Home</a>
         <a href="matches.html">Search Matches</a>
         <a href="signin.html" id="privacySignIn">Sign in</a>
+        <a href="profile.html" id="privacyProfile" hidden>Profile</a>
         <a href="index.html#feedback">Feedback</a>
         <a href="privacy.html" class="active" aria-current="page">Privacy</a>
         <span class="nav-account" id="privacyAccountName" hidden></span>
@@ -724,6 +725,7 @@ document.getElementById('printPolicy').addEventListener('click', () => window.pr
 
 const auth = getAuth(firebaseApp);
 const privacySignIn = document.getElementById('privacySignIn');
+const privacyProfile = document.getElementById('privacyProfile');
 const privacyFooterSignIn = document.getElementById('privacyFooterSignIn');
 const privacyAccountName = document.getElementById('privacyAccountName');
 const privacySignOut = document.getElementById('privacySignOut');
@@ -736,6 +738,7 @@ privacySignOut.addEventListener('click', async () => {
 onAuthStateChanged(auth, (user) => {
     const signedIn = Boolean(user?.emailVerified);
     privacySignIn.hidden = signedIn;
+    privacyProfile.hidden = !signedIn;
     privacyFooterSignIn.hidden = signedIn;
     privacyAccountName.hidden = !signedIn;
     privacySignOut.hidden = !signedIn;
