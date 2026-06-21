@@ -228,11 +228,8 @@ service cloud.firestore {
         && request.resource.data.createdAt == request.time
         && request.resource.data.updatedAt == request.time
         && exists(/databases/$(database)/documents/profiles/$(request.auth.uid))
-        && get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.available == true
         && exists(/databases/$(database)/documents/matchProfiles/$(resource.data.toUid))
         && get(/databases/$(database)/documents/matchProfiles/$(resource.data.toUid)).data.available == true
-        && get(/databases/$(database)/documents/matchProfiles/$(resource.data.toUid)).data.lastActiveAt is timestamp
-        && get(/databases/$(database)/documents/matchProfiles/$(resource.data.toUid)).data.lastActiveAt >= request.time - duration.value(90, 'd')
         && !requestIsBlocked(resource.data)
         && (!exists(/databases/$(database)/documents/moderation/$(request.auth.uid))
           || get(/databases/$(database)/documents/moderation/$(request.auth.uid)).data.status != 'suspended')
@@ -251,11 +248,8 @@ service cloud.firestore {
         && request.resource.data.updatedAt == request.time
         && requestId == request.auth.uid + '_' + request.resource.data.toUid
         && exists(/databases/$(database)/documents/profiles/$(request.auth.uid))
-        && get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.available == true
         && exists(/databases/$(database)/documents/matchProfiles/$(request.resource.data.toUid))
         && get(/databases/$(database)/documents/matchProfiles/$(request.resource.data.toUid)).data.available == true
-        && get(/databases/$(database)/documents/matchProfiles/$(request.resource.data.toUid)).data.lastActiveAt is timestamp
-        && get(/databases/$(database)/documents/matchProfiles/$(request.resource.data.toUid)).data.lastActiveAt >= request.time - duration.value(90, 'd')
         && !requestIsBlocked(request.resource.data)
         && (!exists(/databases/$(database)/documents/moderation/$(request.auth.uid))
           || get(/databases/$(database)/documents/moderation/$(request.auth.uid)).data.status != 'suspended')

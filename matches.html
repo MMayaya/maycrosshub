@@ -7,9 +7,8 @@
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-  let mchAnalyticsConsent = 'denied';
-  try { mchAnalyticsConsent = localStorage.getItem('mch-analytics-consent') === 'granted' ? 'granted' : 'denied'; } catch (error) {}
-  gtag('consent', 'default', { analytics_storage: mchAnalyticsConsent, ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' });
+  
+  gtag('consent', 'default', { analytics_storage: 'granted', ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' });
   gtag('config', 'G-Y2MZ4NKNHS');
 </script>
 <link rel="stylesheet" href="site-core.css">
@@ -1216,7 +1215,7 @@ function bindMatchActions() {
         if (currentStatus === 'pending' || currentStatus === 'accepted') return;
 
         button.addEventListener('click', () => {
-            pendingRequestContext = { button, card, matchUid, currentStatus, score: Number(card.dataset.score) };
+            pendingRequestContext = { button, card, matchUid, currentStatus, score: Math.round(Number(card.dataset.score) || 0) };
             document.getElementById('requestIntroduction').value = '';
             document.getElementById('requestDialogStatus').textContent = '';
             document.getElementById('requestDialog').showModal();
@@ -1290,7 +1289,12 @@ document.getElementById('requestDialogSend').addEventListener('click', async () 
         console.error('Request sending failed.', error);
         button.textContent = currentStatus ? 'Send new request' : 'Send request';
         button.disabled = false;
-        document.getElementById('requestDialogStatus').textContent = 'The request could not be sent. Check your connection and try again.';
+        const requestMessage = error.code === 'permission-denied'
+            ? 'The request was rejected by the current Firestore rules. Publish the latest firestore.rules file and try again.'
+            : error.code === 'already-exists'
+                ? 'A request with this educator already exists. Refresh the page to see its current status.'
+                : 'The request could not be sent. Refresh the page and try again.';
+        document.getElementById('requestDialogStatus').textContent = requestMessage;
     } finally {
         sendButton.disabled = false;
         sendButton.textContent = 'Send Request';

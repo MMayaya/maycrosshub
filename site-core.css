@@ -13,38 +13,6 @@
 
 .skip-link:focus { transform: translateY(0); }
 
-.consent-banner {
-    position: fixed;
-    right: 1rem;
-    bottom: 1rem;
-    left: 1rem;
-    z-index: 9999;
-    max-width: 760px;
-    margin: 0 auto;
-    padding: 1rem;
-    border: 1px solid #b8cbe0;
-    border-radius: 12px;
-    color: #1f2d3d;
-    background: #fff;
-    box-shadow: 0 15px 42px rgba(0, 28, 64, 0.24);
-    font: 400 0.92rem/1.5 "Segoe UI", sans-serif;
-}
-
-.consent-banner h2 { margin: 0 0 0.3rem; color: #002b5e; font-size: 1.08rem; }
-.consent-banner p { margin: 0; }
-.consent-banner a { color: #0057a8; font-weight: 700; }
-.consent-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.85rem; }
-.consent-actions button {
-    min-height: 42px;
-    padding: 0.55rem 0.85rem;
-    border: 1px solid #0057a8;
-    border-radius: 7px;
-    color: #0057a8;
-    background: #fff;
-    cursor: pointer;
-    font: 750 0.88rem "Segoe UI", sans-serif;
-}
-.consent-actions .consent-accept { color: #fff; background: #0057a8; }
 
 .connection-banner {
     position: fixed;
@@ -69,19 +37,6 @@
 }
 .site-legal-links a { color: inherit; }
 
-.nav-notification-badge {
-    display: inline-grid;
-    min-width: 18px;
-    height: 18px;
-    place-items: center;
-    margin-left: 0.25rem;
-    padding: 0 0.3rem;
-    border-radius: 999px;
-    color: #fff;
-    background: #d71920;
-    font-size: 0.68rem;
-    line-height: 1;
-}
 
 .moderation-dialog {
     width: min(92vw, 540px);
@@ -114,7 +69,4 @@
 .moderation-cancel { color: #0057a8; border: 1px solid #9bbde0; background: #fff; }
 .moderation-submit { color: #fff; border: 1px solid #9a2027; background: #a92129; }
 
-@media (max-width: 600px) {
-    .consent-banner { right: 0.5rem; bottom: 0.5rem; left: 0.5rem; }
-    .consent-actions button { flex: 1 1 150px; }
-}
+

@@ -60,7 +60,7 @@ Reports continue to be written to the private reports collection and blocks cont
 
 ## 7. Analytics and privacy
 
-Google Analytics remains consent-based and does not require Cloud Functions. Necessary Firebase Authentication browser storage remains enabled so users can stay signed in. Formspree continues to process feedback and deletion-request submissions.
+Google Analytics runs automatically and does not require Cloud Functions. Necessary Firebase Authentication browser storage remains enabled so users can stay signed in. Formspree continues to process feedback and deletion-request submissions.
 
 ## Spark limitations
 

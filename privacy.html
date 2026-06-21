@@ -7,9 +7,8 @@
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-  let mchAnalyticsConsent = 'denied';
-  try { mchAnalyticsConsent = localStorage.getItem('mch-analytics-consent') === 'granted' ? 'granted' : 'denied'; } catch (error) {}
-  gtag('consent', 'default', { analytics_storage: mchAnalyticsConsent, ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' });
+  
+  gtag('consent', 'default', { analytics_storage: 'granted', ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' });
   gtag('config', 'G-Y2MZ4NKNHS');
 </script>
 <link rel="stylesheet" href="site-core.css">
@@ -642,9 +641,8 @@ footer {
         <section class="policy-section" id="analytics" aria-labelledby="analytics-title">
             <span class="section-number" aria-hidden="true">5</span>
             <h2 id="analytics-title">Service providers, analytics and cookies</h2>
-            <p>May Cross Hub uses Firebase Authentication and Cloud Firestore to provide accounts, profiles, matching, requests and conversations. Formspree processes information submitted through the feedback and account-deletion request forms. Google Analytics is optional and helps measure page use and completed platform actions.</p>
-            <p>Analytics storage is denied by default and is enabled only after the visitor selects <strong>Accept analytics</strong>. May Cross Hub must not send names, email addresses, phone numbers, message contents or exact school details to Analytics.</p>
-            <p><button class="button" type="button" data-reset-consent>Review analytics choice</button></p>
+            <p>May Cross Hub uses Firebase Authentication and Cloud Firestore to provide accounts, profiles, matching, requests and conversations. Formspree processes information submitted through the feedback and account-deletion request forms. Google Analytics runs automatically and helps measure page use and completed platform actions.</p>
+            <p>Google Analytics runs automatically when a visitor opens the website to measure page use and completed platform actions. Advertising storage and advertising personalisation remain disabled. May Cross Hub must not send names, email addresses, phone numbers, message contents or exact school details to Analytics.</p>
         </section>
 
         <section class="policy-section" id="sharing" aria-labelledby="sharing-title">
@@ -683,7 +681,7 @@ footer {
             </details>
             <details>
                 <summary>Does this website use cookies?</summary>
-                <p>Firebase Authentication uses necessary browser storage to maintain secure sessions, and the homepage initialises Firebase Analytics where the browser supports it. Advertising is not included. Any additional optional tracking must be disclosed and, where required, offered as a separate choice.</p>
+                <p>Firebase Authentication uses necessary browser storage to maintain secure sessions, and website pages initialise Firebase Analytics automatically where the browser supports it. Advertising storage and advertising personalisation are disabled. Any additional tracking must be disclosed and reviewed before use.</p>
             </details>
         </section>
 
