@@ -1434,15 +1434,29 @@ if (feedbackForm) {
                 headers: { Accept: 'application/json' }
             });
 
-            if (!response.ok) throw new Error('Feedback submission failed.');
+            if (!response.ok) {
+                const responseData = await response.json().catch(() => ({}));
+                const responseError = new Error(
+                    responseData.errors?.map((item) => item.message).filter(Boolean).join(' ')
+                    || 'The feedback service rejected the message.'
+                );
+                responseError.status = response.status;
+                throw responseError;
+            }
 
             window.mchTrack?.('feedback_submitted', { feedback_type: document.getElementById('feedbackType').value || 'unknown' });
             feedbackForm.reset();
-            showSiteMessage('Message Sent Successfully');
+            feedbackStatus.textContent = 'Message sent successfully.';
+            showSiteMessage('Message sent successfully.');
         } catch (error) {
             console.error('Feedback submission failed.', error);
-            feedbackStatus.textContent = 'Your feedback could not be sent. Please try again.';
-            showSiteMessage('Message could not be sent', 'error');
+            const message = !navigator.onLine || error instanceof TypeError
+                ? 'No network connection. Check your internet connection and try again.'
+                : error.status === 429
+                    ? 'Too many messages were sent. Please wait a few minutes and try again.'
+                    : error.message || 'Your feedback could not be sent. Please try again.';
+            feedbackStatus.textContent = message;
+            showSiteMessage(message, 'error');
         } finally {
             feedbackSubmit.disabled = false;
             feedbackSubmit.textContent = 'Send Feedback';

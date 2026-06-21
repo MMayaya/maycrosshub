@@ -6,6 +6,10 @@ import {
     setDoc
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
+export function displayCodeForUid(uid) {
+    return 'MCH-' + String(uid || '').slice(0, 6).toUpperCase();
+}
+
 export function openSafetyDialog() {
     return new Promise((resolve) => {
         const dialog = document.createElement('dialog');
@@ -65,7 +69,9 @@ export async function submitSafetyAction(db, reporterUid, reportedUid, requestId
     if (action.report) {
         operations.push(addDoc(collection(db, 'reports'), {
             reporterUid,
+            reporterCode: displayCodeForUid(reporterUid),
             reportedUid,
+            reportedCode: displayCodeForUid(reportedUid),
             requestId: requestId || '',
             reason: action.reason,
             details: action.details,

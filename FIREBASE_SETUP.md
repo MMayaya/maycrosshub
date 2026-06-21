@@ -16,7 +16,7 @@ This version is designed for the Firebase Spark plan. It does not use Cloud Func
 2. Replace the editor contents with the contents of firestore.rules.
 3. Click **Publish**.
 
-These rules allow verified users to manage their own profiles, saved matches and blocks. They also allow deterministic match requests between active profiles and participant-only conversations. The identityProfiles collection exposes only title (when provided), initial and surname to the other participant in an accepted request. School and contact details remain private. Publish this exact rules file before testing registration; otherwise the three-document registration batch is rejected.
+These rules allow verified users to manage their own profiles, saved matches and blocks. They also allow deterministic match requests between active profiles and participant-only conversations. The identityProfiles collection exposes only title (when provided), initial and surname to the other participant in an accepted request. School and contact details remain private. New saved matches, requests, messages and reports include readable MCH display codes alongside authoritative UIDs; emails are deliberately kept out of these documents. Publish this exact rules file before testing registration or these newer writes.
 
 The current website does not require a composite Firestore index. firestore.indexes.json is retained as an empty configuration file for future use.
 

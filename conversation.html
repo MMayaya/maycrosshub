@@ -440,7 +440,7 @@ footer {
 <script type="module">
 import { firebaseApp } from "./firebase-config.js";
 import { compactAccountName } from "./auth-ui.js";
-import { openSafetyDialog, submitSafetyAction } from "./moderation-ui.js";
+import { displayCodeForUid, openSafetyDialog, submitSafetyAction } from "./moderation-ui.js";
 import {
     getAuth,
     onAuthStateChanged,
@@ -630,6 +630,7 @@ messageForm.addEventListener('submit', async (event) => {
     try {
         await addDoc(collection(db, 'requests', requestId, 'messages'), {
             senderUid: currentUser.uid,
+            senderCode: displayCodeForUid(currentUser.uid),
             text,
             createdAt: serverTimestamp()
         });

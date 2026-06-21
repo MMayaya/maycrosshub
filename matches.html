@@ -920,7 +920,7 @@ footer {
 <script type="module">
 import { firebaseApp } from "./firebase-config.js";
 import { accountInitials, compactAccountName } from "./auth-ui.js";
-import { openSafetyDialog, submitSafetyAction } from "./moderation-ui.js";
+import { displayCodeForUid, openSafetyDialog, submitSafetyAction } from "./moderation-ui.js";
 import {
     getAuth,
     onAuthStateChanged,
@@ -1069,6 +1069,7 @@ function renderMatchCard(candidate, breakdown) {
                 : 'Send request';
     const currentArea = [candidate.currentDistrict, candidate.currentProvince].filter(Boolean).join(', ');
     const desiredArea = [candidate.desiredDistrict, candidate.desiredProvince].filter(Boolean).join(', ');
+    const candidateCode = candidate.displayCode || displayCodeForUid(candidate.uid);
 
 
     const subjectText = (candidate.subjects || []).join(' ').toLowerCase();
@@ -1092,7 +1093,7 @@ function renderMatchCard(candidate, breakdown) {
             : 'Reciprocal province';
 
     return `
-        <article class="match-card" data-score="${score}" data-province="${escapeHtml(normalise(candidate.currentProvince))}" data-district="${escapeHtml(normalise(candidate.currentDistrict))}" data-subjects="${escapeHtml(subjectText)}" data-match-uid="${escapeHtml(candidate.uid)}">
+        <article class="match-card" data-score="${score}" data-province="${escapeHtml(normalise(candidate.currentProvince))}" data-district="${escapeHtml(normalise(candidate.currentDistrict))}" data-subjects="${escapeHtml(subjectText)}" data-match-uid="${escapeHtml(candidate.uid)}" data-match-code="${escapeHtml(candidateCode)}">
             <div class="match-main">
                 <div class="score-panel">
                     <div class="score-ring" style="--score: ${score}"><strong>${score}%</strong></div>
@@ -1100,7 +1101,7 @@ function renderMatchCard(candidate, breakdown) {
                 </div>
                 <div class="match-content">
                     <div class="match-topline">
-                        <h3>${escapeHtml(candidate.displayCode || `MCH-${candidate.uid.slice(0, 6).toUpperCase()}`)}</h3>
+                        <h3>${escapeHtml(candidateCode)}</h3>
                         <span class="pill pill-direct">${locationLabel}</span>
                         <span class="pill">Available</span>
                         <span class="pill">${escapeHtml(lastActiveLabel(candidate.lastActiveAt))}</span>
@@ -1252,7 +1253,9 @@ function bindMatchActions() {
                 } else {
                     await setDoc(saveRef, {
                         ownerUid: currentUser.uid,
+                        ownerCode: displayCodeForUid(currentUser.uid),
                         matchUid,
+                        matchCode: card.dataset.matchCode || displayCodeForUid(matchUid),
                         createdAt: serverTimestamp()
                     });
                     savedMatchIds.add(matchUid);
@@ -1277,7 +1280,7 @@ function bindMatchActions() {
         if (currentStatus === 'pending' || currentStatus === 'accepted') return;
 
         button.addEventListener('click', () => {
-            pendingRequestContext = { button, card, matchUid, currentStatus, score: Math.round(Number(card.dataset.score) || 0) };
+            pendingRequestContext = { button, card, matchUid, matchCode: card.dataset.matchCode || displayCodeForUid(matchUid), currentStatus, score: Math.round(Number(card.dataset.score) || 0) };
             document.getElementById('requestIntroduction').value = '';
             document.getElementById('requestDialogStatus').textContent = '';
             document.getElementById('requestDialog').showModal();
@@ -1315,7 +1318,7 @@ document.getElementById('requestDialogCancel').addEventListener('click', () => {
 
 document.getElementById('requestDialogSend').addEventListener('click', async () => {
     if (!pendingRequestContext) return;
-    const { button, matchUid, currentStatus, score } = pendingRequestContext;
+    const { button, matchUid, matchCode, currentStatus, score } = pendingRequestContext;
     const introduction = document.getElementById('requestIntroduction').value.trim();
     const sendButton = document.getElementById('requestDialogSend');
     sendButton.disabled = true;
@@ -1325,7 +1328,9 @@ document.getElementById('requestDialogSend').addEventListener('click', async () 
         const requestRef = doc(db, 'requests', requestId);
         const requestData = {
             fromUid: currentUser.uid,
+            fromCode: displayCodeForUid(currentUser.uid),
             toUid: matchUid,
+            toCode: matchCode,
             status: 'pending',
             matchScore: score,
             introMessage: introduction,
@@ -1338,7 +1343,7 @@ document.getElementById('requestDialogSend').addEventListener('click', async () 
         } else {
             await setDoc(requestRef, requestData);
         }
-        outgoingRequests.set(matchUid, { id: requestId, fromUid: currentUser.uid, toUid: matchUid, status: 'pending', matchScore: score, introMessage: introduction });
+        outgoingRequests.set(matchUid, { id: requestId, fromUid: currentUser.uid, fromCode: displayCodeForUid(currentUser.uid), toUid: matchUid, toCode: matchCode, status: 'pending', matchScore: score, introMessage: introduction });
         button.textContent = 'Request pending';
         button.classList.add('button-success');
         button.disabled = true;

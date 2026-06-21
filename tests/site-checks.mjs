@@ -90,6 +90,30 @@ for (const requiredPreviewFeature of [
 }
 if (home.includes('<a href="#matching">Match Logic</a>')) fail('index.html: redundant Match Logic navigation tab remains');
 if (!home.includes('>See Match Logic</a>')) fail('index.html: main See Match Logic button is missing');
+const moderation = fs.readFileSync(path.join(root, 'moderation-ui.js'), 'utf8');
+const conversation = fs.readFileSync(path.join(root, 'conversation.html'), 'utf8');
+for (const readableCodeFeature of [
+    'reporterCode: displayCodeForUid(reporterUid)',
+    'reportedCode: displayCodeForUid(reportedUid)'
+]) {
+    if (!moderation.includes(readableCodeFeature)) fail('moderation-ui.js: readable report code missing: ' + readableCodeFeature);
+}
+if (!conversation.includes('senderCode: displayCodeForUid(currentUser.uid)')) fail('conversation.html: readable sender code missing');
+for (const readableMatchFeature of ['ownerCode:', 'matchCode:', 'fromCode:', 'toCode:', 'data-match-code=']) {
+    if (!matches.includes(readableMatchFeature)) fail('matches.html: readable Firebase code missing: ' + readableMatchFeature);
+}
+for (const privateEmailField of ['senderEmail', 'reporterEmail', 'reportedEmail', 'fromEmail', 'toEmail', 'matchEmail']) {
+    if (matches.includes(privateEmailField) || conversation.includes(privateEmailField) || moderation.includes(privateEmailField)) {
+        fail('private email field must not be stored in shared Firebase records: ' + privateEmailField);
+    }
+}
+for (const feedbackMessageFeature of [
+    'Message sent successfully.',
+    'No network connection. Check your internet connection and try again.',
+    'Too many messages were sent. Please wait a few minutes and try again.'
+]) {
+    if (!home.includes(feedbackMessageFeature)) fail('index.html: Formspree result message missing: ' + feedbackMessageFeature);
+}
 const privacy = fs.readFileSync(path.join(root, 'privacy.html'), 'utf8');
 for (const placeholder of ['Add before launch', 'Appoint and register', 'Add monitored address']) {
     if (privacy.includes(placeholder)) fail(`privacy.html: launch placeholder remains: ${placeholder}`);
