@@ -54,7 +54,7 @@ service cloud.firestore {
       allow create: if owner(uid) && validPrivateProfile(uid);
       allow read: if owner(uid);
       allow update: if owner(uid) && validPrivateProfile(uid);
-      allow delete: if false;
+      allow delete: if owner(uid);
 
       match /savedMatches/{matchUid} {
         allow read: if owner(uid);
@@ -94,7 +94,7 @@ service cloud.firestore {
         && (!exists(/databases/$(database)/documents/moderation/$(uid))
           || get(/databases/$(database)/documents/moderation/$(uid)).data.status != 'suspended'
           || request.resource.data.available == false);
-      allow delete: if false;
+      allow delete: if owner(uid);
 
     }
 
@@ -150,7 +150,7 @@ service cloud.firestore {
         && request.resource.data.createdAt == resource.data.createdAt
         && request.resource.data.updatedAt == request.time;
 
-      allow delete: if false;
+      allow delete: if owner(uid);
     }
 
     function requestParticipant(data) {

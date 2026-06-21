@@ -114,6 +114,29 @@ for (const feedbackMessageFeature of [
 ]) {
     if (!home.includes(feedbackMessageFeature)) fail('index.html: Formspree result message missing: ' + feedbackMessageFeature);
 }
+for (const deletionFeature of [
+    'id="deletePassword"',
+    'reauthenticateWithCredential(currentUser, credential)',
+    'await deleteActiveProfileRecords(currentUser.uid)',
+    'await deleteUser(currentUser)',
+    "window.location.replace('index.html?accountDeleted=1')"
+]) {
+    if (!profile.includes(deletionFeature)) fail('profile.html: direct account deletion feature missing: ' + deletionFeature);
+}
+if (profile.includes('account deletion request') || profile.includes('Send Deletion Request')) {
+    fail('profile.html: obsolete manual deletion request flow remains');
+}
+for (const feedbackAccessFeature of [
+    'id="feedbackSignInPrompt"',
+    'id="feedbackForm" action="https://formspree.io/f/mwvdevgw" method="POST" hidden',
+    'class="btn btn-dark" id="feedbackSubmit"',
+    'window.mchFeedbackUser = signedIn ? user : null',
+    'if (!window.mchFeedbackUser?.emailVerified)'
+]) {
+    if (!home.includes(feedbackAccessFeature)) fail('index.html: verified feedback access feature missing: ' + feedbackAccessFeature);
+}
+
+
 const privacy = fs.readFileSync(path.join(root, 'privacy.html'), 'utf8');
 for (const placeholder of ['Add before launch', 'Appoint and register', 'Add monitored address']) {
     if (privacy.includes(placeholder)) fail(`privacy.html: launch placeholder remains: ${placeholder}`);
@@ -125,6 +148,8 @@ for (const jsonFile of ['firebase.json', 'firestore.indexes.json', 'site.webmani
 }
 
 const rules = fs.readFileSync(path.join(root, 'firestore.rules'), 'utf8');
+const ownerDeleteRuleCount = (rules.match(/allow delete: if owner\(uid\);/g) || []).length;
+if (ownerDeleteRuleCount !== 3) fail('firestore.rules: expected 3 owner profile-delete rules, found ' + ownerDeleteRuleCount);
 let braceDepth = 0;
 for (const character of rules) {
     if (character === '{') braceDepth += 1;

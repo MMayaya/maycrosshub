@@ -37,37 +37,29 @@ Do not upload service-account JSON files, passwords, private keys or Firebase Ad
 7. Open an accepted request conversation and exchange messages.
 8. Save and remove matches.
 9. Block an educator and confirm they disappear from matching and conversation access.
-10. Submit feedback and an account-deletion request.
+10. Submit feedback, then delete a test account and confirm it disappears from Authentication and active profile collections.
 
-## 5. Account-deletion requests
+## 5. Account deletion
 
-The profile page sends account-deletion requests through the existing Formspree endpoint. The operator must verify the request and remove the data manually.
+The Profile page now reauthenticates the educator with their current password, removes their saved matches, blocks, private profile, public match profile and accepted-name identity document, and then deletes their Firebase Authentication account.
 
-For the requested Firebase UID:
+Shared request history, conversation messages and safety reports are not automatically erased because those records involve another participant or may be needed for security and dispute handling. They no longer link to an active match profile after deletion. Review retained records manually when a lawful deletion request requires it.
 
-1. Delete message documents under every affected requests/{requestId}/messages subcollection.
-2. Delete request documents where fromUid or toUid matches the UID.
-3. Delete documents under profiles/{uid}/savedMatches and profiles/{uid}/blockedUsers.
-4. Delete profiles/{uid}, matchProfiles/{uid} and identityProfiles/{uid}. Delete any legacy sharingProfiles/{uid} document if that collection exists.
-5. Review and remove related reports or moderation records where legally appropriate.
-6. Open **Authentication > Users** and delete the Authentication account.
-
-Deleting only the Authentication user is not enough. The Firestore profile and match profile must also be deleted or the educator may continue appearing in results.
-
+Publish the supplied Firestore rules before testing this feature. The rules allow authenticated owners to delete only their own active profile documents.
 ## 6. Safety reports
 
 Reports continue to be written to the private reports collection and blocks continue to work immediately. Without the paid backend, the operator must review reports directly in Firestore Console. There is no automatic report email or administrator dashboard.
 
 ## 7. Analytics and privacy
 
-Google Analytics runs automatically and does not require Cloud Functions. Necessary Firebase Authentication browser storage remains enabled so users can stay signed in. Formspree continues to process feedback and deletion-request submissions.
+Google Analytics runs automatically and does not require Cloud Functions. Necessary Firebase Authentication browser storage remains enabled so users can stay signed in. Formspree processes verified-user feedback submissions; account deletion is handled directly by Firebase after password reauthentication.
 
 ## Spark limitations
 
 This version does not include:
 
 - Server-side hourly request rate limiting.
-- Automatic account and related-data cleanup.
+- Automatic cleanup of shared request, conversation and safety-report history after account deletion.
 - In-app notification generation.
 - Request, acceptance or message notification emails.
 - Weekly saved-match reminders.

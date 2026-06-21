@@ -726,6 +726,18 @@ header::before {
     font-size: 0.88rem;
 }
 
+.feedback-auth-prompt {
+    padding: 1rem;
+    border: 1px solid #b8d1f0;
+    border-radius: 10px;
+    background: #f3f8ff;
+    color: #28425f;
+}
+
+.feedback-auth-prompt strong { display: block; color: #004080; margin-bottom: 0.25rem; }
+.feedback-auth-prompt .btn { margin-top: 0.7rem; background: #004080; color: #fff; }
+.feedback-auth-prompt .btn:hover { background: #003468; }
+
 .feedback-form {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1283,8 +1295,16 @@ footer {
         <h2 class="section-title" id="feedback-title">Share Your Feedback</h2>
         <p class="section-subtitle">Tell us what is working, what is confusing, or what would make May Cross Hub more useful.</p>
 
-        <form class="feedback-form" id="feedbackForm" action="https://formspree.io/f/mwvdevgw" method="POST">
+        <div class="feedback-auth-prompt" id="feedbackSignInPrompt">
+            <strong>Sign in required</strong>
+            <p>Only registered educators with a verified email address can send feedback.</p>
+            <a class="btn" href="signin.html">Sign In to Send Feedback</a>
+        </div>
+
+        <form class="feedback-form" id="feedbackForm" action="https://formspree.io/f/mwvdevgw" method="POST" hidden>
             <input type="hidden" name="_subject" value="New May Cross Hub feedback">
+            <input type="hidden" name="firebase_uid" id="feedbackUid">
+            <input type="hidden" name="educator_code" id="feedbackEducatorCode">
             <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" hidden>
             <div class="feedback-field">
                 <label for="feedbackName">Name</label>
@@ -1310,7 +1330,7 @@ footer {
                 <textarea id="feedbackMessage" name="message" maxlength="2000" required placeholder="Share enough detail for us to understand your feedback."></textarea>
             </div>
             <div class="feedback-actions">
-                <button class="btn btn-primary" id="feedbackSubmit" type="submit">Send Feedback</button>
+                <button class="btn btn-dark" id="feedbackSubmit" type="submit">Send Feedback</button>
                 <p class="feedback-status" id="feedbackStatus" role="status" aria-live="polite"></p>
             </div>
         </form>
@@ -1420,9 +1440,20 @@ function showSiteMessage(message, type = 'success') {
     }, 6000);
 }
 
+if (new URLSearchParams(window.location.search).get('accountDeleted') === '1') {
+    showSiteMessage('Account deleted successfully.');
+    window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+}
+
 if (feedbackForm) {
     feedbackForm.addEventListener('submit', async (event) => {
         event.preventDefault();
+        if (!window.mchFeedbackUser?.emailVerified) {
+            const message = 'Sign in with a verified educator account before sending feedback.';
+            feedbackStatus.textContent = message;
+            showSiteMessage(message, 'error');
+            return;
+        }
         feedbackSubmit.disabled = true;
         feedbackSubmit.textContent = 'Sending...';
         feedbackStatus.textContent = '';
@@ -1446,6 +1477,13 @@ if (feedbackForm) {
 
             window.mchTrack?.('feedback_submitted', { feedback_type: document.getElementById('feedbackType').value || 'unknown' });
             feedbackForm.reset();
+            const verifiedUser = window.mchFeedbackUser;
+            document.getElementById('feedbackName').value = verifiedUser?.displayName || '';
+            document.getElementById('feedbackEmail').value = verifiedUser?.email || '';
+            document.getElementById('feedbackUid').value = verifiedUser?.uid || '';
+            document.getElementById('feedbackEducatorCode').value = verifiedUser?.uid
+                ? 'MCH-' + verifiedUser.uid.slice(0, 6).toUpperCase()
+                : '';
             feedbackStatus.textContent = 'Message sent successfully.';
             showSiteMessage('Message sent successfully.');
         } catch (error) {
@@ -1580,6 +1618,12 @@ const navProfile = document.getElementById('navProfile');
 const navAccountName = document.getElementById('navAccountName');
 const navSignOut = document.getElementById('navSignOut');
 const heroAccountAction = document.getElementById('heroAccountAction');
+const feedbackSignInPrompt = document.getElementById('feedbackSignInPrompt');
+const authenticatedFeedbackForm = document.getElementById('feedbackForm');
+const feedbackName = document.getElementById('feedbackName');
+const feedbackEmail = document.getElementById('feedbackEmail');
+const feedbackUid = document.getElementById('feedbackUid');
+const feedbackEducatorCode = document.getElementById('feedbackEducatorCode');
 
 navSignOut.addEventListener('click', async () => {
     await signOut(auth);
@@ -1593,13 +1637,27 @@ onAuthStateChanged(auth, (user) => {
     navProfile.hidden = !signedIn;
     navAccountName.hidden = !signedIn;
     navSignOut.hidden = !signedIn;
+    window.mchFeedbackUser = signedIn ? user : null;
+    if (authenticatedFeedbackForm && feedbackSignInPrompt) {
+        authenticatedFeedbackForm.hidden = !signedIn;
+        feedbackSignInPrompt.hidden = signedIn;
+    }
 
     if (signedIn) {
+        feedbackEmail.value = user.email || '';
+        feedbackEmail.readOnly = true;
+        feedbackName.value = user.displayName || feedbackName.value;
+        feedbackUid.value = user.uid;
+        feedbackEducatorCode.value = 'MCH-' + user.uid.slice(0, 6).toUpperCase();
         navAccountName.textContent = compactAccountName(user);
         heroAccountAction.href = 'dashboard.html';
         heroAccountAction.textContent = 'Open Dashboard';
     } else {
         navAccountName.textContent = '';
+        feedbackEmail.value = '';
+        feedbackEmail.readOnly = false;
+        feedbackUid.value = '';
+        feedbackEducatorCode.value = '';
         heroAccountAction.href = 'register.html';
         heroAccountAction.textContent = 'Create an Account';
     }
