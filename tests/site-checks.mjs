@@ -67,6 +67,29 @@ for (const requiredMatchFeature of [
     if (!matches.includes(requiredMatchFeature)) fail('matches.html: scoring or red-area feature missing: ' + requiredMatchFeature);
 }
 if (matches.includes('${tags.map')) fail('matches.html: duplicated professional tag row remains in runtime cards');
+const home = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+for (const requiredPreviewFeature of [
+    'Quick Match Percentage Preview',
+    'id="aCurrentDistrict"',
+    'id="bCurrentDistrict"',
+    'id="aSubjects"',
+    'id="bSubjects"',
+    'id="aGrades"',
+    'id="bGrades"',
+    'id="aPhase"',
+    'id="bPhase"',
+    'id="aPostLevel"',
+    'id="bPostLevel"',
+    'id="locationScoreText"',
+    'id="subjectScoreText"',
+    'id="gradeScoreText"',
+    'id="phasePostScoreText"',
+    'subjectOverlap === 0 ? Math.min(rawTotal, 50)'
+]) {
+    if (!home.includes(requiredPreviewFeature)) fail('index.html: full percentage preview feature missing: ' + requiredPreviewFeature);
+}
+if (home.includes('<a href="#matching">Match Logic</a>')) fail('index.html: redundant Match Logic navigation tab remains');
+if (!home.includes('>See Match Logic</a>')) fail('index.html: main See Match Logic button is missing');
 const privacy = fs.readFileSync(path.join(root, 'privacy.html'), 'utf8');
 for (const placeholder of ['Add before launch', 'Appoint and register', 'Add monitored address']) {
     if (privacy.includes(placeholder)) fail(`privacy.html: launch placeholder remains: ${placeholder}`);

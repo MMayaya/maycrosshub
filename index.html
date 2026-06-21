@@ -577,14 +577,60 @@ header::before {
     color: #333;
 }
 
-.demo-grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
-    gap: 0.7rem;
-    align-items: end;
+.score-weights {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
     margin-top: 0.8rem;
 }
 
+.score-weight {
+    padding: 0.3rem 0.6rem;
+    border: 1px solid #b8d1f0;
+    border-radius: 999px;
+    background: #f3f8ff;
+    color: #004080;
+    font-size: 0.78rem;
+    font-weight: 800;
+}
+
+.demo-profile-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem;
+    margin-top: 0.9rem;
+}
+
+.demo-teacher-form {
+    padding: 0.9rem;
+    border: 1px solid #d8e8fb;
+    border-radius: 10px;
+    background: #f8fbff;
+}
+
+.demo-teacher-form h4 {
+    margin-bottom: 0.7rem;
+    color: #004080;
+}
+
+.demo-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+}
+
+.demo-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+    margin-top: 0.9rem;
+}
+
+.demo-actions span {
+    color: #5d6c7c;
+    font-size: 0.82rem;
+}
 .field label {
     display: block;
     color: #003a75;
@@ -593,7 +639,8 @@ header::before {
     margin-bottom: 0.28rem;
 }
 
-.field select {
+.field select,
+.field input {
     width: 100%;
     min-height: 44px;
     border: 1px solid #b8d1f0;
@@ -668,6 +715,7 @@ header::before {
 
 .route-check strong { display: block; margin-top: 0.12rem; }
 .route-check.pass strong { color: #116b36; }
+.route-check.partial strong { color: #6d4900; }
 .route-check.fail strong { color: #a1262d; }
 
 .demo-next {
@@ -852,8 +900,8 @@ footer {
         min-height: 120px;
     }
 
-    .demo-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+    .demo-profile-grid {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -900,7 +948,7 @@ footer {
     .steps-grid,
     .data-grid,
     .tech-grid,
-    .demo-grid {
+    .demo-fields {
         grid-template-columns: 1fr;
     }
 
@@ -974,7 +1022,7 @@ footer {
     <div class="nav-links" id="navLinks">
         <a href="index.html" class="active">Home</a>
         <a href="#how-it-works">Process</a>
-        <a href="#matching">Match Logic</a>
+
         <a href="#feedback">Feedback</a>
         <a href="signin.html" id="navSignIn">Sign In</a>
         <a href="dashboard.html" id="navDashboard" hidden>Dashboard</a>
@@ -1125,84 +1173,64 @@ footer {
         </div>
 
         <div class="form-demo" aria-labelledby="demo-title">
-            <h3 id="demo-title" class="card-title">Quick Location Match Preview</h3>
-            <p class="section-subtitle">This preview checks reciprocal location logic. Full matching also compares phase, grades, subjects, and post level.</p>
+            <h3 id="demo-title" class="card-title">Quick Match Percentage Preview</h3>
+            <p class="section-subtitle">Change either educator's route or professional details to see exactly how the match percentage is calculated.</p>
 
-            <div class="demo-grid">
-                <div class="field">
-                    <label for="aCurrent">A current</label>
-                    <select id="aCurrent">
-                        <option>Eastern Cape</option>
-                        <option>Free State</option>
-                        <option>Gauteng</option>
-                        <option>KwaZulu-Natal</option>
-                        <option>Limpopo</option>
-                        <option>Mpumalanga</option>
-                        <option>North West</option>
-                        <option>Northern Cape</option>
-                        <option>Western Cape</option>
-                    </select>
-                </div>
-                <div class="field">
-                    <label for="aDesired">A wants</label>
-                    <select id="aDesired">
-                        <option>Gauteng</option>
-                        <option>Eastern Cape</option>
-                        <option>Free State</option>
-                        <option>KwaZulu-Natal</option>
-                        <option>Limpopo</option>
-                        <option>Mpumalanga</option>
-                        <option>North West</option>
-                        <option>Northern Cape</option>
-                        <option>Western Cape</option>
-                    </select>
-                </div>
-                <div class="field">
-                    <label for="bCurrent">B current</label>
-                    <select id="bCurrent">
-                        <option>Gauteng</option>
-                        <option>Eastern Cape</option>
-                        <option>Free State</option>
-                        <option>KwaZulu-Natal</option>
-                        <option>Limpopo</option>
-                        <option>Mpumalanga</option>
-                        <option>North West</option>
-                        <option>Northern Cape</option>
-                        <option>Western Cape</option>
-                    </select>
-                </div>
-                <div class="field">
-                    <label for="bDesired">B wants</label>
-                    <select id="bDesired">
-                        <option>Eastern Cape</option>
-                        <option>Free State</option>
-                        <option>Gauteng</option>
-                        <option>KwaZulu-Natal</option>
-                        <option>Limpopo</option>
-                        <option>Mpumalanga</option>
-                        <option>North West</option>
-                        <option>Northern Cape</option>
-                        <option>Western Cape</option>
-                    </select>
-                </div>
-                <button class="btn btn-dark" id="checkMatch" type="button">Check Route</button>
+            <div class="score-weights" aria-label="Match scoring weights">
+                <span class="score-weight">Location: 40 points</span>
+                <span class="score-weight">Subjects: 40 points</span>
+                <span class="score-weight">Grades: 10 points</span>
+                <span class="score-weight">Phase and post: 10 points</span>
+            </div>
+
+            <div class="demo-profile-grid">
+                <section class="demo-teacher-form" aria-labelledby="teacher-a-title">
+                    <h4 id="teacher-a-title">Teacher A</h4>
+                    <div class="demo-fields">
+                        <div class="field"><label for="aCurrentProvince">Current province</label><select id="aCurrentProvince" data-demo-province data-default="Eastern Cape"></select></div>
+                        <div class="field"><label for="aCurrentDistrict">Current district</label><input id="aCurrentDistrict" type="text" value="OR Tambo"></div>
+                        <div class="field"><label for="aDesiredProvince">Desired province</label><select id="aDesiredProvince" data-demo-province data-default="Gauteng"></select></div>
+                        <div class="field"><label for="aDesiredDistrict">Desired district</label><input id="aDesiredDistrict" type="text" value="Tshwane"></div>
+                        <div class="field"><label for="aSubjects">Subjects</label><input id="aSubjects" type="text" value="Mathematics, Physical Sciences" aria-describedby="subjectHint"></div>
+                        <div class="field"><label for="aGrades">Grades</label><input id="aGrades" type="text" value="8, 9" aria-describedby="gradeHint"></div>
+                        <div class="field"><label for="aPhase">Phase</label><select id="aPhase"><option>Foundation</option><option>Intermediate</option><option>Senior</option><option selected>FET</option></select></div>
+                        <div class="field"><label for="aPostLevel">Post level</label><select id="aPostLevel"><option selected>Post Level 1 Educator</option><option>Departmental Head</option><option>Deputy Principal</option><option>Principal</option><option>Other</option></select></div>
+                    </div>
+                </section>
+
+                <section class="demo-teacher-form" aria-labelledby="teacher-b-title">
+                    <h4 id="teacher-b-title">Teacher B</h4>
+                    <div class="demo-fields">
+                        <div class="field"><label for="bCurrentProvince">Current province</label><select id="bCurrentProvince" data-demo-province data-default="Gauteng"></select></div>
+                        <div class="field"><label for="bCurrentDistrict">Current district</label><input id="bCurrentDistrict" type="text" value="Tshwane"></div>
+                        <div class="field"><label for="bDesiredProvince">Desired province</label><select id="bDesiredProvince" data-demo-province data-default="Eastern Cape"></select></div>
+                        <div class="field"><label for="bDesiredDistrict">Desired district</label><input id="bDesiredDistrict" type="text" value="OR Tambo"></div>
+                        <div class="field"><label for="bSubjects">Subjects</label><input id="bSubjects" type="text" value="Mathematics, Physical Sciences" aria-describedby="subjectHint"></div>
+                        <div class="field"><label for="bGrades">Grades</label><input id="bGrades" type="text" value="8, 9" aria-describedby="gradeHint"></div>
+                        <div class="field"><label for="bPhase">Phase</label><select id="bPhase"><option>Foundation</option><option>Intermediate</option><option>Senior</option><option selected>FET</option></select></div>
+                        <div class="field"><label for="bPostLevel">Post level</label><select id="bPostLevel"><option selected>Post Level 1 Educator</option><option>Departmental Head</option><option>Deputy Principal</option><option>Principal</option><option>Other</option></select></div>
+                    </div>
+                </section>
+            </div>
+
+            <p class="demo-next" id="subjectHint">Separate multiple subjects with commas. Two or more shared subjects earn the full 40 subject points.</p>
+            <p class="demo-next" id="gradeHint">Separate multiple grades with commas. Two or more shared grades earn the full 10 grade points.</p>
+            <div class="demo-actions">
+                <button class="btn btn-dark" id="checkMatch" type="button">Recalculate Percentage</button>
+                <span>The percentage also updates automatically as fields change.</span>
             </div>
 
             <div class="demo-result" id="demoResult" data-status="match" role="status" aria-live="polite">
                 <div class="demo-result-heading">
-                    <span class="demo-score" id="demoScore">2/2 checks</span>
-                    <strong id="demoTitle">Direct reciprocal route</strong>
+                    <span class="demo-score" id="demoScore">100%</span>
+                    <strong id="demoTitle">Excellent professional and reciprocal match</strong>
                 </div>
                 <p class="demo-explanation" id="demoExplanation"></p>
                 <div class="route-checks">
-                    <div class="route-check" id="aToBCheck">
-                        <span>Teacher A wants &rarr; Teacher B current</span>
-                        <strong id="aToBText"></strong>
-                    </div>
-                    <div class="route-check" id="bToACheck">
-                        <span>Teacher B wants &rarr; Teacher A current</span>
-                        <strong id="bToAText"></strong>
-                    </div>
+                    <div class="route-check" id="locationScoreCard"><span>Reciprocal location</span><strong id="locationScoreText"></strong></div>
+                    <div class="route-check" id="subjectScoreCard"><span>Shared subjects</span><strong id="subjectScoreText"></strong></div>
+                    <div class="route-check" id="gradeScoreCard"><span>Shared grades</span><strong id="gradeScoreText"></strong></div>
+                    <div class="route-check" id="phasePostScoreCard"><span>Phase and post level</span><strong id="phasePostScoreText"></strong></div>
                 </div>
                 <p class="demo-next" id="demoNext"></p>
             </div>
@@ -1422,61 +1450,101 @@ if (feedbackForm) {
     });
 }
 
+const demoProvinces = [
+    'Eastern Cape', 'Free State', 'Gauteng', 'KwaZulu-Natal', 'Limpopo',
+    'Mpumalanga', 'North West', 'Northern Cape', 'Western Cape'
+];
+
+document.querySelectorAll('[data-demo-province]').forEach((select) => {
+    select.innerHTML = demoProvinces.map((province) =>
+        '<option' + (province === select.dataset.default ? ' selected' : '') + '>' + province + '</option>'
+    ).join('');
+});
+
+function normaliseDemo(value) {
+    return String(value || '').trim().toLowerCase();
+}
+
+function demoValues(value) {
+    return new Set(String(value || '').split(',').map(normaliseDemo).filter(Boolean));
+}
+
+function demoOverlap(first, second) {
+    return [...first].filter((value) => second.has(value)).length;
+}
+
+function setScoreCard(cardId, textId, score, maximum, message) {
+    const card = document.getElementById(cardId);
+    card.className = 'route-check ' + (score === maximum ? 'pass' : score > 0 ? 'partial' : 'fail');
+    document.getElementById(textId).textContent = score + '/' + maximum + ' points - ' + message;
+}
+
 function updateDemoResult() {
-    const aCurrent = document.getElementById('aCurrent').value;
-    const aDesired = document.getElementById('aDesired').value;
-    const bCurrent = document.getElementById('bCurrent').value;
-    const bDesired = document.getElementById('bDesired').value;
-    const aMoves = aCurrent !== aDesired;
-    const bMoves = bCurrent !== bDesired;
-    const aToB = aMoves && aDesired === bCurrent;
-    const bToA = bMoves && bDesired === aCurrent;
-    const passedChecks = Number(aToB) + Number(bToA);
-    const demoScore = document.getElementById('demoScore');
+    const aCurrentProvince = document.getElementById('aCurrentProvince').value;
+    const aCurrentDistrict = document.getElementById('aCurrentDistrict').value;
+    const aDesiredProvince = document.getElementById('aDesiredProvince').value;
+    const aDesiredDistrict = document.getElementById('aDesiredDistrict').value;
+    const bCurrentProvince = document.getElementById('bCurrentProvince').value;
+    const bCurrentDistrict = document.getElementById('bCurrentDistrict').value;
+    const bDesiredProvince = document.getElementById('bDesiredProvince').value;
+    const bDesiredDistrict = document.getElementById('bDesiredDistrict').value;
+
+    const reciprocalProvince = normaliseDemo(aDesiredProvince) === normaliseDemo(bCurrentProvince)
+        && normaliseDemo(bDesiredProvince) === normaliseDemo(aCurrentProvince);
+    const outwardDistrict = normaliseDemo(aDesiredDistrict) === normaliseDemo(bCurrentDistrict);
+    const returnDistrict = normaliseDemo(bDesiredDistrict) === normaliseDemo(aCurrentDistrict);
+    const districtMatches = Number(outwardDistrict) + Number(returnDistrict);
+    const location = reciprocalProvince ? (districtMatches === 2 ? 40 : districtMatches === 1 ? 25 : 10) : 0;
+
+    const subjectOverlap = demoOverlap(demoValues(document.getElementById('aSubjects').value), demoValues(document.getElementById('bSubjects').value));
+    const subjects = subjectOverlap >= 2 ? 40 : subjectOverlap === 1 ? 30 : 0;
+    const gradeOverlap = demoOverlap(demoValues(document.getElementById('aGrades').value), demoValues(document.getElementById('bGrades').value));
+    const grades = gradeOverlap >= 2 ? 10 : gradeOverlap === 1 ? 5 : 0;
+    const phase = normaliseDemo(document.getElementById('aPhase').value) === normaliseDemo(document.getElementById('bPhase').value) ? 6 : 0;
+    const postLevel = normaliseDemo(document.getElementById('aPostLevel').value) === normaliseDemo(document.getElementById('bPostLevel').value) ? 4 : 0;
+    const rawTotal = location + subjects + grades + phase + postLevel;
+    const total = subjectOverlap === 0 ? Math.min(rawTotal, 50) : Math.min(rawTotal, 100);
+
+    document.getElementById('demoScore').textContent = total + '%';
+    demoResult.dataset.status = total >= 75 ? 'match' : total >= 50 ? 'partial' : 'none';
+
     const demoTitle = document.getElementById('demoTitle');
-    const demoExplanation = document.getElementById('demoExplanation');
-    const aToBCheck = document.getElementById('aToBCheck');
-    const bToACheck = document.getElementById('bToACheck');
-    const aToBText = document.getElementById('aToBText');
-    const bToAText = document.getElementById('bToAText');
-    const demoNext = document.getElementById('demoNext');
-
-    demoScore.textContent = `${passedChecks}/2 checks`;
-    aToBCheck.className = `route-check ${aToB ? 'pass' : 'fail'}`;
-    bToACheck.className = `route-check ${bToA ? 'pass' : 'fail'}`;
-    aToBText.textContent = aToB
-        ? `Match: ${aDesired}`
-        : `${aDesired} does not match ${bCurrent}`;
-    bToAText.textContent = bToA
-        ? `Match: ${bDesired}`
-        : `${bDesired} does not match ${aCurrent}`;
-
-    if (passedChecks === 2) {
-        demoResult.dataset.status = 'match';
-        demoTitle.textContent = 'Direct reciprocal route found';
-        demoExplanation.textContent = `Teacher A can move from ${aCurrent} to ${aDesired}, while Teacher B can move from ${bCurrent} to ${bDesired}. Both destinations cross with the other teacher's current province.`;
-        demoNext.textContent = 'Location check passed. A real match would next compare subjects, phase, grades and post level.';
-    } else if (passedChecks === 1) {
-        demoResult.dataset.status = 'partial';
-        demoTitle.textContent = 'One side of the route matches';
-        demoExplanation.textContent = aToB
-            ? `Teacher A wants ${aDesired}, where Teacher B is currently posted, but Teacher B wants ${bDesired} instead of ${aCurrent}.`
-            : `Teacher B wants ${bDesired}, where Teacher A is currently posted, but Teacher A wants ${aDesired} instead of ${bCurrent}.`;
-        demoNext.textContent = 'This is a partial route, not yet a reciprocal transfer match. Change one destination to complete the cross.';
+    if (subjectOverlap === 0) {
+        demoTitle.textContent = 'No shared subject: percentage capped at 50%';
+    } else if (total >= 90) {
+        demoTitle.textContent = 'Excellent professional and reciprocal match';
+    } else if (total >= 75) {
+        demoTitle.textContent = 'Strong potential match';
+    } else if (total >= 60) {
+        demoTitle.textContent = 'Good possible match';
     } else {
-        demoResult.dataset.status = 'none';
-        demoTitle.textContent = 'The routes do not cross yet';
-        demoExplanation.textContent = `Teacher A wants ${aDesired}, but Teacher B is in ${bCurrent}. Teacher B wants ${bDesired}, but Teacher A is in ${aCurrent}.`;
-        demoNext.textContent = !aMoves || !bMoves
-            ? 'Each teacher must choose a destination different from their current province.'
-            : 'Try changing the destinations so each teacher wants the other teacher\'s current province.';
+        demoTitle.textContent = 'Limited compatibility';
     }
+
+    const locationMessage = !reciprocalProvince
+        ? 'the province route is not reciprocal'
+        : districtMatches === 2
+            ? 'both district directions match'
+            : districtMatches === 1
+                ? 'one district direction matches'
+                : 'provinces match, but districts do not';
+    setScoreCard('locationScoreCard', 'locationScoreText', location, 40, locationMessage);
+    setScoreCard('subjectScoreCard', 'subjectScoreText', subjects, 40, subjectOverlap + ' shared subject' + (subjectOverlap === 1 ? '' : 's'));
+    setScoreCard('gradeScoreCard', 'gradeScoreText', grades, 10, gradeOverlap + ' shared grade' + (gradeOverlap === 1 ? '' : 's'));
+    setScoreCard('phasePostScoreCard', 'phasePostScoreText', phase + postLevel, 10, (phase ? 'phase matches' : 'phase differs') + '; ' + (postLevel ? 'post level matches' : 'post level differs'));
+
+    document.getElementById('demoExplanation').textContent =
+        'Percentage: ' + location + ' location + ' + subjects + ' subjects + ' + grades +
+        ' grades + ' + (phase + postLevel) + ' phase/post = ' + rawTotal + ' points' +
+        (subjectOverlap === 0 && rawTotal > 50 ? ', capped at 50% because no subjects match.' : '.');
+    document.getElementById('demoNext').textContent =
+        'Real match results use the same weighting. The percentage measures compatibility only and does not guarantee transfer approval.';
 }
 
 if (checkMatch && demoResult) {
     checkMatch.addEventListener('click', updateDemoResult);
-    document.querySelectorAll('.form-demo select').forEach((select) => {
-        select.addEventListener('change', updateDemoResult);
+    document.querySelectorAll('.form-demo input, .form-demo select').forEach((field) => {
+        field.addEventListener(field.tagName === 'INPUT' ? 'input' : 'change', updateDemoResult);
     });
     updateDemoResult();
 }
