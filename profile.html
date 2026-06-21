@@ -345,6 +345,7 @@ footer { padding: 1.5rem 1rem 2.5rem; color: #69798b; text-align: center; font-s
                 <div><h2 id="personalTitle">Personal details</h2><p>Your email is linked to your sign-in account and cannot be changed here.</p></div>
             </div>
             <div class="field-grid">
+                <div class="field"><label for="title">Title</label><select id="title" required><option value="">Select title</option><option value="Mr.">Mr.</option><option value="Ms.">Ms.</option><option value="Mrs.">Mrs.</option><option value="Miss">Miss</option><option value="Mx.">Mx.</option><option value="Dr.">Dr.</option><option value="Prof.">Prof.</option></select></div>
                 <div class="field"><label for="firstName">First name</label><input id="firstName" type="text" autocomplete="given-name" required></div>
                 <div class="field"><label for="lastName">Surname</label><input id="lastName" type="text" autocomplete="family-name" required></div>
                 <div class="field"><label for="email">Email address</label><input id="email" type="email" readonly></div>
@@ -406,8 +407,8 @@ footer { padding: 1.5rem 1rem 2.5rem; color: #69798b; text-align: center; font-s
                 <label class="privacy-option"><input id="showProfessional" type="checkbox"><span><strong>Show subjects and district</strong><span>Needed to create a useful searchable match profile.</span></span></label>
                 <label class="privacy-option"><input id="allowRequests" type="checkbox"><span><strong>Allow match requests</strong><span>Other verified educators may send you a private request.</span></span></label>
 
-                <label class="privacy-option"><input id="showSchool" type="checkbox"><span><strong>Allow school sharing later</strong><span>Your school remains absent from public match cards.</span></span></label>
-                <label class="privacy-option"><input id="showContact" type="checkbox"><span><strong>Allow contact sharing later</strong><span>Your contact details remain absent from public match cards.</span></span></label>
+                <label class="privacy-option"><input id="showSchool" type="checkbox"><span><strong>Show school after acceptance</strong><span>Only educators with an accepted request can see your current school.</span></span></label>
+                <label class="privacy-option"><input id="showContact" type="checkbox"><span><strong>Show contact details after acceptance</strong><span>Only educators with an accepted request can see your email and cellphone number.</span></span></label>
             </div>
         </section>
 
@@ -495,6 +496,7 @@ const subjectList = document.getElementById('subjectList');
 let currentUser = null;
 let privateProfile = null;
 let publicProfile = null;
+let sharingProfile = null;
 let accountSuspended = false;
 let selectedGrades = [];
 let selectedSubjects = [];
@@ -661,6 +663,7 @@ document.getElementById('allowRequests').addEventListener('change', updateVisibi
 document.getElementById('profilePaused').addEventListener('change', updateVisibilityPreview);
 
 function populateForm(profile) {
+    document.getElementById('title').value = profile.title || '';
     document.getElementById('firstName').value = profile.firstName || '';
     document.getElementById('lastName').value = profile.lastName || '';
     document.getElementById('email').value = currentUser.email || profile.email || '';
@@ -747,6 +750,7 @@ form.addEventListener('submit', async (event) => {
         return;
     }
 
+    const title = document.getElementById('title').value;
     const firstName = document.getElementById('firstName').value.trim();
     const lastName = document.getElementById('lastName').value.trim();
     const showProfessional = document.getElementById('showProfessional').checked;
@@ -783,6 +787,7 @@ form.addEventListener('submit', async (event) => {
 
     const updatedPrivateProfile = {
         uid: currentUser.uid,
+        title,
         firstName,
         lastName,
         email: currentUser.email || privateProfile.email,
@@ -816,16 +821,32 @@ form.addEventListener('submit', async (event) => {
         updatedAt: serverTimestamp()
     };
 
+    const updatedSharingProfile = {
+        uid: currentUser.uid,
+        title,
+        initial: Array.from(firstName)[0]?.toUpperCase() || '',
+        surname: lastName,
+        school: privacy.showSchool ? current.school : '',
+        email: privacy.showContact ? (currentUser.email || privateProfile.email) : '',
+        phone: privacy.showContact ? document.getElementById('phone').value.trim() : '',
+        shareSchool: privacy.showSchool,
+        shareContact: privacy.showContact,
+        createdAt: sharingProfile?.createdAt || serverTimestamp(),
+        updatedAt: serverTimestamp()
+    };
+
     saveButton.disabled = true;
     saveButton.textContent = 'Saving...';
     try {
         const batch = writeBatch(db);
         batch.set(doc(db, 'profiles', currentUser.uid), updatedPrivateProfile);
         batch.set(doc(db, 'matchProfiles', currentUser.uid), updatedPublicProfile);
+        batch.set(doc(db, 'sharingProfiles', currentUser.uid), updatedSharingProfile);
         await batch.commit();
         await updateProfile(currentUser, { displayName: `${firstName} ${lastName}`.trim() });
         privateProfile = { ...updatedPrivateProfile, createdAt: privateProfile.createdAt };
         publicProfile = { ...updatedPublicProfile, createdAt: publicProfile?.createdAt };
+        sharingProfile = { ...updatedSharingProfile, createdAt: sharingProfile?.createdAt };
         accountName.textContent = compactAccountName(currentUser, updatedPrivateProfile);
         accountAvatar.textContent = accountInitials(currentUser, updatedPrivateProfile);
         updateVisibilityPreview();
@@ -874,6 +895,7 @@ document.getElementById('exportButton').addEventListener('click', async () => {
             account: { uid: currentUser.uid, email: currentUser.email, emailVerified: currentUser.emailVerified },
             privateProfile,
             matchProfile: publicProfile,
+            sharingProfile,
             requests: Array.from(requests.values()),
             conversations
         });
@@ -970,9 +992,10 @@ onAuthStateChanged(auth, async (user) => {
     accountName.textContent = compactAccountName(user);
     accountAvatar.textContent = accountInitials(user);
     try {
-        const [privateSnapshot, publicSnapshot, moderationSnapshot] = await Promise.all([
+        const [privateSnapshot, publicSnapshot, sharingSnapshot, moderationSnapshot] = await Promise.all([
             getDoc(doc(db, 'profiles', user.uid)),
             getDoc(doc(db, 'matchProfiles', user.uid)),
+            getDoc(doc(db, 'sharingProfiles', user.uid)),
             getDoc(doc(db, 'moderation', user.uid))
         ]);
         if (!privateSnapshot.exists()) {
@@ -982,6 +1005,7 @@ onAuthStateChanged(auth, async (user) => {
         }
         privateProfile = privateSnapshot.data();
         publicProfile = publicSnapshot.exists() ? publicSnapshot.data() : null;
+        sharingProfile = sharingSnapshot.exists() ? sharingSnapshot.data() : null;
         accountSuspended = moderationSnapshot.data()?.status === 'suspended';
         populateForm(privateProfile);
         await loadBlockedEducators();
@@ -990,6 +1014,9 @@ onAuthStateChanged(auth, async (user) => {
         accountAvatar.textContent = accountInitials(user, privateProfile);
         loadingPanel.hidden = true;
         form.hidden = false;
+        if (!privateProfile.title && !accountSuspended) {
+            showMessage('Choose your title and save your profile to enable identity sharing with accepted matches.');
+        }
     } catch (error) {
         console.error('Profile loading failed.', error);
         loadingPanel.textContent = 'Your profile could not be loaded. Refresh the page and try again.';

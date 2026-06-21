@@ -484,6 +484,8 @@ input:focus-visible {
     color: var(--success);
     font-size: 0.82rem;
 }
+.accepted-panel strong { display: block; margin-bottom: 0.25rem; }
+.accepted-panel span { display: block; margin-top: 0.18rem; color: #245b38; }
 
 .empty-state {
     display: none;
@@ -627,14 +629,14 @@ footer {
         <div>
             <p class="eyebrow">Private, controlled conversations</p>
             <h1>Match requests</h1>
-            <p>Review reciprocal routes before responding. Accepting a request does not approve a transfer or automatically reveal your private contact details.</p>
+            <p>Review reciprocal routes before responding. Acceptance reveals each educator's title, initial and surname; school and contact details follow their sharing choices.</p>
         </div>
         <a class="button button-secondary" href="matches.html">Find more matches</a>
     </header>
 
     <aside class="privacy-strip" aria-label="Privacy reminder">
         <span class="privacy-icon" aria-hidden="true">i</span>
-        <p><strong>Contact sharing remains off.</strong> Names, school details, email addresses and cellphone numbers stay hidden until a future user-controlled sharing step is implemented.</p>
+        <p><strong>Sharing is acceptance-controlled.</strong> Before acceptance, identities remain private. After acceptance, formal names are shown, while school and contact details appear only when the educator enabled those choices.</p>
     </aside>
 
     <section class="stats-grid" aria-label="Request summary">
@@ -755,7 +757,7 @@ footer {
                         <span class="route-arrow" aria-hidden="true">&#8596;</span>
                         <div class="route-box"><span>They want</span><strong>Amathole, Eastern Cape</strong></div>
                     </div>
-                    <p class="accepted-panel"><strong>Next step:</strong> confirm serious interest inside the platform. Contact details remain hidden.</p>
+                    <p class="accepted-panel"><strong>Accepted:</strong> identity and permitted sharing details are available after profiles finish loading.</p>
                 </div>
                 <div class="request-actions">
                     <button class="button button-secondary" type="button" data-preview-message>Open conversation</button>
@@ -838,7 +840,7 @@ let renderVersion = 0;
 const actionCopy = {
     accept: {
         title: 'Accept this request?',
-        message: 'This will mark the request as accepted. Your private contact details will remain hidden.',
+        message: 'This will accept the request and reveal your formal name. Your school and contact details will appear only if you enabled those sharing choices.',
         confirm: 'Accept request'
     },
     decline: {
@@ -914,38 +916,71 @@ function requestActions(status) {
     return '<span class="status-pill status-archived">No further action</span>';
 }
 
-function renderRequestCard(request, counterpart) {
+function formalSharedName(sharing) {
+    if (!sharing?.title || !sharing?.initial || !sharing?.surname) return '';
+    return [sharing.title, sharing.initial + '.', sharing.surname].join(' ');
+}
+
+function acceptedSharingPanel(sharing) {
+    const name = formalSharedName(sharing);
+    if (!name) {
+        return '<div class="accepted-panel"><strong>Identity sharing pending</strong><span>The educator needs to select a title and save their profile.</span></div>';
+    }
+    let html = '<div class="accepted-panel"><strong>' + escapeHtml(name) + '</strong>';
+    html += sharing.shareSchool && sharing.school
+        ? '<span><b>School:</b> ' + escapeHtml(sharing.school) + '</span>'
+        : '<span>School not shared.</span>';
+    html += sharing.shareContact && (sharing.email || sharing.phone)
+        ? '<span><b>Contact:</b> ' + escapeHtml([sharing.email, sharing.phone].filter(Boolean).join(' | ')) + '</span>'
+        : '<span>Contact details not shared.</span>';
+    return html + '</div>';
+}
+
+function renderRequestCard(request, counterpart, sharing = {}) {
     const status = displayStatus(request);
     const currentArea = [counterpart.currentDistrict, counterpart.currentProvince].filter(Boolean).join(', ');
     const desiredArea = [counterpart.desiredDistrict, counterpart.desiredProvince].filter(Boolean).join(', ');
     const tags = [counterpart.phase, ...(counterpart.subjects || []).slice(0, 2), counterpart.postLevel].filter(Boolean);
-    const searchText = [counterpart.displayCode, currentArea, desiredArea, ...tags].join(' ').toLowerCase();
-    const acceptedNote = status === 'accepted'
-        ? '<p class="accepted-panel"><strong>Next step:</strong> continue inside the platform. Contact details remain hidden.</p>'
-        : `<p class="request-note"><strong>Introduction:</strong> ${escapeHtml(request.introMessage || 'No introductory message was included.')}</p>`;
+    const sharedName = formalSharedName(sharing);
+    const identity = status === 'accepted' && sharedName
+        ? sharedName
+        : (counterpart.displayCode || 'Private educator');
+    const searchText = [
+        counterpart.displayCode,
+        identity,
+        sharing.school,
+        sharing.email,
+        sharing.phone,
+        currentArea,
+        desiredArea,
+        ...tags
+    ].filter(Boolean).join(' ').toLowerCase();
+    const note = status === 'accepted'
+        ? acceptedSharingPanel(sharing)
+        : '<p class="request-note"><strong>Introduction:</strong> ' + escapeHtml(request.introMessage || 'No introductory message was included.') + '</p>';
+    const avatar = status === 'incoming' ? 'IN' : status === 'sent' ? 'OUT' : 'OK';
+    const tagsHtml = tags.map((tag) => '<span class="tag">' + escapeHtml(tag) + '</span>').join('');
+    const counterpartUid = counterpart.uid || sharing.uid || '';
 
-    return `
-        <article class="request-card" data-status="${status}" data-search="${escapeHtml(searchText)}" data-request-id="${escapeHtml(request.id)}" data-counterpart-uid="${escapeHtml(counterpart.uid || '')}">
-            <div class="request-card-head">
-                <div class="request-identity">
-                    <span class="request-avatar" aria-hidden="true">${status === 'incoming' ? 'IN' : status === 'sent' ? 'OUT' : 'OK'}</span>
-                    <div><h2>${escapeHtml(counterpart.displayCode || 'Private educator')}</h2><p>${escapeHtml(formatDate(request.createdAt))}</p></div>
-                </div>
-                <span class="status-pill status-${status}">${statusText(status)}</span>
-            </div>
-            <div class="request-body">
-                <div>
-                    <div class="score-line"><span class="score">${Number(request.matchScore || 0)}% match</span>${tags.map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}</div>
-                    <div class="route-grid">
-                        <div class="route-box"><span>Their current area</span><strong>${escapeHtml(currentArea || counterpart.currentProvince || 'Private')}</strong></div>
-                        <span class="route-arrow" aria-hidden="true">&#8596;</span>
-                        <div class="route-box"><span>They want</span><strong>${escapeHtml(desiredArea || counterpart.desiredProvince || 'Private')}</strong></div>
-                    </div>
-                    ${acceptedNote}
-                </div>
-                <div class="request-actions">${requestActions(status)}<button class="button button-secondary" type="button" data-safety>Report / block</button></div>
-            </div>
-        </article>`;
+    return '<article class="request-card" data-status="' + status
+        + '" data-search="' + escapeHtml(searchText)
+        + '" data-request-id="' + escapeHtml(request.id)
+        + '" data-counterpart-uid="' + escapeHtml(counterpartUid) + '">'
+        + '<div class="request-card-head"><div class="request-identity">'
+        + '<span class="request-avatar" aria-hidden="true">' + avatar + '</span>'
+        + '<div><h2>' + escapeHtml(identity) + '</h2><p>' + escapeHtml(formatDate(request.createdAt)) + '</p></div>'
+        + '</div><span class="status-pill status-' + status + '">' + statusText(status) + '</span></div>'
+        + '<div class="request-body"><div>'
+        + '<div class="score-line"><span class="score">' + Number(request.matchScore || 0) + '% match</span>' + tagsHtml + '</div>'
+        + '<div class="route-grid"><div class="route-box"><span>Their current area</span><strong>'
+        + escapeHtml(currentArea || counterpart.currentProvince || 'Private')
+        + '</strong></div><span class="route-arrow" aria-hidden="true">&#8596;</span>'
+        + '<div class="route-box"><span>They want</span><strong>'
+        + escapeHtml(desiredArea || counterpart.desiredProvince || 'Private')
+        + '</strong></div></div>' + note + '</div>'
+        + '<div class="request-actions">' + requestActions(status)
+        + '<button class="button button-secondary" type="button" data-safety>Report / block</button></div>'
+        + '</div></article>';
 }
 
 function showToast(message) {
@@ -1059,7 +1094,7 @@ dialogConfirm.addEventListener('click', async () => {
         await updateDoc(doc(db, 'requests', pendingRequestId), changes);
         actionDialog.close();
         showToast(pendingAction === 'accept'
-            ? 'Request accepted. Contact details remain hidden.'
+            ? 'Request accepted. Identity and permitted sharing details are now available.'
             : 'Request status updated.');
         window.mchTrack?.('request_status_changed', { status: nextStatus });
     } catch (error) {
@@ -1086,8 +1121,17 @@ async function refreshRequests() {
 
     const rendered = await Promise.all(requests.map(async (request) => {
         const counterpartUid = request.fromUid === currentUser.uid ? request.toUid : request.fromUid;
-        const snapshot = await getDoc(doc(db, 'matchProfiles', counterpartUid));
-        return renderRequestCard(request, snapshot.exists() ? snapshot.data() : {});
+        const [matchSnapshot, sharingSnapshot] = await Promise.all([
+            getDoc(doc(db, 'matchProfiles', counterpartUid)),
+            request.status === 'accepted'
+                ? getDoc(doc(db, 'sharingProfiles', counterpartUid)).catch(() => null)
+                : Promise.resolve(null)
+        ]);
+        return renderRequestCard(
+            request,
+            matchSnapshot.exists() ? matchSnapshot.data() : {},
+            sharingSnapshot?.exists() ? sharingSnapshot.data() : {}
+        );
     }));
     if (version !== renderVersion) return;
 

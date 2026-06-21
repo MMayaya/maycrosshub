@@ -17,13 +17,15 @@ service cloud.firestore {
 
     function validPrivateProfile(uid) {
       return request.resource.data.keys().hasOnly([
-          'uid', 'firstName', 'lastName', 'email', 'phone',
+          'uid', 'title', 'firstName', 'lastName', 'email', 'phone',
           'current', 'desired', 'privacy', 'available',
           'emailVerified', 'paused', 'lastActiveAt',
           'createdAt', 'updatedAt'
         ])
         && request.resource.data.uid == uid
-        && request.resource.data.email == request.auth.token.email;
+        && request.resource.data.email == request.auth.token.email
+        && (!('title' in request.resource.data)
+          || request.resource.data.title in ['Mr.', 'Ms.', 'Mrs.', 'Miss', 'Mx.', 'Dr.', 'Prof.']);
     }
 
     function validMatchProfile(uid) {
@@ -88,6 +90,83 @@ service cloud.firestore {
 
     }
 
+    function usersBlocked(uidA, uidB) {
+      return exists(/databases/$(database)/documents/profiles/$(uidA)/blockedUsers/$(uidB))
+        || exists(/databases/$(database)/documents/profiles/$(uidB)/blockedUsers/$(uidA));
+    }
+
+    function acceptedRequestBetween(uidA, uidB) {
+      return uidA != uidB
+        && (
+          (
+            exists(/databases/$(database)/documents/requests/$(uidA + '_' + uidB))
+            && get(/databases/$(database)/documents/requests/$(uidA + '_' + uidB)).data.status == 'accepted'
+          ) || (
+            exists(/databases/$(database)/documents/requests/$(uidB + '_' + uidA))
+            && get(/databases/$(database)/documents/requests/$(uidB + '_' + uidA)).data.status == 'accepted'
+          )
+        );
+    }
+
+    function validSharingProfile(uid) {
+      return request.resource.data.keys().hasOnly([
+          'uid', 'title', 'initial', 'surname', 'school',
+          'email', 'phone', 'shareSchool', 'shareContact',
+          'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.uid == uid
+        && request.resource.data.title in ['Mr.', 'Ms.', 'Mrs.', 'Miss', 'Mx.', 'Dr.', 'Prof.']
+        && request.resource.data.initial is string
+        && request.resource.data.initial.size() > 0
+        && request.resource.data.initial.size() <= 4
+        && request.resource.data.surname is string
+        && request.resource.data.surname.size() > 0
+        && request.resource.data.surname.size() <= 80
+        && request.resource.data.school is string
+        && request.resource.data.email is string
+        && request.resource.data.phone is string
+        && request.resource.data.shareSchool is bool
+        && request.resource.data.shareContact is bool
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp
+        && (
+          (request.resource.data.shareSchool == false && request.resource.data.school == '')
+          || (request.resource.data.shareSchool == true
+            && request.resource.data.school.size() > 0
+            && request.resource.data.school.size() <= 160)
+        )
+        && (
+          (request.resource.data.shareContact == false
+            && request.resource.data.email == ''
+            && request.resource.data.phone == '')
+          || (request.resource.data.shareContact == true
+            && request.resource.data.email == request.auth.token.email
+            && request.resource.data.phone.size() >= 7
+            && request.resource.data.phone.size() <= 20)
+        );
+    }
+
+    match /sharingProfiles/{uid} {
+      allow read: if owner(uid)
+        || (
+          verified()
+          && acceptedRequestBetween(request.auth.uid, uid)
+          && !usersBlocked(request.auth.uid, uid)
+        );
+
+      allow create: if owner(uid)
+        && validSharingProfile(uid)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      allow update: if owner(uid)
+        && validSharingProfile(uid)
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time;
+
+      allow delete: if false;
+    }
+
     function requestParticipant(data) {
       return signedIn()
         && (data.fromUid == request.auth.uid || data.toUid == request.auth.uid);
@@ -98,8 +177,7 @@ service cloud.firestore {
     }
 
     function requestIsBlocked(data) {
-      return exists(/databases/$(database)/documents/profiles/$(data.fromUid)/blockedUsers/$(data.toUid))
-        || exists(/databases/$(database)/documents/profiles/$(data.toUid)/blockedUsers/$(data.fromUid));
+      return usersBlocked(data.fromUid, data.toUid);
     }
 
     function validRequestData() {

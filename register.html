@@ -733,6 +733,19 @@ footer {
 
                         <div class="field-grid">
                             <div class="field">
+                                <label for="title">Title</label>
+                                <select id="title" name="title" required>
+                                    <option value="">Select title</option>
+                                    <option value="Mr.">Mr.</option>
+                                    <option value="Ms.">Ms.</option>
+                                    <option value="Mrs.">Mrs.</option>
+                                    <option value="Miss">Miss</option>
+                                    <option value="Mx.">Mx.</option>
+                                    <option value="Dr.">Dr.</option>
+                                    <option value="Prof.">Prof.</option>
+                                </select>
+                            </div>
+                            <div class="field">
                                 <label for="firstName">First name</label>
                                 <input id="firstName" name="firstName" type="text" autocomplete="given-name" required>
                             </div>
@@ -964,11 +977,11 @@ footer {
                             </label>
 
                             <label class="switch-row">
-                                <span><strong>Show my school name</strong><span>Keep this private until you are ready.</span></span>
+                                <span><strong>Show my school after acceptance</strong><span>Only an educator whose request you accept can see it.</span></span>
                                 <span class="switch"><input type="checkbox" name="showSchool"><span class="slider"></span></span>
                             </label>
                             <label class="switch-row">
-                                <span><strong>Show my cellphone or email</strong><span>Not recommended before a request is accepted.</span></span>
+                                <span><strong>Show my cellphone and email after acceptance</strong><span>Only an accepted match can see these contact details.</span></span>
                                 <span class="switch"><input type="checkbox" name="showContact"><span class="slider"></span></span>
                             </label>
                         </div>
@@ -1284,6 +1297,11 @@ function verificationErrorMessage(error) {
     return `${messages[code] || 'The verification email could not be sent.'} (${code})`;
 }
 
+function formalName(title, firstName, lastName) {
+    const initial = Array.from(firstName.trim())[0]?.toUpperCase() || '';
+    return [title, initial ? initial + '.' : '', lastName.trim()].filter(Boolean).join(' ');
+}
+
 function buildProfileDocuments(uid, email) {
     const phase = form.querySelector('input[name="phase"]:checked')?.value || '';
     const nearby = form.querySelector('input[name="nearby"]:checked')?.value === 'Yes';
@@ -1294,6 +1312,7 @@ function buildProfileDocuments(uid, email) {
 
     const privateProfile = {
         uid,
+        title: document.getElementById('title').value,
         firstName: document.getElementById('firstName').value.trim(),
         lastName: document.getElementById('lastName').value.trim(),
         email,
@@ -1351,7 +1370,21 @@ function buildProfileDocuments(uid, email) {
         updatedAt: serverTimestamp()
     };
 
-    return { privateProfile, matchProfile, allowRequests, showProfessional };
+    const sharingProfile = {
+        uid,
+        title: privateProfile.title,
+        initial: Array.from(privateProfile.firstName)[0]?.toUpperCase() || '',
+        surname: privateProfile.lastName,
+        school: privateProfile.privacy.showSchool ? privateProfile.current.school : '',
+        email: privateProfile.privacy.showContact ? privateProfile.email : '',
+        phone: privateProfile.privacy.showContact ? privateProfile.phone : '',
+        shareSchool: privateProfile.privacy.showSchool,
+        shareContact: privateProfile.privacy.showContact,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+    };
+
+    return { privateProfile, matchProfile, sharingProfile, allowRequests, showProfessional };
 }
 
 function validateStep(step) {
@@ -1401,7 +1434,11 @@ function updateReview() {
     const selectedPhase = form.querySelector('input[name="phase"]:checked');
     const nearby = form.querySelector('input[name="nearby"]:checked');
     const values = [
-        ['Educator', `${document.getElementById('firstName').value} ${document.getElementById('lastName').value}`.trim()],
+        ['Educator', formalName(
+            document.getElementById('title').value,
+            document.getElementById('firstName').value,
+            document.getElementById('lastName').value
+        )],
         ['Current post', document.getElementById('currentSchool').value],
         ['Current area', `${document.getElementById('currentDistrict').value}, ${document.getElementById('currentProvince').value}`],
         ['Teaching profile', `${selectedPhase ? selectedPhase.value : ''} - Grades ${selectedGrades.join(', ')} - ${selectedSubjects.join(', ')}`],
@@ -1487,10 +1524,11 @@ form.addEventListener('submit', async (event) => {
         await credential.user.getIdToken(true);
 
         const accountEmail = credential.user.email || email;
-        const { privateProfile, matchProfile } = buildProfileDocuments(credential.user.uid, accountEmail);
+        const { privateProfile, matchProfile, sharingProfile } = buildProfileDocuments(credential.user.uid, accountEmail);
         const batch = writeBatch(db);
         batch.set(doc(db, 'profiles', credential.user.uid), privateProfile);
         batch.set(doc(db, 'matchProfiles', credential.user.uid), matchProfile);
+        batch.set(doc(db, 'sharingProfiles', credential.user.uid), sharingProfile);
         await batch.commit();
         profileSaved = true;
 
