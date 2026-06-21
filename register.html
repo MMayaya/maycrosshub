@@ -739,9 +739,8 @@ footer {
                                     <option value="Ms.">Ms.</option>
                                     <option value="Mrs.">Mrs.</option>
                                     <option value="Miss">Miss</option>
-                                    <option value="Mx.">Mx.</option>
                                     <option value="Dr.">Dr.</option>
-                                    <option value="Prof.">Prof.</option>
+                                    <option value="N/A">N/A (Prefer not to say)</option>
                                 </select>
                             </div>
                             <div class="field">
@@ -962,27 +961,16 @@ footer {
                     <section class="form-step" data-step="3" aria-labelledby="privacy-title">
                         <div class="step-heading">
                             <h2 id="privacy-title" tabindex="-1">Privacy and final review</h2>
-                            <p>You can change these settings later. Contact details are off by default.</p>
+                            <p>Your matching details are visible, while your school and contact details remain private.</p>
                         </div>
 
                         <div class="switch-list">
-                            <label class="switch-row">
-                                <span><strong>Show my subjects and district</strong><span>Needed for useful professional matching.</span></span>
-                                <span class="switch"><input type="checkbox" name="showProfessional" checked><span class="slider"></span></span>
-                            </label>
+
                             <label class="switch-row">
                                 <span><strong>Allow educators to send match requests</strong><span>Requests remain inside May Cross Hub.</span></span>
                                 <span class="switch"><input type="checkbox" name="allowRequests" checked><span class="slider"></span></span>
                             </label>
-
-                            <label class="switch-row">
-                                <span><strong>Show my school after acceptance</strong><span>Only an educator whose request you accept can see it.</span></span>
-                                <span class="switch"><input type="checkbox" name="showSchool"><span class="slider"></span></span>
-                            </label>
-                            <label class="switch-row">
-                                <span><strong>Show my cellphone and email after acceptance</strong><span>Only an accepted match can see these contact details.</span></span>
-                                <span class="switch"><input type="checkbox" name="showContact"><span class="slider"></span></span>
-                            </label>
+                            <p class="helper"><strong>What is shown:</strong> Your district and teaching subjects are shown for matching. After both educators accept, only your title (if selected), first-name initial and surname are revealed. Your school, email address and cellphone number are never shared.</p>
                         </div>
 
                         <div class="review-box">
@@ -1275,7 +1263,7 @@ function registrationErrorMessage(error) {
     };
 
     const profileMessages = {
-        'permission-denied': 'Your educator profile could not be saved. Please try again or contact support.',
+        'permission-denied': 'Firebase rejected the educator profile. Publish the firestore.rules included with this website, then register again.',
         'failed-precondition': 'The profile service is not ready. Please contact support.',
         'unavailable': 'The profile service is temporarily unavailable. Please try again.'
     };
@@ -1298,7 +1286,8 @@ function verificationErrorMessage(error) {
 
 function formalName(title, firstName, lastName) {
     const initial = Array.from(firstName.trim())[0]?.toUpperCase() || '';
-    return [title, initial ? initial + '.' : '', lastName.trim()].filter(Boolean).join(' ');
+    const visibleTitle = title === 'N/A' ? '' : title;
+    return [visibleTitle, initial ? initial + '.' : '', lastName.trim()].filter(Boolean).join(' ');
 }
 
 function buildProfileDocuments(uid, email) {
@@ -1306,7 +1295,7 @@ function buildProfileDocuments(uid, email) {
     const nearby = form.querySelector('input[name="nearby"]:checked')?.value === 'Yes';
     const grades = [...selectedGrades];
     const subjects = [...selectedSubjects];
-    const showProfessional = form.elements.showProfessional.checked;
+    const showProfessional = true;
     const allowRequests = form.elements.allowRequests.checked;
 
     const privateProfile = {
@@ -1338,9 +1327,7 @@ function buildProfileDocuments(uid, email) {
         privacy: {
             showProfessional,
             allowRequests,
-
-            showSchool: form.elements.showSchool.checked,
-            showContact: form.elements.showContact.checked
+            shareName: true
         },
         available: false,
         emailVerified: false,
@@ -1354,14 +1341,14 @@ function buildProfileDocuments(uid, email) {
         uid,
         displayCode: `MCH-${uid.slice(0, 6).toUpperCase()}`,
         currentProvince: privateProfile.current.province,
-        currentDistrict: showProfessional ? privateProfile.current.district : '',
+        currentDistrict: privateProfile.current.district,
         desiredProvince: privateProfile.desired.province,
-        desiredDistrict: showProfessional ? privateProfile.desired.district : '',
-        desiredTown: showProfessional ? privateProfile.desired.town : '',
-        phase: showProfessional ? phase : '',
-        grades: showProfessional ? grades : [],
-        subjects: showProfessional ? subjects : [],
-        postLevel: showProfessional ? privateProfile.current.postLevel : '',
+        desiredDistrict: privateProfile.desired.district,
+        desiredTown: privateProfile.desired.town,
+        phase,
+        grades,
+        subjects,
+        postLevel: privateProfile.current.postLevel,
         nearby,
         available: false,
         lastActiveAt: serverTimestamp(),
@@ -1369,21 +1356,16 @@ function buildProfileDocuments(uid, email) {
         updatedAt: serverTimestamp()
     };
 
-    const sharingProfile = {
+    const identityProfile = {
         uid,
         title: privateProfile.title,
         initial: Array.from(privateProfile.firstName)[0]?.toUpperCase() || '',
         surname: privateProfile.lastName,
-        school: privateProfile.privacy.showSchool ? privateProfile.current.school : '',
-        email: privateProfile.privacy.showContact ? privateProfile.email : '',
-        phone: privateProfile.privacy.showContact ? privateProfile.phone : '',
-        shareSchool: privateProfile.privacy.showSchool,
-        shareContact: privateProfile.privacy.showContact,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
     };
 
-    return { privateProfile, matchProfile, sharingProfile, allowRequests, showProfessional };
+    return { privateProfile, matchProfile, identityProfile, allowRequests, showProfessional };
 }
 
 function validateStep(step) {
@@ -1523,11 +1505,11 @@ form.addEventListener('submit', async (event) => {
         await credential.user.getIdToken(true);
 
         const accountEmail = credential.user.email || email;
-        const { privateProfile, matchProfile, sharingProfile } = buildProfileDocuments(credential.user.uid, accountEmail);
+        const { privateProfile, matchProfile, identityProfile } = buildProfileDocuments(credential.user.uid, accountEmail);
         const batch = writeBatch(db);
         batch.set(doc(db, 'profiles', credential.user.uid), privateProfile);
         batch.set(doc(db, 'matchProfiles', credential.user.uid), matchProfile);
-        batch.set(doc(db, 'sharingProfiles', credential.user.uid), sharingProfile);
+        batch.set(doc(db, 'identityProfiles', credential.user.uid), identityProfile);
         await batch.commit();
         profileSaved = true;
 

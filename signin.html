@@ -589,7 +589,7 @@ async function activateVerifiedProfile(user) {
     const available = moderationSnapshot.data()?.status !== 'suspended'
         && profile.paused !== true
         && profile.privacy?.allowRequests === true
-        && profile.privacy?.showProfessional === true;
+;
     const batch = writeBatch(db);
     batch.update(profileRef, {
         emailVerified: true,

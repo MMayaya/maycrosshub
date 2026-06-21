@@ -16,7 +16,7 @@ This version is designed for the Firebase Spark plan. It does not use Cloud Func
 2. Replace the editor contents with the contents of firestore.rules.
 3. Click **Publish**.
 
-These rules allow verified users to manage their own profiles, saved matches and blocks. They also allow deterministic match requests between active profiles and participant-only conversations. The sharingProfiles collection exposes only title, initial, surname and user-permitted school or contact details to the other participant in an accepted request.
+These rules allow verified users to manage their own profiles, saved matches and blocks. They also allow deterministic match requests between active profiles and participant-only conversations. The identityProfiles collection exposes only title (when provided), initial and surname to the other participant in an accepted request. School and contact details remain private. Publish this exact rules file before testing registration; otherwise the three-document registration batch is rejected.
 
 The current website does not require a composite Firestore index. firestore.indexes.json is retained as an empty configuration file for future use.
 
@@ -31,9 +31,9 @@ Do not upload service-account JSON files, passwords, private keys or Firebase Ad
 1. Register educator A and verify the email.
 2. Register educator B with a reciprocal current and desired location and verify the email.
 3. Confirm that both accounts can sign in and find each other.
-4. Choose a required title and test both school and contact sharing choices.
+4. Choose a required title and confirm the formal-name sharing acknowledgement.
 5. Send, accept, decline, cancel and resend a request.
-6. Confirm that accepted requests show title, initial and surname, plus only the school/contact fields enabled by the educator.
+6. Confirm that accepted requests show only title, initial and surname.
 7. Open an accepted request conversation and exchange messages.
 8. Save and remove matches.
 9. Block an educator and confirm they disappear from matching and conversation access.
@@ -48,7 +48,7 @@ For the requested Firebase UID:
 1. Delete message documents under every affected requests/{requestId}/messages subcollection.
 2. Delete request documents where fromUid or toUid matches the UID.
 3. Delete documents under profiles/{uid}/savedMatches and profiles/{uid}/blockedUsers.
-4. Delete profiles/{uid}, matchProfiles/{uid} and sharingProfiles/{uid}.
+4. Delete profiles/{uid}, matchProfiles/{uid} and identityProfiles/{uid}. Delete any legacy sharingProfiles/{uid} document if that collection exists.
 5. Review and remove related reports or moderation records where legally appropriate.
 6. Open **Authentication > Users** and delete the Authentication account.
 

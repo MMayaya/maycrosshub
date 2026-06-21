@@ -628,14 +628,14 @@ footer {
         <div>
             <p class="eyebrow">Private, controlled conversations</p>
             <h1>Match requests</h1>
-            <p>Review reciprocal routes before responding. Acceptance reveals each educator's title, initial and surname; school and contact details follow their sharing choices.</p>
+            <p>Review reciprocal routes before responding. Acceptance reveals only each educator's title, initial and surname.</p>
         </div>
         <a class="button button-secondary" href="matches.html">Find more matches</a>
     </header>
 
     <aside class="privacy-strip" aria-label="Privacy reminder">
         <span class="privacy-icon" aria-hidden="true">i</span>
-        <p><strong>Sharing is acceptance-controlled.</strong> Before acceptance, identities remain private. After acceptance, formal names are shown, while school and contact details appear only when the educator enabled those choices.</p>
+        <p><strong>Sharing is acceptance-controlled.</strong> Before acceptance, identities remain private. After acceptance, only title, initial and surname are shown; school and contact details stay private.</p>
     </aside>
 
     <section class="stats-grid" aria-label="Request summary">
@@ -839,7 +839,7 @@ let renderVersion = 0;
 const actionCopy = {
     accept: {
         title: 'Accept this request?',
-        message: 'This will accept the request and reveal your formal name. Your school and contact details will appear only if you enabled those sharing choices.',
+        message: 'This will accept the request and reveal only your title, initial and surname to the matched educator.',
         confirm: 'Accept request'
     },
     decline: {
@@ -917,7 +917,7 @@ function requestActions(status) {
 
 function formalSharedName(sharing) {
     if (!sharing?.title || !sharing?.initial || !sharing?.surname) return '';
-    return [sharing.title, sharing.initial + '.', sharing.surname].join(' ');
+    return [sharing.title === 'N/A' ? '' : sharing.title, sharing.initial + '.', sharing.surname].filter(Boolean).join(' ');
 }
 
 function acceptedSharingPanel(sharing) {
@@ -925,14 +925,8 @@ function acceptedSharingPanel(sharing) {
     if (!name) {
         return '<div class="accepted-panel"><strong>Identity sharing pending</strong><span>The educator needs to select a title and save their profile.</span></div>';
     }
-    let html = '<div class="accepted-panel"><strong>' + escapeHtml(name) + '</strong>';
-    html += sharing.shareSchool && sharing.school
-        ? '<span><b>School:</b> ' + escapeHtml(sharing.school) + '</span>'
-        : '<span>School not shared.</span>';
-    html += sharing.shareContact && (sharing.email || sharing.phone)
-        ? '<span><b>Contact:</b> ' + escapeHtml([sharing.email, sharing.phone].filter(Boolean).join(' | ')) + '</span>'
-        : '<span>Contact details not shared.</span>';
-    return html + '</div>';
+    return '<div class="accepted-panel"><strong>' + escapeHtml(name)
+        + '</strong><span>Only the accepted educator name is shared.</span></div>';
 }
 
 function renderRequestCard(request, counterpart, sharing = {}) {
@@ -947,9 +941,7 @@ function renderRequestCard(request, counterpart, sharing = {}) {
     const searchText = [
         counterpart.displayCode,
         identity,
-        sharing.school,
-        sharing.email,
-        sharing.phone,
+
         currentArea,
         desiredArea,
         ...tags
@@ -1120,16 +1112,16 @@ async function refreshRequests() {
 
     const rendered = await Promise.all(requests.map(async (request) => {
         const counterpartUid = request.fromUid === currentUser.uid ? request.toUid : request.fromUid;
-        const [matchSnapshot, sharingSnapshot] = await Promise.all([
+        const [matchSnapshot, identitySnapshot] = await Promise.all([
             getDoc(doc(db, 'matchProfiles', counterpartUid)),
             request.status === 'accepted'
-                ? getDoc(doc(db, 'sharingProfiles', counterpartUid)).catch(() => null)
+                ? getDoc(doc(db, 'identityProfiles', counterpartUid)).catch(() => null)
                 : Promise.resolve(null)
         ]);
         return renderRequestCard(
             request,
             matchSnapshot.exists() ? matchSnapshot.data() : {},
-            sharingSnapshot?.exists() ? sharingSnapshot.data() : {}
+            identitySnapshot?.exists() ? identitySnapshot.data() : {}
         );
     }));
     if (version !== renderVersion) return;

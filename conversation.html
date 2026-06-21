@@ -403,9 +403,8 @@ footer {
         </aside>
 
         <section class="shared-profile" aria-labelledby="sharedIdentity">
-            <h2 id="sharedIdentity">Loading accepted-match details...</h2>
-            <p id="sharedSchool">Checking school-sharing preference...</p>
-            <p id="sharedContact">Checking contact-sharing preference...</p>
+            <h2 id="sharedIdentity">Loading accepted educator name...</h2>
+            <p>Only the educator's title, initial and surname are shared after acceptance.</p>
         </section>
         <p><button class="button-link" id="safetyButton" type="button">Report or block this educator</button></p>
 
@@ -471,8 +470,6 @@ const conversationTitle = document.getElementById('conversationTitle');
 const routeSummary = document.getElementById('routeSummary');
 const matchScore = document.getElementById('matchScore');
 const sharedIdentity = document.getElementById('sharedIdentity');
-const sharedSchool = document.getElementById('sharedSchool');
-const sharedContact = document.getElementById('sharedContact');
 const messageList = document.getElementById('messageList');
 const messageForm = document.getElementById('messageForm');
 const messageText = document.getElementById('messageText');
@@ -508,7 +505,7 @@ function showBlocked(title, message) {
 
 function formalSharedName(sharing) {
     if (!sharing?.title || !sharing?.initial || !sharing?.surname) return '';
-    return [sharing.title, sharing.initial + '.', sharing.surname].join(' ');
+    return [sharing.title === 'N/A' ? '' : sharing.title, sharing.initial + '.', sharing.surname].filter(Boolean).join(' ');
 }
 
 function formatTime(timestamp) {
@@ -597,24 +594,18 @@ async function openConversation(user) {
     counterpartUid = activeRequest.fromUid === user.uid
         ? activeRequest.toUid
         : activeRequest.fromUid;
-    const [counterpartSnapshot, sharingSnapshot] = await Promise.all([
+    const [counterpartSnapshot, identitySnapshot] = await Promise.all([
         getDoc(doc(db, 'matchProfiles', counterpartUid)),
-        getDoc(doc(db, 'sharingProfiles', counterpartUid)).catch(() => null)
+        getDoc(doc(db, 'identityProfiles', counterpartUid)).catch(() => null)
     ]);
     const counterpart = counterpartSnapshot.exists() ? counterpartSnapshot.data() : {};
-    const sharing = sharingSnapshot?.exists() ? sharingSnapshot.data() : {};
+    const identity = identitySnapshot?.exists() ? identitySnapshot.data() : {};
     const currentArea = [counterpart.currentDistrict, counterpart.currentProvince].filter(Boolean).join(', ');
     const desiredArea = [counterpart.desiredDistrict, counterpart.desiredProvince].filter(Boolean).join(', ');
 
-    const sharedName = formalSharedName(sharing);
+    const sharedName = formalSharedName(identity);
     conversationTitle.textContent = sharedName || counterpart.displayCode || 'Accepted educator match';
     sharedIdentity.textContent = sharedName || 'Identity sharing pending';
-    sharedSchool.textContent = sharing.shareSchool && sharing.school
-        ? 'School: ' + sharing.school
-        : 'School not shared.';
-    sharedContact.textContent = sharing.shareContact && (sharing.email || sharing.phone)
-        ? 'Contact: ' + [sharing.email, sharing.phone].filter(Boolean).join(' | ')
-        : 'Contact details not shared.';
     routeSummary.textContent = [currentArea, desiredArea].filter(Boolean).join(' to ') || 'Accepted reciprocal transfer match';
     matchScore.textContent = `${Number(activeRequest.matchScore || 0)}%`;
     blockedState.hidden = true;

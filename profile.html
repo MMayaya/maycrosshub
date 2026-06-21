@@ -344,7 +344,7 @@ footer { padding: 1.5rem 1rem 2.5rem; color: #69798b; text-align: center; font-s
                 <div><h2 id="personalTitle">Personal details</h2><p>Your email is linked to your sign-in account and cannot be changed here.</p></div>
             </div>
             <div class="field-grid">
-                <div class="field"><label for="title">Title</label><select id="title" required><option value="">Select title</option><option value="Mr.">Mr.</option><option value="Ms.">Ms.</option><option value="Mrs.">Mrs.</option><option value="Miss">Miss</option><option value="Mx.">Mx.</option><option value="Dr.">Dr.</option><option value="Prof.">Prof.</option></select></div>
+                <div class="field"><label for="title">Title</label><select id="title" required><option value="">Select title</option><option value="Mr.">Mr.</option><option value="Ms.">Ms.</option><option value="Mrs.">Mrs.</option><option value="Miss">Miss</option><option value="Dr.">Dr.</option><option value="N/A">N/A (Prefer not to say)</option></select></div>
                 <div class="field"><label for="firstName">First name</label><input id="firstName" type="text" autocomplete="given-name" required></div>
                 <div class="field"><label for="lastName">Surname</label><input id="lastName" type="text" autocomplete="family-name" required></div>
                 <div class="field"><label for="email">Email address</label><input id="email" type="email" readonly></div>
@@ -399,15 +399,13 @@ footer { padding: 1.5rem 1rem 2.5rem; color: #69798b; text-align: center; font-s
         <section class="form-section" aria-labelledby="privacyTitle">
             <div class="section-heading">
                 <span class="section-number">4</span>
-                <div><h2 id="privacyTitle">Privacy and availability</h2><p>Turning either of the first two settings off removes your profile from active match results.</p></div>
+                <div><h2 id="privacyTitle">Privacy and availability</h2><p>District and subjects are always shown for matching. School and contact details remain private.</p></div>
             </div>
             <div class="privacy-grid">
                 <label class="privacy-option"><input id="profilePaused" type="checkbox"><span><strong>Pause my match profile</strong><span>Hide your profile and stop new requests without deleting your account.</span></span></label>
-                <label class="privacy-option"><input id="showProfessional" type="checkbox"><span><strong>Show subjects and district</strong><span>Needed to create a useful searchable match profile.</span></span></label>
-                <label class="privacy-option"><input id="allowRequests" type="checkbox"><span><strong>Allow match requests</strong><span>Other verified educators may send you a private request.</span></span></label>
 
-                <label class="privacy-option"><input id="showSchool" type="checkbox"><span><strong>Show school after acceptance</strong><span>Only educators with an accepted request can see your current school.</span></span></label>
-                <label class="privacy-option"><input id="showContact" type="checkbox"><span><strong>Show contact details after acceptance</strong><span>Only educators with an accepted request can see your email and cellphone number.</span></span></label>
+                <label class="privacy-option"><input id="allowRequests" type="checkbox"><span><strong>Allow match requests</strong><span>Other verified educators may send you a private request.</span></span></label>
+                <div class="privacy-option"><span><strong>Automatic privacy</strong><span>After acceptance, only your title (if selected), first-name initial and surname are revealed. Your school, email address and cellphone number are never shared.</span></span></div>
             </div>
         </section>
 
@@ -495,7 +493,7 @@ const subjectList = document.getElementById('subjectList');
 let currentUser = null;
 let privateProfile = null;
 let publicProfile = null;
-let sharingProfile = null;
+let identityProfile = null;
 let accountSuspended = false;
 let selectedGrades = [];
 let selectedSubjects = [];
@@ -612,7 +610,6 @@ function updateVisibilityPreview() {
         return;
     }
     const visible = !document.getElementById('profilePaused').checked
-        && document.getElementById('showProfessional').checked
         && document.getElementById('allowRequests').checked;
     visibilityStatus.textContent = visible ? 'Visible to matches' : 'Hidden from matches';
 }
@@ -657,7 +654,7 @@ subjectSelect.addEventListener('change', () => {
     otherSubject.hidden = subjectSelect.value !== 'Other';
     if (!otherSubject.hidden) otherSubject.focus();
 });
-document.getElementById('showProfessional').addEventListener('change', updateVisibilityPreview);
+
 document.getElementById('allowRequests').addEventListener('change', updateVisibilityPreview);
 document.getElementById('profilePaused').addEventListener('change', updateVisibilityPreview);
 
@@ -684,12 +681,11 @@ function populateForm(profile) {
     document.getElementById('preferredSchool').value = profile.desired?.preferredSchool || '';
     document.getElementById('nearby').value = profile.desired?.nearby === false ? 'No' : 'Yes';
     document.getElementById('reason').value = profile.desired?.reason || '';
-    document.getElementById('showProfessional').checked = profile.privacy?.showProfessional === true;
+
     document.getElementById('allowRequests').checked = profile.privacy?.allowRequests === true;
 
     document.getElementById('profilePaused').checked = profile.paused === true;
-    document.getElementById('showSchool').checked = profile.privacy?.showSchool === true;
-    document.getElementById('showContact').checked = profile.privacy?.showContact === true;
+
     updateVisibilityPreview();
 }
 
@@ -752,7 +748,7 @@ form.addEventListener('submit', async (event) => {
     const title = document.getElementById('title').value;
     const firstName = document.getElementById('firstName').value.trim();
     const lastName = document.getElementById('lastName').value.trim();
-    const showProfessional = document.getElementById('showProfessional').checked;
+    const showProfessional = true;
     const allowRequests = document.getElementById('allowRequests').checked;
     const paused = document.getElementById('profilePaused').checked;
     const nearby = document.getElementById('nearby').value === 'Yes';
@@ -779,9 +775,7 @@ form.addEventListener('submit', async (event) => {
     const privacy = {
         showProfessional,
         allowRequests,
-
-        showSchool: document.getElementById('showSchool').checked,
-        showContact: document.getElementById('showContact').checked
+        shareName: true
     };
 
     const updatedPrivateProfile = {
@@ -805,14 +799,14 @@ form.addEventListener('submit', async (event) => {
         uid: currentUser.uid,
         displayCode: publicProfile?.displayCode || `MCH-${currentUser.uid.slice(0, 6).toUpperCase()}`,
         currentProvince: current.province,
-        currentDistrict: showProfessional ? current.district : '',
+        currentDistrict: current.district,
         desiredProvince: desired.province,
-        desiredDistrict: showProfessional ? desired.district : '',
-        desiredTown: showProfessional ? desired.town : '',
-        phase: showProfessional ? current.phase : '',
-        grades: showProfessional ? current.grades : [],
-        subjects: showProfessional ? current.subjects : [],
-        postLevel: showProfessional ? current.postLevel : '',
+        desiredDistrict: desired.district,
+        desiredTown: desired.town,
+        phase: current.phase,
+        grades: current.grades,
+        subjects: current.subjects,
+        postLevel: current.postLevel,
         nearby,
         available,
         lastActiveAt: publicProfile?.lastActiveAt || privateProfile.lastActiveAt || serverTimestamp(),
@@ -820,17 +814,12 @@ form.addEventListener('submit', async (event) => {
         updatedAt: serverTimestamp()
     };
 
-    const updatedSharingProfile = {
+    const updatedIdentityProfile = {
         uid: currentUser.uid,
         title,
         initial: Array.from(firstName)[0]?.toUpperCase() || '',
         surname: lastName,
-        school: privacy.showSchool ? current.school : '',
-        email: privacy.showContact ? (currentUser.email || privateProfile.email) : '',
-        phone: privacy.showContact ? document.getElementById('phone').value.trim() : '',
-        shareSchool: privacy.showSchool,
-        shareContact: privacy.showContact,
-        createdAt: sharingProfile?.createdAt || serverTimestamp(),
+        createdAt: identityProfile?.createdAt || serverTimestamp(),
         updatedAt: serverTimestamp()
     };
 
@@ -840,12 +829,12 @@ form.addEventListener('submit', async (event) => {
         const batch = writeBatch(db);
         batch.set(doc(db, 'profiles', currentUser.uid), updatedPrivateProfile);
         batch.set(doc(db, 'matchProfiles', currentUser.uid), updatedPublicProfile);
-        batch.set(doc(db, 'sharingProfiles', currentUser.uid), updatedSharingProfile);
+        batch.set(doc(db, 'identityProfiles', currentUser.uid), updatedIdentityProfile);
         await batch.commit();
         await updateProfile(currentUser, { displayName: `${firstName} ${lastName}`.trim() });
         privateProfile = { ...updatedPrivateProfile, createdAt: privateProfile.createdAt };
         publicProfile = { ...updatedPublicProfile, createdAt: publicProfile?.createdAt };
-        sharingProfile = { ...updatedSharingProfile, createdAt: sharingProfile?.createdAt };
+        identityProfile = { ...updatedIdentityProfile, createdAt: identityProfile?.createdAt };
         accountName.textContent = compactAccountName(currentUser, updatedPrivateProfile);
         accountAvatar.textContent = accountInitials(currentUser, updatedPrivateProfile);
         updateVisibilityPreview();
@@ -894,7 +883,7 @@ document.getElementById('exportButton').addEventListener('click', async () => {
             account: { uid: currentUser.uid, email: currentUser.email, emailVerified: currentUser.emailVerified },
             privateProfile,
             matchProfile: publicProfile,
-            sharingProfile,
+            identityProfile,
             requests: Array.from(requests.values()),
             conversations
         });
@@ -991,10 +980,10 @@ onAuthStateChanged(auth, async (user) => {
     accountName.textContent = compactAccountName(user);
     accountAvatar.textContent = accountInitials(user);
     try {
-        const [privateSnapshot, publicSnapshot, sharingSnapshot, moderationSnapshot] = await Promise.all([
+        const [privateSnapshot, publicSnapshot, identitySnapshot, moderationSnapshot] = await Promise.all([
             getDoc(doc(db, 'profiles', user.uid)),
             getDoc(doc(db, 'matchProfiles', user.uid)),
-            getDoc(doc(db, 'sharingProfiles', user.uid)),
+            getDoc(doc(db, 'identityProfiles', user.uid)),
             getDoc(doc(db, 'moderation', user.uid))
         ]);
         if (!privateSnapshot.exists()) {
@@ -1004,7 +993,7 @@ onAuthStateChanged(auth, async (user) => {
         }
         privateProfile = privateSnapshot.data();
         publicProfile = publicSnapshot.exists() ? publicSnapshot.data() : null;
-        sharingProfile = sharingSnapshot.exists() ? sharingSnapshot.data() : null;
+        identityProfile = identitySnapshot.exists() ? identitySnapshot.data() : null;
         accountSuspended = moderationSnapshot.data()?.status === 'suspended';
         populateForm(privateProfile);
         await loadBlockedEducators();

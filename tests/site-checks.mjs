@@ -37,6 +37,18 @@ for (const file of htmlFiles) {
     }
 }
 
+const register = fs.readFileSync(path.join(root, 'register.html'), 'utf8');
+const profile = fs.readFileSync(path.join(root, 'profile.html'), 'utf8');
+for (const staleControl of ['name="showProfessional"', 'name="shareName"', 'Show my school', 'Show my cellphone', 'Show my email']) {
+    if (register.includes(staleControl)) fail('register.html: stale sharing control remains: ' + staleControl);
+}
+for (const staleControl of ['id="showProfessional"', 'id="shareName"']) {
+    if (profile.includes(staleControl)) fail('profile.html: stale sharing control remains: ' + staleControl);
+}
+for (const page of [['register.html', register], ['profile.html', profile]]) {
+    if (!page[1].includes('N/A (Prefer not to say)')) fail(page[0] + ': private title choice missing');
+    if (/value="(?:Mx.|Prof.)"/.test(page[1])) fail(page[0] + ': removed title choice remains');
+}
 const privacy = fs.readFileSync(path.join(root, 'privacy.html'), 'utf8');
 for (const placeholder of ['Add before launch', 'Appoint and register', 'Add monitored address']) {
     if (privacy.includes(placeholder)) fail(`privacy.html: launch placeholder remains: ${placeholder}`);

@@ -10,7 +10,7 @@ export function compactAccountName(user, profile = null) {
     const firstName = profile?.firstName || parts[0];
     const surname = profile?.lastName || parts[parts.length - 1];
     const initial = firstName.charAt(0).toUpperCase();
-    const title = profile?.title ? profile.title + ' ' : '';
+    const title = profile?.title && profile.title !== 'N/A' ? profile.title + ' ' : '';
     return title + initial + '. ' + surname;
 }
 
