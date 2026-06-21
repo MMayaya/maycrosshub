@@ -480,6 +480,22 @@ select:focus-visible {
 .route-box.current-area span { color: #ffe2e2; }
 .route-box.current-area strong { color: #fff; }
 
+.current-post-details {
+    margin-top: 0.55rem;
+    padding-top: 0.5rem;
+    display: grid;
+    gap: 0.25rem;
+    border-top: 1px solid rgba(255,255,255,0.28);
+}
+
+.current-post-details span {
+    color: #ffe2e2;
+    font-size: 0.74rem;
+    line-height: 1.35;
+}
+
+.current-post-details b { color: #fff; }
+
 .route-arrow {
     width: 36px;
     height: 36px;
@@ -535,7 +551,7 @@ select:focus-visible {
 
 .detail-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0.75rem;
 }
 
@@ -677,7 +693,7 @@ footer {
         <div>
             <p class="eyebrow">Reciprocal transfer matching</p>
             <h1 id="page-title">Your reciprocal matches.</h1>
-            <p class="hero-subtitle">Results compare reciprocal location needs with phase, subjects, grades and post level. Higher scores indicate stronger professional alignment.</p>
+            <p class="hero-subtitle">Subjects and reciprocal districts carry the most weight. Province-only routes score lower, and no shared subject can score above 50%.</p>
         </div>
 
         <div class="route-summary" aria-label="Your preview transfer route">
@@ -988,23 +1004,41 @@ function lastActiveLabel(timestamp) {
 }
 
 function calculateScore(candidate) {
-    let location = 60;
+    const desiredProvinceMatches = normalise(privateProfile.desired?.province) === normalise(candidate.currentProvince);
+    const currentProvinceMatches = normalise(privateProfile.current?.province) === normalise(candidate.desiredProvince);
+    const reciprocalProvince = desiredProvinceMatches && currentProvinceMatches;
+
     const desiredDistrict = normalise(privateProfile.desired?.district);
     const currentDistrict = normalise(privateProfile.current?.district);
+    const candidateCurrentDistrict = normalise(candidate.currentDistrict);
+    const candidateDesiredDistrict = normalise(candidate.desiredDistrict);
+    const outwardDistrictMatch = Boolean(desiredDistrict && desiredDistrict === candidateCurrentDistrict);
+    const returnDistrictMatch = Boolean(currentDistrict && currentDistrict === candidateDesiredDistrict);
+    const districtMatches = Number(outwardDistrictMatch) + Number(returnDistrictMatch);
+    const location = reciprocalProvince ? (districtMatches === 2 ? 40 : districtMatches === 1 ? 25 : 10) : 0;
 
-    if (desiredDistrict && desiredDistrict === normalise(candidate.currentDistrict)) location += 10;
-    if (currentDistrict && currentDistrict === normalise(candidate.desiredDistrict)) location += 10;
-    const phase = normalise(privateProfile.current?.phase) === normalise(candidate.phase) ? 8 : 0;
+    const ownSubjects = new Set((privateProfile.current?.subjects || []).map(normalise).filter(Boolean));
+    const subjectOverlap = [...new Set((candidate.subjects || []).map(normalise).filter((subject) => ownSubjects.has(subject)))].length;
+    const subjects = subjectOverlap >= 2 ? 40 : subjectOverlap === 1 ? 30 : 0;
+
+    const ownGrades = new Set((privateProfile.current?.grades || []).map(normalise).filter(Boolean));
+    const gradeOverlap = [...new Set((candidate.grades || []).map(normalise).filter((grade) => ownGrades.has(grade)))].length;
+    const grades = gradeOverlap >= 2 ? 10 : gradeOverlap === 1 ? 5 : 0;
+
+    const phase = normalise(privateProfile.current?.phase) === normalise(candidate.phase) ? 6 : 0;
     const postLevel = normalise(privateProfile.current?.postLevel) === normalise(candidate.postLevel) ? 4 : 0;
+    const rawTotal = location + subjects + grades + phase + postLevel;
+    const total = subjectOverlap === 0 ? Math.min(rawTotal, 50) : Math.min(rawTotal, 100);
 
-    const ownSubjects = new Set((privateProfile.current?.subjects || []).map(normalise));
-    const subjectOverlap = (candidate.subjects || []).filter((subject) => ownSubjects.has(normalise(subject))).length;
-    const subjects = Math.min(subjectOverlap * 4, 8);
     return {
-        total: Math.min(location + phase + postLevel + subjects, 100),
+        total,
         location,
+        reciprocalProvince,
+        districtMatches,
         phase,
         postLevel,
+        grades,
+        gradeOverlap,
         subjects,
         subjectOverlap
     };
@@ -1036,23 +1070,46 @@ function renderMatchCard(candidate, breakdown) {
     const tags = tagsFor(candidate);
     const searchText = [currentArea, desiredArea, ...tags].join(' ').toLowerCase();
     const subjectText = (candidate.subjects || []).join(' ').toLowerCase();
+    const gradeText = candidate.grades?.length ? candidate.grades.join(', ') : 'Not specified';
+    const subjectDisplay = candidate.subjects?.length ? candidate.subjects.join(', ') : 'Not specified';
+    const fitLabel = breakdown.subjectOverlap === 0
+        ? 'No subject overlap'
+        : score >= 90
+            ? 'Excellent fit'
+            : score >= 75
+                ? 'Strong fit'
+                : score >= 60
+                    ? 'Good fit'
+                    : 'Possible fit';
+    const locationLabel = breakdown.districtMatches === 2
+        ? 'Reciprocal district'
+        : breakdown.districtMatches === 1
+            ? 'One district aligned'
+            : 'Reciprocal province';
 
     return `
         <article class="match-card" data-score="${score}" data-province="${escapeHtml(normalise(candidate.currentProvince))}" data-district="${escapeHtml(normalise(candidate.currentDistrict))}" data-subjects="${escapeHtml(subjectText)}" data-search="${escapeHtml(searchText)}" data-match-uid="${escapeHtml(candidate.uid)}">
             <div class="match-main">
                 <div class="score-panel">
                     <div class="score-ring" style="--score: ${score}"><strong>${score}%</strong></div>
-                    <span>${score >= 90 ? 'Excellent fit' : score >= 80 ? 'Strong fit' : 'Possible fit'}</span>
+                    <span>${fitLabel}</span>
                 </div>
                 <div class="match-content">
                     <div class="match-topline">
                         <h3>${escapeHtml(candidate.displayCode || `MCH-${candidate.uid.slice(0, 6).toUpperCase()}`)}</h3>
-                        <span class="pill pill-direct">Reciprocal province</span>
+                        <span class="pill pill-direct">${locationLabel}</span>
                         <span class="pill">Available</span>
                         <span class="pill">${escapeHtml(lastActiveLabel(candidate.lastActiveAt))}</span>
                     </div>
                     <div class="route-grid">
-                        <div class="route-box current-area"><span>Their current area</span><strong>${escapeHtml(currentArea || candidate.currentProvince)}</strong></div>
+                        <div class="route-box current-area">
+                            <span>Their current post</span>
+                            <strong>${escapeHtml(currentArea || candidate.currentProvince)}</strong>
+                            <div class="current-post-details">
+                                <span><b>Grades:</b> ${escapeHtml(gradeText)}</span>
+                                <span><b>Subjects:</b> ${escapeHtml(subjectDisplay)}</span>
+                            </div>
+                        </div>
                         <span class="route-arrow" aria-hidden="true">&#8596;</span>
                         <div class="route-box"><span>They want</span><strong>${escapeHtml(desiredArea || candidate.desiredProvince)}</strong></div>
                     </div>
@@ -1069,11 +1126,12 @@ function renderMatchCard(candidate, breakdown) {
             </div>
             <div class="match-details">
                 <div class="detail-grid">
-                    <div class="detail-item"><span>Location route</span><strong>${breakdown.location}/80 points</strong></div>
-                    <div class="detail-item"><span>Subject alignment</span><strong>${breakdown.subjects}/8 points (${breakdown.subjectOverlap} shared)</strong></div>
-                    <div class="detail-item"><span>Phase and post</span><strong>${breakdown.phase + breakdown.postLevel}/12 points</strong></div>
+                    <div class="detail-item"><span>Location route</span><strong>${breakdown.location}/40 points (${breakdown.districtMatches} district directions)</strong></div>
+                    <div class="detail-item"><span>Subject alignment</span><strong>${breakdown.subjects}/40 points (${breakdown.subjectOverlap} shared)</strong></div>
+                    <div class="detail-item"><span>Grade alignment</span><strong>${breakdown.grades}/10 points (${breakdown.gradeOverlap} shared)</strong></div>
+                    <div class="detail-item"><span>Phase and post</span><strong>${breakdown.phase + breakdown.postLevel}/10 points</strong></div>
                 </div>
-                <p class="details-note">The score explains professional and reciprocal-route alignment only. It does not guarantee approval of a transfer.</p>
+                <p class="details-note">Subjects and reciprocal districts carry the most weight. A match with no shared subject is capped at 50%. The score does not guarantee approval of a transfer.</p>
             </div>
         </article>`;
 }

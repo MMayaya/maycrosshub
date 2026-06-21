@@ -49,6 +49,17 @@ for (const page of [['register.html', register], ['profile.html', profile]]) {
     if (!page[1].includes('N/A (Prefer not to say)')) fail(page[0] + ': private title choice missing');
     if (/value="(?:Mx.|Prof.)"/.test(page[1])) fail(page[0] + ': removed title choice remains');
 }
+const matches = fs.readFileSync(path.join(root, 'matches.html'), 'utf8');
+for (const requiredMatchFeature of [
+    'class="current-post-details"',
+    '<b>Grades:</b>',
+    '<b>Subjects:</b>',
+    'subjectOverlap === 0 ? Math.min(rawTotal, 50)',
+    'breakdown.subjects}/40 points',
+    'breakdown.location}/40 points'
+]) {
+    if (!matches.includes(requiredMatchFeature)) fail('matches.html: scoring or red-area feature missing: ' + requiredMatchFeature);
+}
 const privacy = fs.readFileSync(path.join(root, 'privacy.html'), 'utf8');
 for (const placeholder of ['Add before launch', 'Appoint and register', 'Add monitored address']) {
     if (privacy.includes(placeholder)) fail(`privacy.html: launch placeholder remains: ${placeholder}`);

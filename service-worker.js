@@ -1,4 +1,4 @@
-const CACHE_NAME = 'may-cross-hub-v6';
+const CACHE_NAME = 'may-cross-hub-v7';
 const CORE_ASSETS = [
   './', './index.html', './signin.html', './register.html', './privacy.html',
   './terms.html', './guidelines.html', './site-core.css', './site-core.js',
