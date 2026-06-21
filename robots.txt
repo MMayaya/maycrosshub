@@ -1,9 +1,9 @@
 User-agent: *
 Allow: /
-Disallow: /dashboard.html
-Disallow: /profile.html
-Disallow: /matches.html
-Disallow: /request.html
-Disallow: /conversation.html
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /matches
+Disallow: /request
+Disallow: /conversation
 
 Sitemap: https://maycrosshub.co.za/sitemap.xml

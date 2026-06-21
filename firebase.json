@@ -43,6 +43,8 @@
                                                         }
                                                     ]
                                     }
-                                ]
+                                ],
+                    "cleanUrls":  true,
+                    "trailingSlash":  false
                 }
 }

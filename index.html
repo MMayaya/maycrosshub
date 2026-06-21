@@ -1027,18 +1027,18 @@ footer {
 <body>
 <div class="site-message" id="siteMessage" role="status" aria-live="polite" hidden></div>
 <nav aria-label="Main navigation">
-    <a href="index.html" class="logo">
+    <a href="/" class="logo">
         May Cross Hub
     </a>
     <button class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="navLinks" aria-label="Toggle navigation menu">☰</button>
     <div class="nav-links" id="navLinks">
-        <a href="index.html" class="active">Home</a>
+        <a href="/" class="active">Home</a>
         <a href="#how-it-works">Process</a>
 
         <a href="#feedback">Feedback</a>
-        <a href="signin.html" id="navSignIn">Sign In</a>
-        <a href="dashboard.html" id="navDashboard" hidden>Dashboard</a>
-        <a href="profile.html" id="navProfile" hidden>Profile</a>
+        <a href="/signin" id="navSignIn">Sign In</a>
+        <a href="/dashboard" id="navDashboard" hidden>Dashboard</a>
+        <a href="/profile" id="navProfile" hidden>Profile</a>
         <span class="nav-account" id="navAccountName" hidden></span>
         <button class="nav-signout" id="navSignOut" type="button" hidden>Sign out</button>
     </div>
@@ -1063,7 +1063,7 @@ footer {
                 A privacy-conscious teacher transfer matching platform where educators can register their current post, desired transfer area, subjects, phase, grades, and preferences to find compatible reciprocal matches.
             </p>
             <div class="hero-actions">
-                <a href="register.html" class="btn btn-primary" id="heroAccountAction">Create an Account</a>
+                <a href="/register" class="btn btn-primary" id="heroAccountAction">Create an Account</a>
                 <a href="#matching" class="btn btn-secondary">See Match Logic</a>
             </div>
         </div>
@@ -1073,9 +1073,9 @@ footer {
 <div class="container">
     <div class="hub-toggle-container">
         <div class="hub-toggle">
-            <a href="index.html" class="toggle-option active">Cross Hub</a>
-            <a href="matches.html" class="toggle-option">Search a Match</a>
-            <a href="request.html" class="toggle-option">Requests</a>
+            <a href="/" class="toggle-option active">Cross Hub</a>
+            <a href="/matches" class="toggle-option">Search a Match</a>
+            <a href="/request" class="toggle-option">Requests</a>
             <a href="#feedback" class="toggle-option">Feedback</a>
         </div>
     </div>
@@ -1298,7 +1298,7 @@ footer {
         <div class="feedback-auth-prompt" id="feedbackSignInPrompt">
             <strong>Sign in required</strong>
             <p>Only registered educators with a verified email address can send feedback.</p>
-            <a class="btn" href="signin.html">Sign In to Send Feedback</a>
+            <a class="btn" href="/signin">Sign In to Send Feedback</a>
         </div>
 
         <form class="feedback-form" id="feedbackForm" action="https://formspree.io/f/mwvdevgw" method="POST" hidden>
@@ -1365,7 +1365,7 @@ footer {
                 Sign in to search compatible reciprocal routes by subject, province and district.
             </p>
         </div>
-        <a href="matches.html" class="btn btn-primary">Search Matches</a>
+        <a href="/matches" class="btn btn-primary">Search Matches</a>
     </section>
 </div>
 
@@ -1380,11 +1380,11 @@ footer {
 
         <div class="footer-links">
             <h4>Quick Links</h4>
-            <a href="index.html">Home</a>
-            <a href="matches.html">Search Matches</a>
-            <a href="signin.html">Sign In</a>
+            <a href="/">Home</a>
+            <a href="/matches">Search Matches</a>
+            <a href="/signin">Sign In</a>
             <a href="#feedback">Feedback</a>
-            <a href="privacy.html">Privacy Policy</a>
+            <a href="/privacy">Privacy Policy</a>
         </div>
 
         <div class="footer-note">
@@ -1627,7 +1627,7 @@ const feedbackEducatorCode = document.getElementById('feedbackEducatorCode');
 
 navSignOut.addEventListener('click', async () => {
     await signOut(auth);
-    window.location.href = 'index.html';
+    window.location.href = '/';
 });
 
 onAuthStateChanged(auth, (user) => {
@@ -1650,7 +1650,7 @@ onAuthStateChanged(auth, (user) => {
         feedbackUid.value = user.uid;
         feedbackEducatorCode.value = 'MCH-' + user.uid.slice(0, 6).toUpperCase();
         navAccountName.textContent = compactAccountName(user);
-        heroAccountAction.href = 'dashboard.html';
+        heroAccountAction.href = '/dashboard';
         heroAccountAction.textContent = 'Open Dashboard';
     } else {
         navAccountName.textContent = '';
@@ -1658,7 +1658,7 @@ onAuthStateChanged(auth, (user) => {
         feedbackEmail.readOnly = false;
         feedbackUid.value = '';
         feedbackEducatorCode.value = '';
-        heroAccountAction.href = 'register.html';
+        heroAccountAction.href = '/register';
         heroAccountAction.textContent = 'Create an Account';
     }
 });

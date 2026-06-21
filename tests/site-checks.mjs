@@ -119,7 +119,7 @@ for (const deletionFeature of [
     'reauthenticateWithCredential(currentUser, credential)',
     'await deleteActiveProfileRecords(currentUser.uid)',
     'await deleteUser(currentUser)',
-    "window.location.replace('index.html?accountDeleted=1')"
+    "window.location.replace('/?accountDeleted=1')"
 ]) {
     if (!profile.includes(deletionFeature)) fail('profile.html: direct account deletion feature missing: ' + deletionFeature);
 }
@@ -137,6 +137,30 @@ for (const feedbackAccessFeature of [
 }
 
 
+const cleanRoutes = ['dashboard', 'matches', 'request', 'profile', 'conversation', 'register', 'signin', 'privacy', 'terms', 'guidelines'];
+for (const route of cleanRoutes) {
+    const source = fs.readFileSync(path.join(root, route + '.html'), 'utf8');
+    const routedPath = path.join(root, route, 'index.html');
+    if (!fs.existsSync(routedPath)) {
+        fail('clean route missing: /' + route);
+        continue;
+    }
+    const routed = fs.readFileSync(routedPath, 'utf8');
+    if (!routed.includes('<base href="/">')) fail('clean route base missing: /' + route);
+    const routedWithoutBase = routed
+        .replace('<head>' + String.fromCharCode(13, 10) + '<base href="/">', '<head>')
+        .replace('<head>' + String.fromCharCode(10) + '<base href="/">', '<head>');
+    if (routedWithoutBase !== source) {
+        fail('clean route is out of sync with ' + route + '.html');
+    }
+}
+for (const file of htmlFiles) {
+    const html = fs.readFileSync(path.join(root, file), 'utf8');
+    if (/(?:href|action)="[^"]*[.]html(?:[?#"])/i.test(html)) fail(file + ': visible .html URL remains');
+}
+const firebaseConfig = JSON.parse(fs.readFileSync(path.join(root, 'firebase.json'), 'utf8'));
+if (firebaseConfig.hosting?.cleanUrls !== true) fail('firebase.json: cleanUrls must be enabled');
+if (firebaseConfig.hosting?.trailingSlash !== false) fail('firebase.json: trailingSlash must be false');
 const privacy = fs.readFileSync(path.join(root, 'privacy.html'), 'utf8');
 for (const placeholder of ['Add before launch', 'Appoint and register', 'Add monitored address']) {
     if (privacy.includes(placeholder)) fail(`privacy.html: launch placeholder remains: ${placeholder}`);

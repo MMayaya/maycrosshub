@@ -22,7 +22,9 @@ The current website does not require a composite Firestore index. firestore.inde
 
 ## 3. Publish the website
 
-Push the contents of this folder to the GitHub repository used by the May Cross Hub custom domain. GitHub Pages can publish the static HTML, CSS, JavaScript and image files without Firebase CLI access.
+Push the complete contents of this folder to the GitHub repository used by the May Cross Hub custom domain. The clean URL folders such as matches/index.html, profile/index.html and privacy/index.html must be uploaded together with the root files; GitHub Pages uses them to serve /matches, /profile and /privacy without visible .html extensions.
+
+Firebase Hosting users can deploy the same folder. firebase.json enables cleanUrls and disables trailing slashes. Existing .html addresses are retained only as compatibility entry points and redirect to their clean URL.
 
 Do not upload service-account JSON files, passwords, private keys or Firebase Admin SDK credentials.
 
