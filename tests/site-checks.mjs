@@ -54,12 +54,19 @@ for (const requiredMatchFeature of [
     'class="current-post-details"',
     '<b>Grades:</b>',
     '<b>Subjects:</b>',
+    '<b>Phase:</b>',
+    '<b>Post level:</b>',
+    'id="currentGrades"',
+    'id="currentSubjects"',
+    'id="currentPhase"',
+    'id="currentPostLevel"',
     'subjectOverlap === 0 ? Math.min(rawTotal, 50)',
     'breakdown.subjects}/40 points',
     'breakdown.location}/40 points'
 ]) {
     if (!matches.includes(requiredMatchFeature)) fail('matches.html: scoring or red-area feature missing: ' + requiredMatchFeature);
 }
+if (matches.includes('${tags.map')) fail('matches.html: duplicated professional tag row remains in runtime cards');
 const privacy = fs.readFileSync(path.join(root, 'privacy.html'), 'utf8');
 for (const placeholder of ['Add before launch', 'Appoint and register', 'Add monitored address']) {
     if (privacy.includes(placeholder)) fail(`privacy.html: launch placeholder remains: ${placeholder}`);

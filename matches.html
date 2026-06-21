@@ -700,6 +700,12 @@ footer {
             <div class="current-post">
                 <small>Your current post</small>
                 <strong id="currentRoute">Loading profile...</strong>
+                <div class="current-post-details" aria-label="Your professional matching details">
+                    <span><b>Grades:</b> <span id="currentGrades">Loading...</span></span>
+                    <span><b>Subjects:</b> <span id="currentSubjects">Loading...</span></span>
+                    <span><b>Phase:</b> <span id="currentPhase">Loading...</span></span>
+                    <span><b>Post level:</b> <span id="currentPostLevel">Loading...</span></span>
+                </div>
             </div>
             <span class="route-swap" aria-hidden="true">&#8595;</span>
             <div class="desired-post">
@@ -952,6 +958,10 @@ const matchTotal = document.getElementById('matchTotal');
 const strongTotal = document.getElementById('strongTotal');
 const requestTotal = document.getElementById('requestTotal');
 const currentRoute = document.getElementById('currentRoute');
+const currentGrades = document.getElementById('currentGrades');
+const currentSubjects = document.getElementById('currentSubjects');
+const currentPhase = document.getElementById('currentPhase');
+const currentPostLevel = document.getElementById('currentPostLevel');
 const desiredRoute = document.getElementById('desiredRoute');
 const toast = document.getElementById('toast');
 const profileMenu = document.querySelector('.profile-menu span');
@@ -1044,14 +1054,6 @@ function calculateScore(candidate) {
     };
 }
 
-function tagsFor(candidate) {
-    return [
-        candidate.phase,
-        ...(candidate.subjects || []).slice(0, 2),
-        candidate.grades?.length ? `Grades ${candidate.grades.join(', ')}` : '',
-        candidate.postLevel
-    ].filter(Boolean);
-}
 
 function renderMatchCard(candidate, breakdown) {
     const score = breakdown.total;
@@ -1067,11 +1069,13 @@ function renderMatchCard(candidate, breakdown) {
                 : 'Send request';
     const currentArea = [candidate.currentDistrict, candidate.currentProvince].filter(Boolean).join(', ');
     const desiredArea = [candidate.desiredDistrict, candidate.desiredProvince].filter(Boolean).join(', ');
-    const tags = tagsFor(candidate);
-    const searchText = [currentArea, desiredArea, ...tags].join(' ').toLowerCase();
+
+
     const subjectText = (candidate.subjects || []).join(' ').toLowerCase();
     const gradeText = candidate.grades?.length ? candidate.grades.join(', ') : 'Not specified';
     const subjectDisplay = candidate.subjects?.length ? candidate.subjects.join(', ') : 'Not specified';
+    const phaseDisplay = candidate.phase || 'Not specified';
+    const postLevelDisplay = candidate.postLevel || 'Not specified';
     const fitLabel = breakdown.subjectOverlap === 0
         ? 'No subject overlap'
         : score >= 90
@@ -1088,7 +1092,7 @@ function renderMatchCard(candidate, breakdown) {
             : 'Reciprocal province';
 
     return `
-        <article class="match-card" data-score="${score}" data-province="${escapeHtml(normalise(candidate.currentProvince))}" data-district="${escapeHtml(normalise(candidate.currentDistrict))}" data-subjects="${escapeHtml(subjectText)}" data-search="${escapeHtml(searchText)}" data-match-uid="${escapeHtml(candidate.uid)}">
+        <article class="match-card" data-score="${score}" data-province="${escapeHtml(normalise(candidate.currentProvince))}" data-district="${escapeHtml(normalise(candidate.currentDistrict))}" data-subjects="${escapeHtml(subjectText)}" data-match-uid="${escapeHtml(candidate.uid)}">
             <div class="match-main">
                 <div class="score-panel">
                     <div class="score-ring" style="--score: ${score}"><strong>${score}%</strong></div>
@@ -1108,14 +1112,14 @@ function renderMatchCard(candidate, breakdown) {
                             <div class="current-post-details">
                                 <span><b>Grades:</b> ${escapeHtml(gradeText)}</span>
                                 <span><b>Subjects:</b> ${escapeHtml(subjectDisplay)}</span>
+                                <span><b>Phase:</b> ${escapeHtml(phaseDisplay)}</span>
+                                <span><b>Post level:</b> ${escapeHtml(postLevelDisplay)}</span>
                             </div>
                         </div>
                         <span class="route-arrow" aria-hidden="true">&#8596;</span>
                         <div class="route-box"><span>They want</span><strong>${escapeHtml(desiredArea || candidate.desiredProvince)}</strong></div>
                     </div>
-                    <div class="tags" aria-label="Professional compatibility">
-                        ${tags.map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
-                    </div>
+
                 </div>
                 <div class="match-actions">
                     <button class="button button-secondary details-button" type="button" aria-expanded="false">View details</button>
@@ -1438,6 +1442,10 @@ async function loadMatches(user) {
 
     privateProfile = profileSnapshot.data();
     currentRoute.textContent = [privateProfile.current?.district, privateProfile.current?.province].filter(Boolean).join(', ') || 'Not provided';
+    currentGrades.textContent = privateProfile.current?.grades?.length ? privateProfile.current.grades.join(', ') : 'Not provided';
+    currentSubjects.textContent = privateProfile.current?.subjects?.length ? privateProfile.current.subjects.join(', ') : 'Not provided';
+    currentPhase.textContent = privateProfile.current?.phase || 'Not provided';
+    currentPostLevel.textContent = privateProfile.current?.postLevel || 'Not provided';
     desiredRoute.textContent = [privateProfile.desired?.town, privateProfile.desired?.province].filter(Boolean).join(', ') || 'Not provided';
     profileMenu.innerHTML = `<strong>${escapeHtml(compactAccountName(user, privateProfile))}</strong>Signed in`;
     profileAvatar.textContent = accountInitials(user, privateProfile);
