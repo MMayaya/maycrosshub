@@ -471,6 +471,21 @@ input:focus-visible {
     font-size: 0.82rem;
 }
 
+.report-status {
+    margin-top: 0.7rem;
+    padding: 0.62rem 0.72rem;
+    border: 1px solid #d4e3f7;
+    border-left: 4px solid var(--blue);
+    border-radius: 8px;
+    background: #f7fbff;
+    color: #405268;
+    font-size: 0.82rem;
+}
+
+.report-status strong { display: block; color: var(--blue); margin-bottom: 0.12rem; }
+.report-status-reviewing { border-left-color: var(--warning); background: var(--warning-bg); }
+.report-status-resolved { border-left-color: var(--success); background: var(--success-bg); }
+.report-status-dismissed { border-left-color: var(--danger); background: #fff5f5; }
 .request-actions {
     display: flex;
     flex-direction: column;
@@ -837,6 +852,7 @@ let activeFilter = 'all';
 let currentUser = null;
 let incomingDocuments = new Map();
 let sentDocuments = new Map();
+let reportDocumentsByUid = new Map();
 let pendingRequestId = null;
 let pendingAction = null;
 let toastTimer;
@@ -935,6 +951,46 @@ function acceptedSharingPanel(sharing) {
         + '</strong><span>Only the accepted educator name is shared.</span></div>';
 }
 
+function reportTimestamp(report) {
+    return report?.updatedAt?.seconds || report?.createdAt?.seconds || 0;
+}
+
+function reportStatusText(report) {
+    const status = report?.status || 'open';
+    return {
+        open: 'Your report was submitted and is waiting for review.',
+        reviewing: 'Your report is under review.',
+        resolved: 'Your report has been resolved.',
+        dismissed: 'Your report was reviewed and dismissed.'
+    }[status] || 'Your report status was updated.';
+}
+
+function reportStatusNotice(uid) {
+    const report = reportDocumentsByUid.get(uid);
+    if (!report) return '';
+    const status = report.status || 'open';
+    return '<p class="report-status report-status-' + escapeHtml(status) + '"><strong>Report update</strong>' + escapeHtml(reportStatusText(report)) + '</p>';
+}
+
+function latestReportsByReportedUid(snapshot) {
+    const latest = new Map();
+    snapshot.docs.forEach((item) => {
+        const report = { id: item.id, ...item.data() };
+        const previous = latest.get(report.reportedUid);
+        if (!previous || reportTimestamp(report) >= reportTimestamp(previous)) latest.set(report.reportedUid, report);
+    });
+    return latest;
+}
+
+function watchReporterReports(uid) {
+    onSnapshot(query(collection(db, 'reports'), where('reporterUid', '==', uid)), (snapshot) => {
+        reportDocumentsByUid = latestReportsByReportedUid(snapshot);
+        refreshRequests().catch((error) => console.error('Request report status refresh failed.', error));
+    }, (error) => {
+        console.error('Report status loading failed.', error);
+    });
+}
+
 function renderRequestCard(request, counterpart, sharing = {}) {
     const status = displayStatus(request);
     const currentArea = [counterpart.currentDistrict, counterpart.currentProvince].filter(Boolean).join(', ');
@@ -958,6 +1014,7 @@ function renderRequestCard(request, counterpart, sharing = {}) {
     const avatar = status === 'incoming' ? 'IN' : status === 'sent' ? 'OUT' : 'OK';
     const tagsHtml = tags.map((tag) => '<span class="tag">' + escapeHtml(tag) + '</span>').join('');
     const counterpartUid = counterpart.uid || sharing.uid || '';
+    const reportNotice = reportStatusNotice(counterpartUid);
 
     return '<article class="request-card" data-status="' + status
         + '" data-search="' + escapeHtml(searchText)
@@ -974,7 +1031,7 @@ function renderRequestCard(request, counterpart, sharing = {}) {
         + '</strong></div><span class="route-arrow" aria-hidden="true">&#8596;</span>'
         + '<div class="route-box"><span>They want</span><strong>'
         + escapeHtml(desiredArea || counterpart.desiredProvince || 'Private')
-        + '</strong></div></div>' + note + '</div>'
+        + '</strong></div></div>' + note + reportNotice + '</div>'
         + '<div class="request-actions">' + requestActions(status)
         + '<button class="button button-secondary" type="button" data-safety>Report / block</button></div>'
         + '</div></article>';
@@ -1043,6 +1100,10 @@ function bindCardActions(card) {
         if (!action) return;
         try {
             await submitSafetyAction(db, currentUser.uid, counterpartUid, card.dataset.requestId, action);
+            if (action.report) {
+                reportDocumentsByUid.set(counterpartUid, { reportedUid: counterpartUid, status: 'open', updatedAt: { seconds: Math.floor(Date.now() / 1000) } });
+                refreshRequests().catch((error) => console.error('Request report status refresh failed.', error));
+            }
             showToast(action.block ? 'Safety choice saved. The educator is now blocked.' : 'Report submitted for review.');
             if (action.block) card.hidden = true;
             window.mchTrack?.('safety_action_submitted', { blocked: action.block ? 'yes' : 'no' });
@@ -1180,6 +1241,7 @@ onAuthStateChanged(auth, async (user) => {
         const profile = profileSnapshot.exists() ? profileSnapshot.data() : null;
         profileMenu.innerHTML = `<strong>${escapeHtml(compactAccountName(user, profile))}</strong>Signed in`;
         profileAvatar.textContent = accountInitials(user, profile);
+        watchReporterReports(user.uid);
         watchRequests(user.uid);
     } catch (error) {
         console.error('Profile loading failed.', error);

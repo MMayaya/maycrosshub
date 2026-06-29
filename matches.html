@@ -571,6 +571,21 @@ select:focus-visible {
 .detail-item span { display: block; color: #748294; font-size: 0.72rem; }
 .detail-item strong { color: #28425f; font-size: 0.87rem; }
 
+.report-status {
+    margin-top: 0.75rem;
+    padding: 0.62rem 0.72rem;
+    border: 1px solid #d4e3f7;
+    border-left: 4px solid var(--blue);
+    border-radius: 8px;
+    background: #f7fbff;
+    color: #405268;
+    font-size: 0.82rem;
+}
+
+.report-status strong { display: block; color: var(--blue); margin-bottom: 0.12rem; }
+.report-status-reviewing { border-left-color: var(--warning); background: var(--warning-bg); }
+.report-status-resolved { border-left-color: var(--success); background: var(--success-bg); }
+.report-status-dismissed { border-left-color: var(--danger); background: #fff5f5; }
 .details-note {
     margin-top: 0.75rem;
     color: var(--muted);
@@ -981,11 +996,13 @@ let savedMatchIds = new Set();
 let blockedMatchIds = new Set();
 let outgoingRequests = new Map();
 let incomingRequests = new Map();
+let reportedStatusByUid = new Map();
 let filterCandidates = [];
 let loadedMatches = [];
 let lastMatchDocument = null;
 let toastTimer;
 let pendingRequestContext = null;
+let stopReportWatch = null;
 
 document.getElementById('year').textContent = new Date().getFullYear();
 signOutButton.addEventListener('click', async () => {
@@ -1114,12 +1131,60 @@ function updateRequestButton(button, request, matchUid) {
     button.classList.toggle('button-success', state.className === 'button-success');
 }
 
+function reportTimestamp(report) {
+    return report?.updatedAt?.seconds || report?.createdAt?.seconds || 0;
+}
+
+function reportStatusText(report) {
+    const status = report?.status || 'open';
+    return {
+        open: 'Your report was submitted and is waiting for review.',
+        reviewing: 'Your report is under review.',
+        resolved: 'Your report has been resolved.',
+        dismissed: 'Your report was reviewed and dismissed.'
+    }[status] || 'Your report status was updated.';
+}
+
+function reportStatusNotice(uid) {
+    const report = reportedStatusByUid.get(uid);
+    if (!report) return '';
+    const status = report.status || 'open';
+    return '<p class="report-status report-status-' + escapeHtml(status) + '"><strong>Report update</strong>' + escapeHtml(reportStatusText(report)) + '</p>';
+}
+
+function latestReportsByReportedUid(snapshot) {
+    const latest = new Map();
+    snapshot.docs.forEach((item) => {
+        const report = { id: item.id, ...item.data() };
+        const previous = latest.get(report.reportedUid);
+        if (!previous || reportTimestamp(report) >= reportTimestamp(previous)) latest.set(report.reportedUid, report);
+    });
+    return latest;
+}
+
+function applyReportNotices() {
+    document.querySelectorAll('[data-report-notice-for]').forEach((container) => {
+        container.innerHTML = reportStatusNotice(container.dataset.reportNoticeFor);
+    });
+}
+
+function watchReporterReports(uid) {
+    if (stopReportWatch) stopReportWatch();
+    stopReportWatch = onSnapshot(query(collection(db, 'reports'), where('reporterUid', '==', uid)), (snapshot) => {
+        reportedStatusByUid = latestReportsByReportedUid(snapshot);
+        applyReportNotices();
+    }, (error) => {
+        console.error('Report status loading failed.', error);
+    });
+}
+
 
 function renderMatchCard(candidate, breakdown) {
     const score = breakdown.total;
     const saved = savedMatchIds.has(candidate.uid);
     const request = activeRequestFor(candidate.uid);
     const requestState = requestActionState(request, candidate.uid);
+    const reportNotice = reportStatusNotice(candidate.uid);
     const currentArea = [candidate.currentDistrict, candidate.currentProvince].filter(Boolean).join(', ');
     const desiredArea = [candidate.desiredDistrict, candidate.desiredProvince].filter(Boolean).join(', ');
     const candidateCode = candidate.displayCode || displayCodeForUid(candidate.uid);
@@ -1173,6 +1238,7 @@ function renderMatchCard(candidate, breakdown) {
                         <span class="route-arrow" aria-hidden="true">&#8596;</span>
                         <div class="route-box"><span>They want</span><strong>${escapeHtml(desiredArea || candidate.desiredProvince)}</strong></div>
                     </div>
+                    <div data-report-notice-for="${escapeHtml(candidate.uid)}">${reportNotice}</div>
 
                 </div>
                 <div class="match-actions">
@@ -1551,6 +1617,7 @@ async function loadMatches(user) {
     desiredRoute.textContent = [privateProfile.desired?.town, privateProfile.desired?.province].filter(Boolean).join(', ') || 'Not provided';
     profileMenu.innerHTML = `<strong>${escapeHtml(compactAccountName(user, privateProfile))}</strong>Signed in`;
     profileAvatar.textContent = accountInitials(user, privateProfile);
+    watchReporterReports(user.uid);
     await Promise.all([loadSavedMatches(user.uid), loadBlockedMatches(user.uid), loadMatchRequests(user.uid)]);
 
     loadedMatches = [];

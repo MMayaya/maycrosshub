@@ -102,7 +102,7 @@ service cloud.firestore {
           || request.resource.data.available == false);
       allow update: if admin()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['available', 'updatedAt'])
-        && request.resource.data.available == false
+        && request.resource.data.available is bool
         && request.resource.data.updatedAt == request.time;
       allow delete: if owner(uid);
 
