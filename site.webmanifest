@@ -1,18 +1,30 @@
 {
-    "name":  "May Cross Hub",
-    "short_name":  "MayCrossHub",
-    "description":  "Privacy-conscious reciprocal teacher transfer matching.",
-    "start_url":  "/",
-    "scope":  "/",
-    "display":  "standalone",
-    "background_color":  "#f2f6fa",
-    "theme_color":  "#002b5e",
-    "icons":  [
-                  {
-                      "src":  "/favicon.svg",
-                      "sizes":  "any",
-                      "type":  "image/svg+xml",
-                      "purpose":  "any maskable"
-                  }
-              ]
+  "name": "May Cross Hub",
+  "short_name": "MayCrossHub",
+  "description": "Privacy-conscious reciprocal teacher transfer matching.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f2f6fa",
+  "theme_color": "#002b5e",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
 }
