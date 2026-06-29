@@ -981,6 +981,7 @@ let privateProfile = null;
 let savedMatchIds = new Set();
 let blockedMatchIds = new Set();
 let outgoingRequests = new Map();
+let incomingRequests = new Map();
 let filterCandidates = [];
 let loadedMatches = [];
 let lastMatchDocument = null;
@@ -1061,19 +1062,65 @@ function calculateScore(candidate) {
     };
 }
 
+function requestRank(request) {
+    if (!request) return 0;
+    const incoming = request.toUid === currentUser?.uid;
+    if (request.status === 'accepted') return 4;
+    if (request.status === 'pending' && incoming) return 3;
+    if (request.status === 'pending') return 2;
+    if (['declined', 'cancelled', 'archived'].includes(request.status)) return 1;
+    return 0;
+}
+
+function requestTimestamp(request) {
+    return request?.updatedAt?.seconds || request?.createdAt?.seconds || 0;
+}
+
+function activeRequestFor(matchUid) {
+    const incoming = incomingRequests.get(matchUid);
+    const outgoing = outgoingRequests.get(matchUid);
+    if (!incoming) return outgoing;
+    if (!outgoing) return incoming;
+    const rankDifference = requestRank(incoming) - requestRank(outgoing);
+    if (rankDifference !== 0) return rankDifference > 0 ? incoming : outgoing;
+    return requestTimestamp(incoming) >= requestTimestamp(outgoing) ? incoming : outgoing;
+}
+
+function requestActionState(request, matchUid) {
+    if (!request) return { action: 'send', label: 'Send request', className: '', disabled: false };
+    if (request.status === 'accepted') return { action: 'open-conversation', label: 'Open conversation', className: 'button-success', disabled: false };
+    if (request.status === 'pending' && request.toUid === currentUser?.uid) return { action: 'accept', label: 'Accept request', className: 'button-success', disabled: false };
+    if (request.status === 'pending') return { action: 'pending', label: 'Request pending', className: 'button-success', disabled: true };
+    const outgoingStatus = outgoingRequests.get(matchUid)?.status || '';
+    return { action: 'send', label: outgoingStatus ? 'Send new request' : 'Send request', className: '', disabled: false };
+}
+
+function uniqueRequestRecords() {
+    const records = new Map();
+    incomingRequests.forEach((request) => records.set(request.id, request));
+    outgoingRequests.forEach((request) => records.set(request.id, request));
+    return Array.from(records.values());
+}
+
+function updatePendingRequestTotal() {
+    requestTotal.textContent = uniqueRequestRecords().filter((request) => request.status === 'pending').length;
+}
+
+function updateRequestButton(button, request, matchUid) {
+    const state = requestActionState(request, matchUid);
+    button.textContent = state.label;
+    button.disabled = state.disabled;
+    button.dataset.requestAction = state.action;
+    button.dataset.reqKey = request?.id || '';
+    button.classList.toggle('button-success', state.className === 'button-success');
+}
+
 
 function renderMatchCard(candidate, breakdown) {
     const score = breakdown.total;
     const saved = savedMatchIds.has(candidate.uid);
-    const requestStatus = outgoingRequests.get(candidate.uid)?.status || '';
-    const requestLocked = requestStatus === 'pending' || requestStatus === 'accepted';
-    const requestLabel = requestStatus === 'pending'
-        ? 'Request pending'
-        : requestStatus === 'accepted'
-            ? 'Request accepted'
-            : requestStatus
-                ? 'Send new request'
-                : 'Send request';
+    const request = activeRequestFor(candidate.uid);
+    const requestState = requestActionState(request, candidate.uid);
     const currentArea = [candidate.currentDistrict, candidate.currentProvince].filter(Boolean).join(', ');
     const desiredArea = [candidate.desiredDistrict, candidate.desiredProvince].filter(Boolean).join(', ');
     const candidateCode = candidate.displayCode || displayCodeForUid(candidate.uid);
@@ -1100,7 +1147,7 @@ function renderMatchCard(candidate, breakdown) {
             : 'Reciprocal province';
 
     return `
-        <article class="match-card" data-score="${score}" data-province="${escapeHtml(normalise(candidate.currentProvince))}" data-district="${escapeHtml(normalise(candidate.currentDistrict))}" data-subjects="${escapeHtml(subjectText)}" data-match-uid="${escapeHtml(candidate.uid)}" data-match-code="${escapeHtml(candidateCode)}">
+        <article class="match-card" data-score="${score}" data-province="${escapeHtml(normalise(candidate.currentProvince))}" data-district="${escapeHtml(normalise(candidate.currentDistrict))}" data-subjects="${escapeHtml(subjectText)}" data-match-uid="${escapeHtml(candidate.uid)}" data-match-code="${escapeHtml(candidateCode)}" data-req-key="${escapeHtml(request?.id || '')}" data-request-status="${escapeHtml(request?.status || '')}">
             <div class="match-main">
                 <div class="score-panel">
                     <div class="score-ring" style="--score: ${score}"><strong>${score}%</strong></div>
@@ -1131,7 +1178,7 @@ function renderMatchCard(candidate, breakdown) {
                 </div>
                 <div class="match-actions">
                     <button class="button button-secondary details-button" type="button" aria-expanded="false">View details</button>
-                    <button class="button request-button${requestLocked ? ' button-success' : ''}" type="button"${requestLocked ? ' disabled' : ''}>${requestLabel}</button>
+                    <button class="button request-button${requestState.className ? ' ' + requestState.className : ''}" type="button" data-request-action="${escapeHtml(requestState.action)}" data-req-key="${escapeHtml(request?.id || '')}"${requestState.disabled ? ' disabled' : ''}>${escapeHtml(requestState.label)}</button>
                     <button class="button button-secondary save-button${saved ? ' saved' : ''}" type="button" aria-pressed="${saved}">${saved ? 'Saved' : 'Save match'}</button>
                     <button class="button button-secondary safety-button" type="button">Report / block</button>
                 </div>
@@ -1281,12 +1328,48 @@ function bindMatchActions() {
     });
 
     document.querySelectorAll('.request-button').forEach((button) => {
-        const card = button.closest('.match-card');
-        const matchUid = card.dataset.matchUid;
-        const currentStatus = outgoingRequests.get(matchUid)?.status;
-        if (currentStatus === 'pending' || currentStatus === 'accepted') return;
+        button.addEventListener('click', async () => {
+            const card = button.closest('.match-card');
+            const matchUid = card.dataset.matchUid;
+            const request = activeRequestFor(matchUid);
+            const action = button.dataset.requestAction;
 
-        button.addEventListener('click', () => {
+            if (action === 'pending') return;
+            if (action === 'open-conversation') {
+                const requestId = encodeURIComponent(button.dataset.reqKey || request?.id || '');
+                if (requestId) window.location.href = `/conversation?request=${requestId}`;
+                return;
+            }
+            if (action === 'accept') {
+                if (!request?.id) {
+                    showToast('This request could not be found. Refresh the page and try again.');
+                    return;
+                }
+                button.disabled = true;
+                button.textContent = 'Accepting...';
+                try {
+                    await updateDoc(doc(db, 'requests', request.id), {
+                        status: 'accepted',
+                        updatedAt: serverTimestamp(),
+                        respondedAt: serverTimestamp()
+                    });
+                    const acceptedRequest = { ...request, status: 'accepted' };
+                    incomingRequests.set(matchUid, acceptedRequest);
+                    card.dataset.reqKey = request.id;
+                    card.dataset.requestStatus = 'accepted';
+                    updateRequestButton(button, acceptedRequest, matchUid);
+                    updatePendingRequestTotal();
+                    showToast('Request accepted. You can now open the conversation.');
+                    window.mchTrack?.('request_status_changed', { status: 'accepted', source: 'matches' });
+                } catch (error) {
+                    console.error('Request acceptance failed.', error);
+                    updateRequestButton(button, request, matchUid);
+                    showToast('The request could not be accepted. Please try again.');
+                }
+                return;
+            }
+
+            const currentStatus = outgoingRequests.get(matchUid)?.status || '';
             pendingRequestContext = { button, card, matchUid, matchCode: card.dataset.matchCode || displayCodeForUid(matchUid), currentStatus, score: Math.round(Number(card.dataset.score) || 0) };
             document.getElementById('requestIntroduction').value = '';
             document.getElementById('requestDialogStatus').textContent = '';
@@ -1350,11 +1433,12 @@ document.getElementById('requestDialogSend').addEventListener('click', async () 
         } else {
             await setDoc(requestRef, requestData);
         }
-        outgoingRequests.set(matchUid, { id: requestId, fromUid: currentUser.uid, fromCode: displayCodeForUid(currentUser.uid), toUid: matchUid, toCode: matchCode, status: 'pending', matchScore: score, introMessage: introduction });
-        button.textContent = 'Request pending';
-        button.classList.add('button-success');
-        button.disabled = true;
-        requestTotal.textContent = Number(requestTotal.textContent) + 1;
+        const pendingRequest = { id: requestId, fromUid: currentUser.uid, fromCode: displayCodeForUid(currentUser.uid), toUid: matchUid, toCode: matchCode, status: 'pending', matchScore: score, introMessage: introduction };
+        outgoingRequests.set(matchUid, pendingRequest);
+        pendingRequestContext.card.dataset.reqKey = requestId;
+        pendingRequestContext.card.dataset.requestStatus = 'pending';
+        updateRequestButton(button, pendingRequest, matchUid);
+        updatePendingRequestTotal();
         document.getElementById('requestDialog').close();
         showToast('Match request sent privately.');
         window.mchTrack?.('match_request_sent', { match_score: score });
@@ -1385,13 +1469,20 @@ async function loadBlockedMatches(uid) {
     blockedMatchIds = new Set(snapshot.docs.map((item) => item.id));
 }
 
-async function loadOutgoingRequests(uid) {
-    const snapshot = await getDocs(query(collection(db, 'requests'), where('fromUid', '==', uid)));
-    outgoingRequests = new Map(snapshot.docs.map((item) => [
+async function loadMatchRequests(uid) {
+    const [outgoingSnapshot, incomingSnapshot] = await Promise.all([
+        getDocs(query(collection(db, 'requests'), where('fromUid', '==', uid))),
+        getDocs(query(collection(db, 'requests'), where('toUid', '==', uid)))
+    ]);
+    outgoingRequests = new Map(outgoingSnapshot.docs.map((item) => [
         item.data().toUid,
         { id: item.id, ...item.data() }
     ]));
-    requestTotal.textContent = snapshot.docs.filter((item) => item.data().status === 'pending').length;
+    incomingRequests = new Map(incomingSnapshot.docs.map((item) => [
+        item.data().fromUid,
+        { id: item.id, ...item.data() }
+    ]));
+    updatePendingRequestTotal();
 }
 
 function renderLoadedMatches() {
@@ -1461,7 +1552,7 @@ async function loadMatches(user) {
     desiredRoute.textContent = [privateProfile.desired?.town, privateProfile.desired?.province].filter(Boolean).join(', ') || 'Not provided';
     profileMenu.innerHTML = `<strong>${escapeHtml(compactAccountName(user, privateProfile))}</strong>Signed in`;
     profileAvatar.textContent = accountInitials(user, privateProfile);
-    await Promise.all([loadSavedMatches(user.uid), loadBlockedMatches(user.uid), loadOutgoingRequests(user.uid)]);
+    await Promise.all([loadSavedMatches(user.uid), loadBlockedMatches(user.uid), loadMatchRequests(user.uid)]);
 
     loadedMatches = [];
     lastMatchDocument = null;
