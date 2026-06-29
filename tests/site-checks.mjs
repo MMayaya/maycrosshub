@@ -177,7 +177,7 @@ for (const requiredAdminFeature of [
     "collection(db,'requests')",
     "collection(db,'reports')",
     "batch.set(moderationRef",
-    "Admin access not enabled"
+    "Admin access declined"
 ]) {
     if (!adminPage.includes(requiredAdminFeature)) fail('admin.html: missing admin feature: ' + requiredAdminFeature);
 }
