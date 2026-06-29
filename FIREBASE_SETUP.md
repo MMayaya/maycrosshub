@@ -10,6 +10,15 @@ This version is designed for the Firebase Spark plan. It does not use Cloud Func
 4. Under **Authentication > Settings > Authorized domains**, add the live domain and any local domain used for testing.
 5. Review the verification-email and password-reset templates under **Authentication > Templates**.
 
+## Custom password reset page
+
+The site includes a themed password reset handler at `https://maycrosshub.co.za/reset-password`.
+
+In Firebase Console, open **Authentication > Templates > Password reset** and set the custom action URL / continue URL for password reset links to:
+
+`https://maycrosshub.co.za/reset-password`
+
+The page reads Firebase's `mode=resetPassword` and `oobCode` query parameters, verifies the reset code, asks users to enter the new password twice, then confirms the reset with Firebase.
 ## 2. Publish Firestore rules
 
 1. Open **Firestore Database > Rules**.

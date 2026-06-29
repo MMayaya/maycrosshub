@@ -137,7 +137,7 @@ for (const feedbackAccessFeature of [
 }
 
 
-const cleanRoutes = ['dashboard', 'admin', 'matches', 'request', 'profile', 'conversation', 'register', 'signin', 'privacy', 'terms', 'guidelines'];
+const cleanRoutes = ['dashboard', 'admin', 'matches', 'request', 'profile', 'conversation', 'register', 'signin', 'reset-password', 'privacy', 'terms', 'guidelines'];
 for (const route of cleanRoutes) {
     const source = fs.readFileSync(path.join(root, route + '.html'), 'utf8');
     const routedPath = path.join(root, route, 'index.html');
