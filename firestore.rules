@@ -14,6 +14,12 @@ service cloud.firestore {
       return signedIn() && request.auth.uid == uid;
     }
 
+    function admin() {
+      return verified()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+        && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.active == true;
+    }
+
 
     function validPrivateProfile(uid) {
       return request.resource.data.keys().hasOnly([
@@ -94,8 +100,17 @@ service cloud.firestore {
         && (!exists(/databases/$(database)/documents/moderation/$(uid))
           || get(/databases/$(database)/documents/moderation/$(uid)).data.status != 'suspended'
           || request.resource.data.available == false);
+      allow update: if admin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['available', 'updatedAt'])
+        && request.resource.data.available == false
+        && request.resource.data.updatedAt == request.time;
       allow delete: if owner(uid);
 
+    }
+
+    match /admins/{uid} {
+      allow read: if owner(uid) || admin();
+      allow create, update, delete: if false;
     }
 
     function usersBlocked(uidA, uidB) {
@@ -252,7 +267,7 @@ service cloud.firestore {
         && (!exists(/databases/$(database)/documents/moderation/$(request.resource.data.toUid))
           || get(/databases/$(database)/documents/moderation/$(request.resource.data.toUid)).data.status != 'suspended');
 
-      allow read: if verified() && requestParticipant(resource.data);
+      allow read: if verified() && (requestParticipant(resource.data) || admin());
 
       allow update: if verified()
         && requestParticipant(resource.data)
@@ -309,13 +324,38 @@ service cloud.firestore {
         && request.resource.data.status == 'open'
         && request.resource.data.createdAt == request.time
         && request.resource.data.updatedAt == request.time;
-      allow read: if verified() && resource.data.reporterUid == request.auth.uid;
-      allow update, delete: if false;
+      allow read: if verified() && (resource.data.reporterUid == request.auth.uid || admin());
+      allow update: if admin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status', 'updatedAt', 'reviewedAt', 'reviewedBy', 'adminNote', 'actionTaken'
+        ])
+        && request.resource.data.status in ['open', 'reviewing', 'resolved', 'dismissed']
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.reviewedAt == request.time
+        && request.resource.data.reviewedBy == request.auth.uid
+        && (!('adminNote' in request.resource.data) || request.resource.data.adminNote is string)
+        && (!('actionTaken' in request.resource.data) || request.resource.data.actionTaken is string);
+      allow delete: if false;
     }
 
     match /moderation/{uid} {
-      allow read: if owner(uid);
-      allow create, update, delete: if false;
+      allow read: if owner(uid) || admin();
+      allow create, update: if admin()
+        && request.resource.data.keys().hasOnly([
+          'uid', 'status', 'reason', 'reportId', 'adminUid', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.uid == uid
+        && request.resource.data.status in ['suspended', 'cleared']
+        && request.resource.data.reason is string
+        && request.resource.data.reason.size() <= 500
+        && request.resource.data.reportId is string
+        && request.resource.data.adminUid == request.auth.uid
+        && request.resource.data.updatedAt == request.time
+        && (!exists(/databases/$(database)/documents/moderation/$(uid))
+          || request.resource.data.createdAt == resource.data.createdAt)
+        && (exists(/databases/$(database)/documents/moderation/$(uid))
+          || request.resource.data.createdAt == request.time);
+      allow delete: if false;
     }
   }
 }

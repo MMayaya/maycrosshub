@@ -28,6 +28,26 @@ Firebase Hosting users can deploy the same folder. firebase.json enables cleanUr
 
 Do not upload service-account JSON files, passwords, private keys or Firebase Admin SDK credentials.
 
+## Admin overview page
+
+The site now includes a protected admin page at `/admin` for viewing recent requests and safety reports.
+
+To enable it for your own account:
+
+1. Sign in to May Cross Hub once with your admin email and verify the email.
+2. In Firebase Console, open **Authentication > Users** and copy your user UID.
+3. Open **Firestore Database > Data**.
+4. Create a collection named `admins`.
+5. Inside it, create a document whose document ID is your copied UID.
+6. Add these fields:
+
+   - `active` = boolean `true`
+   - `name` = your name, for example `Mzwamadoda Mayaya`
+   - `createdAt` = timestamp/current time, optional
+
+7. Publish the included `firestore.rules` before using `/admin`.
+
+The admin page can read recent requests, read reports, mark reports as reviewing/resolved/dismissed, and suspend a reported profile from match results. It does not expose Firebase Auth passwords and it does not use Cloud Functions.
 ## 4. Test the complete user journey
 
 1. Register educator A and verify the email.

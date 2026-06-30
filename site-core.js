@@ -4,6 +4,7 @@
     const legacyRoutes = {
         '/index.html': '/',
         '/dashboard.html': '/dashboard',
+        '/admin.html': '/admin',
         '/matches.html': '/matches',
         '/request.html': '/request',
         '/profile.html': '/profile',

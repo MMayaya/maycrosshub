@@ -6,7 +6,7 @@ const root = path.resolve(import.meta.dirname, '..');
 const htmlFiles = fs.readdirSync(root).filter((name) => name.endsWith('.html')).sort();
 const failures = [];
 
-for (const removedPath of ['admin.html', 'notifications-ui.js', 'functions']) {
+for (const removedPath of ['notifications-ui.js', 'functions']) {
     if (fs.existsSync(path.join(root, removedPath))) fail('paid backend artifact remains: ' + removedPath);
 }
 function fail(message) { failures.push(message); }
@@ -137,7 +137,7 @@ for (const feedbackAccessFeature of [
 }
 
 
-const cleanRoutes = ['dashboard', 'matches', 'request', 'profile', 'conversation', 'register', 'signin', 'privacy', 'terms', 'guidelines'];
+const cleanRoutes = ['dashboard', 'admin', 'matches', 'request', 'profile', 'conversation', 'register', 'signin', 'privacy', 'terms', 'guidelines'];
 for (const route of cleanRoutes) {
     const source = fs.readFileSync(path.join(root, route + '.html'), 'utf8');
     const routedPath = path.join(root, route, 'index.html');
@@ -171,7 +171,19 @@ for (const jsonFile of ['firebase.json', 'firestore.indexes.json', 'site.webmani
     catch (error) { fail(`${jsonFile}: invalid JSON: ${error.message}`); }
 }
 
+const adminPage = fs.readFileSync(path.join(root, 'admin.html'), 'utf8');
+for (const requiredAdminFeature of [
+    "doc(db,'admins',user.uid)",
+    "collection(db,'requests')",
+    "collection(db,'reports')",
+    "batch.set(moderationRef",
+    "Admin access not enabled"
+]) {
+    if (!adminPage.includes(requiredAdminFeature)) fail('admin.html: missing admin feature: ' + requiredAdminFeature);
+}
 const rules = fs.readFileSync(path.join(root, 'firestore.rules'), 'utf8');
+if (!rules.includes('function admin()')) fail('firestore.rules: admin function missing');
+if (!rules.includes('match /admins/{uid}')) fail('firestore.rules: admins collection rule missing');
 const ownerDeleteRuleCount = (rules.match(/allow delete: if owner\(uid\);/g) || []).length;
 if (ownerDeleteRuleCount !== 3) fail('firestore.rules: expected 3 owner profile-delete rules, found ' + ownerDeleteRuleCount);
 let braceDepth = 0;
