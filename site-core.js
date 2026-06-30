@@ -75,7 +75,7 @@
     }
 
     function addDocumentMetadata() {
-        const cleanPath = location.pathname === '/' ? '/' : location.pathname.replace(//+$/, '');
+        const cleanPath = location.pathname === '/' ? '/' : location.pathname.replace(/\/+$/, '');
         if (!document.querySelector('link[rel="canonical"]')) {
             const canonical = document.createElement('link');
             canonical.rel = 'canonical';

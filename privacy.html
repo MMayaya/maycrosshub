@@ -549,10 +549,10 @@ footer {
     <div class="hero-inner">
         <p class="eyebrow">Privacy first, matching second</p>
         <h1>Privacy Policy</h1>
-        <p class="hero-text">This policy explains what May Cross Hub plans to collect, why it is needed for educator transfer matching, what other users may see, and the choices available to each educator.</p>
+        <p class="hero-text">This policy explains what May Cross Hub collects, why it is needed for educator transfer matching, what other users may see, and the choices available to each educator.</p>
         <div class="hero-meta">
-            <span class="meta-pill">Draft for pre-launch review</span>
-            <span class="meta-pill">Last updated: 18 June 2026</span>
+            <span class="meta-pill">Effective from: 30 June 2026</span>
+            <span class="meta-pill">Last updated: 30 June 2026</span>
             <span class="meta-pill">South Africa</span>
         </div>
     </div>
@@ -562,11 +562,11 @@ footer {
     <aside class="sidebar" aria-label="Privacy policy contents">
         <h2>On this page</h2>
         <ol class="contents-list">
-            <li><a href="#scope">Scope and status</a></li>
+            <li><a href="#scope">Scope</a></li>
             <li><a href="#collect">Information collected</a></li>
             <li><a href="#use">How information is used</a></li>
             <li><a href="#visibility">What others see</a></li>
-            <li><a href="#sharing">Sharing and providers</a></li>
+            <li><a href="#providers">Providers and analytics</a></li>
             <li><a href="#security">Security and retention</a></li>
             <li><a href="#rights">Your choices and rights</a></li>
             <li><a href="#contact">Contact and complaints</a></li>
@@ -575,137 +575,132 @@ footer {
     </aside>
 
     <div class="content">
-        <aside class="status-banner" aria-label="Important draft status">
-            <span class="status-icon" aria-hidden="true">!</span>
-            <p><strong>This is a responsible pre-launch draft.</strong> The website code now creates Firebase accounts and stores private and sanitised profile documents when Firebase is configured. Before public launch, the operator must publish and test the supplied security rules, add real contact details, appoint the responsible privacy roles, decide retention periods, and obtain a South African legal review.</p>
+        <aside class="status-banner" aria-label="Privacy summary">
+            <span class="status-icon" aria-hidden="true">i</span>
+            <p><strong>Privacy summary:</strong> May Cross Hub shows only the professional matching details needed to compare transfer routes. School, email address and cellphone number are kept private. After both educators accept a request, only title, first-name initial and surname are revealed.</p>
         </aside>
 
         <section class="policy-section" id="scope" aria-labelledby="scope-title">
             <span class="section-number" aria-hidden="true">1</span>
-            <h2 id="scope-title">Scope and current status</h2>
-            <p>This policy is for May Cross Hub, a proposed service that helps educators discover possible reciprocal transfer matches. It applies to the public website, account registration, educator profiles, privacy preferences, match results, match requests and accepted-request conversations.</p>
-            <p>May Cross Hub is not a provincial education department, employer or official transfer authority. Finding a possible match does not approve or complete a transfer.</p>
-            <div class="callout"><strong>Current implementation:</strong> registration sends account details to Firebase Authentication and writes a private educator profile, a sanitised match profile and an acceptance-controlled identity profile to Firestore. Matches and requests require a signed-in, email-verified account. Conversations are limited to the two participants in an accepted request.</div>
+            <h2 id="scope-title">Scope</h2>
+            <p>This policy applies to May Cross Hub, an educator transfer matching platform operated by Mzwamadoda Mayaya in South Africa. It covers the public website, registration, educator profiles, match results, saved matches, match requests, accepted-request conversations, reports, blocks and feedback submissions.</p>
+            <p>May Cross Hub is not a provincial education department, employer or official transfer authority. A match found on the platform is only a possible connection between educators. Official departmental, employer and school transfer procedures still apply.</p>
+            <div class="callout"><strong>How the platform is built:</strong> May Cross Hub uses Firebase Authentication for accounts, Cloud Firestore for profiles and matching records, Google Analytics for website usage measurement, and Formspree for verified-user feedback.</div>
         </section>
 
         <section class="policy-section" id="collect" aria-labelledby="collect-title">
             <span class="section-number" aria-hidden="true">2</span>
             <h2 id="collect-title">Information May Cross Hub collects</h2>
-            <p>Only information reasonably needed to create an account, compare reciprocal transfer routes, assess professional compatibility, manage requests and protect the service should be collected.</p>
+            <p>May Cross Hub collects information needed to create an account, compare reciprocal transfer routes, assess professional compatibility, manage requests, support conversations and keep the service safe.</p>
 
             <div class="data-grid">
-                <article class="data-card"><strong>Account details</strong><span>Name, email address, cellphone number, account verification and sign-in records.</span></article>
+                <article class="data-card"><strong>Account details</strong><span>Title, first name, surname, email address, cellphone number, password handled by Firebase Authentication, verification status and sign-in activity.</span></article>
                 <article class="data-card"><strong>Current post</strong><span>School, province, district, optional circuit or ward, quintile, phase, grades, subjects and post level.</span></article>
-                <article class="data-card"><strong>Transfer preferences</strong><span>Desired province, district, town, optional preferred school, nearby-area preference and availability.</span></article>
-                <article class="data-card"><strong>Optional transfer reason</strong><span>Information an educator chooses to provide. Users should avoid unnecessary health, family or other highly sensitive details.</span></article>
-                <article class="data-card"><strong>Privacy choices</strong><span>Visibility settings, request permissions and consent records.</span></article>
-                <article class="data-card"><strong>Match activity</strong><span>Compatibility results, saved matches, requests, responses, accepted-request messages and safety or support records.</span></article>
+                <article class="data-card"><strong>Transfer preferences</strong><span>Desired province, district, town, optional preferred school, nearby-area preference, optional transfer reason and availability for requests.</span></article>
+                <article class="data-card"><strong>Match activity</strong><span>Compatibility scores, saved matches, sent requests, received requests, responses and accepted-request conversations.</span></article>
+                <article class="data-card"><strong>Safety and support</strong><span>Reports, blocks, feedback messages, privacy requests and technical records needed to investigate service issues.</span></article>
+                <article class="data-card"><strong>Analytics</strong><span>Page use and platform action events, without sending names, emails, phone numbers, school names or message contents to Analytics.</span></article>
             </div>
 
-            <h3>Information not needed for matching</h3>
-            <p>May Cross Hub should not ask for identity numbers, payroll details, bank information, copies of identity documents or payment-card information as part of ordinary transfer matching.</p>
+            <h3>Information not requested for ordinary matching</h3>
+            <p>May Cross Hub does not ask for identity numbers, payroll details, bank information, payment-card details, copies of identity documents or passwords outside the secure Firebase sign-in process.</p>
         </section>
 
         <section class="policy-section" id="use" aria-labelledby="use-title">
             <span class="section-number" aria-hidden="true">3</span>
             <h2 id="use-title">How information is used</h2>
             <ul class="policy-list">
-                <li>Create and verify an educator account.</li>
-                <li>Compare current and desired locations to identify reciprocal routes.</li>
-                <li>Compare phase, grades, subjects and post level to estimate professional compatibility.</li>
-                <li>Show privacy-controlled match results, manage match requests and support conversations after acceptance.</li>
-                <li>Send essential account verification and password-reset emails, and display request status inside the platform.</li>
-                <li>Prevent misuse, investigate reports and maintain service security.</li>
-                <li>Meet applicable legal obligations and respond to lawful requests.</li>
+                <li>Create, verify and protect educator accounts.</li>
+                <li>Compare current and desired locations to identify reciprocal transfer routes.</li>
+                <li>Compare subjects, grades, phase and post level to estimate professional compatibility.</li>
+                <li>Show privacy-controlled match results and allow educators to send, accept, decline, cancel or archive match requests.</li>
+                <li>Open participant-only conversations after a request is accepted.</li>
+                <li>Send essential account verification and password-reset emails through Firebase Authentication.</li>
+                <li>Receive verified-user feedback through Formspree and review reports or blocks for safety.</li>
+                <li>Measure website use and completed platform actions with Google Analytics.</li>
+                <li>Comply with applicable law and respond to valid legal requests.</li>
             </ul>
-            <p class="callout">The operator must document an appropriate justification for each processing purpose before launch. Optional marketing should require a separate choice and should not be bundled into registration.</p>
+            <p class="callout">May Cross Hub does not sell personal information and does not use educator profile details for advertising personalisation.</p>
         </section>
 
         <section class="policy-section" id="visibility" aria-labelledby="visibility-title">
             <span class="section-number" aria-hidden="true">4</span>
             <h2 id="visibility-title">What matched educators may see</h2>
-            <p>The recommended starting point is to show enough professional information to assess a match while keeping direct identifiers and contact details private.</p>
+            <p>The platform separates private account information from the match profile that other verified educators can see.</p>
 
             <div class="privacy-grid">
-                <article class="privacy-card on"><span class="setting-state">Shown for matching</span><strong>Subjects, phase and grades</strong><span>Supports professional compatibility checks.</span></article>
-                <article class="privacy-card on"><span class="setting-state">Shown for matching</span><strong>Province and district</strong><span>Supports reciprocal route matching without an exact address.</span></article>
-                <article class="privacy-card on"><span class="setting-state">Shown for matching</span><strong>Post level and availability</strong><span>Helps educators assess whether a request is realistic.</span></article>
-                <article class="privacy-card off"><span class="setting-state">Shown after acceptance</span><strong>Title, initial and surname</strong><span>The only identity information visible to the other educator in an accepted request.</span></article>
-                <article class="privacy-card off"><span class="setting-state">Always private</span><strong>School, email and cellphone number</strong><span>Not included in the accepted-match identity document and not shown to another educator.</span></article>
-                <article class="privacy-card off"><span class="setting-state">Hidden initially</span><strong>Optional transfer reason</strong><span>Should not be shown to other educators by default.</span></article>
+                <article class="privacy-card on"><span class="setting-state">Shown for matching</span><strong>Subjects, phase and grades</strong><span>Used to assess professional compatibility.</span></article>
+                <article class="privacy-card on"><span class="setting-state">Shown for matching</span><strong>Province and district</strong><span>Used to compare reciprocal transfer routes without showing an exact address.</span></article>
+                <article class="privacy-card on"><span class="setting-state">Shown for matching</span><strong>Post level and availability</strong><span>Helps educators decide whether a request is realistic.</span></article>
+                <article class="privacy-card off"><span class="setting-state">Shown after acceptance</span><strong>Title, initial and surname</strong><span>The only identity information revealed to the other educator after both sides accept a request.</span></article>
+                <article class="privacy-card off"><span class="setting-state">Always private</span><strong>School, email and cellphone number</strong><span>Stored in the private profile and not shown to another educator.</span></article>
+                <article class="privacy-card off"><span class="setting-state">Private by default</span><strong>Optional transfer reason</strong><span>Stored with the private profile and not shown in match cards.</span></article>
             </div>
 
-            <p class="callout">Privacy settings must be enforced by database security rules, not only hidden on the page. Interface controls alone do not protect stored information.</p>
+            <p class="callout">Accepted-request conversations are visible only to the two educators in that request. Messages cannot be edited or deleted after sending, so users should avoid sharing sensitive personal information.</p>
         </section>
 
-        <section class="policy-section" id="analytics" aria-labelledby="analytics-title">
+        <section class="policy-section" id="providers" aria-labelledby="providers-title">
             <span class="section-number" aria-hidden="true">5</span>
-            <h2 id="analytics-title">Service providers, analytics and cookies</h2>
-            <p>May Cross Hub uses Firebase Authentication and Cloud Firestore to provide accounts, profiles, matching, requests, conversations and direct account deletion. Formspree processes feedback submitted by signed-in, verified educators.</p>
-            <p>Google Analytics runs automatically when a visitor opens the website to measure page use and completed platform actions. Advertising storage and advertising personalisation remain disabled. May Cross Hub must not send names, email addresses, phone numbers, message contents or exact school details to Analytics.</p>
-        </section>
-
-        <section class="policy-section" id="sharing" aria-labelledby="sharing-title">
-            <span class="section-number" aria-hidden="true">6</span>
-            <h2 id="sharing-title">Sharing, service providers and transfers</h2>
-            <p>May Cross Hub should not sell personal information. Information should be shared only where needed for the service, where the educator has chosen to reveal it, where a contracted provider processes it securely, or where disclosure is required or permitted by law.</p>
+            <h2 id="providers-title">Service providers, analytics and storage</h2>
+            <p>May Cross Hub uses trusted service providers to run the platform. These providers process information only for the service functions described in this policy.</p>
 
             <div class="table-wrap">
                 <table>
-                    <thead><tr><th>Recipient</th><th>What may be shared</th><th>Purpose and control</th></tr></thead>
+                    <thead><tr><th>Provider or recipient</th><th>Information involved</th><th>Purpose</th></tr></thead>
                     <tbody>
-                        <tr><td>Potential matched educators</td><td>Privacy-controlled professional profile and broad location before acceptance; title, initial and surname after acceptance; participant messages</td><td>Assess compatibility, manage match requests and hold participant-only conversations while keeping school and contact details private.</td></tr>
-                        <tr><td>Firebase / Google Cloud</td><td>Account, profile and technical service data</td><td>Authentication, database hosting and security, subject to final configuration and contractual review.</td></tr>
-                        <tr><td>Formspree</td><td>Feedback details submitted by a signed-in, verified educator</td><td>Deliver feedback to the May Cross Hub operator without redirecting away from the website.</td></tr>
-                        <tr><td>Authorised May Cross Hub administrators</td><td>Only information needed for support, safety or administration</td><td>Role-based access, confidentiality and access logging should apply.</td></tr>
-                        <tr><td>Authorities or legal recipients</td><td>Information covered by a valid legal obligation or request</td><td>Handled carefully and limited to what is required.</td></tr>
+                        <tr><td>Firebase / Google Cloud</td><td>Authentication details, private profiles, match profiles, requests, messages, reports and technical records</td><td>Account access, database storage, matching, security and platform operation.</td></tr>
+                        <tr><td>Google Analytics</td><td>Website usage and platform action events</td><td>Understand how the website is used. Advertising storage and advertising personalisation are disabled.</td></tr>
+                        <tr><td>Formspree</td><td>Feedback details submitted by a signed-in, verified educator</td><td>Deliver feedback and privacy concerns to the May Cross Hub operator without redirecting users away from the website.</td></tr>
+                        <tr><td>Matched educators</td><td>Professional match details before acceptance; title, initial and surname after acceptance; participant messages</td><td>Assess compatibility, manage requests and communicate after acceptance.</td></tr>
+                        <tr><td>Authorities or legal recipients</td><td>Information required by a valid legal obligation or request</td><td>Comply with applicable law and protect users or the service.</td></tr>
                     </tbody>
                 </table>
             </div>
 
-            <p>Before launch, the operator must confirm and document where Firebase data is stored, assess any cross-border processing, verify the selected service region and update this policy with accurate provider details.</p>
+            <p>Some providers may process or store information outside South Africa depending on their infrastructure and account configuration. May Cross Hub will take reasonable steps to use providers with appropriate privacy and security safeguards.</p>
         </section>
 
         <section class="policy-section" id="security" aria-labelledby="security-title">
             <span class="section-number" aria-hidden="true">6</span>
             <h2 id="security-title">Security, incidents and retention</h2>
-            <p>Implemented controls include verified authentication, separate private, match-safe and acceptance-controlled identity documents, participant-only request and conversation access, immutable messages and Firestore security rules supplied with the website. Before launch, the operator must publish and test those rules and complete operator access controls, monitoring, a manual backup process and an incident response process.</p>
+            <p>May Cross Hub protects information by using verified authentication, separated private and match-safe profile documents, participant-only request access, participant-only conversations, immutable messages and Firestore security rules. Users are responsible for keeping their own passwords secure and for signing out on shared devices.</p>
 
             <details>
                 <summary>What happens after a security incident?</summary>
-                <p>The operator should investigate promptly, contain the incident, document decisions and give any notifications required by POPIA to the Information Regulator and affected people. The actual response process and responsible contacts must be completed before launch.</p>
+                <p>May Cross Hub will investigate the issue, take steps to contain it, document important decisions and give notices required by applicable law, including notices required under POPIA where relevant.</p>
             </details>
             <details>
-                <summary>How long will information be kept?</summary>
-                <p>A final retention schedule has not yet been approved. Before launch, May Cross Hub must define periods for active accounts, closed accounts, request history, security logs and backups. Information should not be retained longer than necessary for its documented purpose or a legal requirement.</p>
+                <summary>How long is information kept?</summary>
+                <p>Active account and profile information is kept while the account is open. When a user deletes an account, the active private profile, public match profile and accepted-name identity profile are removed. Shared request history, conversation messages, safety reports and support records may be kept for up to 24 months, or longer where needed for security, dispute handling or legal obligations.</p>
             </details>
             <details>
-                <summary>Does this website use cookies?</summary>
-                <p>Firebase Authentication uses necessary browser storage to maintain secure sessions, and website pages initialise Firebase Analytics automatically where the browser supports it. Advertising storage and advertising personalisation are disabled. Any additional tracking must be disclosed and reviewed before use.</p>
+                <summary>Does this website use cookies or browser storage?</summary>
+                <p>Firebase Authentication uses necessary browser storage to keep users signed in securely. Google Analytics runs automatically where the browser supports it. Advertising storage and advertising personalisation are disabled.</p>
             </details>
         </section>
 
         <section class="policy-section" id="rights" aria-labelledby="rights-title">
             <span class="section-number" aria-hidden="true">7</span>
             <h2 id="rights-title">Your choices and privacy rights</h2>
-            <p>Subject to applicable law and any valid limitations, an educator may ask about personal information held by May Cross Hub and exercise relevant rights under POPIA.</p>
+            <p>Subject to applicable law, educators may ask about personal information held by May Cross Hub and may exercise rights available under South Africa's Protection of Personal Information Act, 2013 (POPIA).</p>
 
             <div class="rights-grid">
-                <article class="right-card"><strong>Access</strong><span>Ask whether information is held and request access to it.</span></article>
+                <article class="right-card"><strong>Access</strong><span>Ask whether May Cross Hub holds personal information about you and request access to it.</span></article>
                 <article class="right-card"><strong>Correction</strong><span>Update information that is inaccurate, incomplete, misleading or out of date.</span></article>
-                <article class="right-card"><strong>Deletion</strong><span>Delete the active account and profile from the Profile page; shared safety and participant history may be retained where justified.</span></article>
-                <article class="right-card"><strong>Objection</strong><span>Object to certain processing on reasonable grounds where POPIA provides for it.</span></article>
-                <article class="right-card"><strong>Withdraw a choice</strong><span>Change optional visibility and communication choices without affecting earlier lawful processing.</span></article>
-                <article class="right-card"><strong>Complain</strong><span>Raise a concern with May Cross Hub or lodge a complaint with the Information Regulator.</span></article>
+                <article class="right-card"><strong>Deletion</strong><span>Delete the active account and profile from the Profile page after password confirmation.</span></article>
+                <article class="right-card"><strong>Objection</strong><span>Object to certain processing where POPIA gives you that right.</span></article>
+                <article class="right-card"><strong>Withdraw choices</strong><span>Pause your profile, change request availability or update optional information from the Profile page.</span></article>
+                <article class="right-card"><strong>Complain</strong><span>Raise a concern with May Cross Hub or lodge a complaint with South Africa's Information Regulator.</span></article>
             </div>
 
-            <p class="callout">Identity may need to be confirmed before acting on a privacy request, but May Cross Hub should request only what is reasonably necessary for verification.</p>
+            <p class="callout">May Cross Hub may need to confirm your identity before acting on a privacy request, but will request only what is reasonably necessary for verification.</p>
         </section>
 
         <section class="policy-section" id="contact" aria-labelledby="contact-title">
             <span class="section-number" aria-hidden="true">8</span>
             <h2 id="contact-title">Contact, complaints and official resources</h2>
-            <p>Privacy questions and requests should first be submitted to the May Cross Hub privacy contact. Select <strong>Privacy concern</strong> on the feedback form so the request can be identified and handled separately from ordinary feedback.</p>
+            <p>Privacy questions, access requests, correction requests and complaints can be submitted through the May Cross Hub feedback form. Choose <strong>Privacy concern</strong> so the request can be identified and handled separately from ordinary feedback.</p>
 
             <div class="contact-card">
                 <p><strong>Responsible party:</strong><span>May Cross Hub, operated by Mzwamadoda Mayaya</span></p>
@@ -714,7 +709,7 @@ footer {
                 <p><strong>Service location:</strong><span>South Africa</span></p>
             </div>
 
-            <p>Educators may also contact or complain to South Africa's Information Regulator. Users should consult the regulator's current website for official forms, contact details and procedures.</p>
+            <p>Users may also contact South Africa's Information Regulator for official POPIA guidance, forms and complaint procedures.</p>
 
             <div class="official-links">
                 <a href="https://inforegulator.org.za/popia/" target="_blank" rel="noopener noreferrer">Information Regulator: POPIA resources</a>
@@ -730,7 +725,7 @@ footer {
         <a href="/matches">Search Matches</a>
         <a href="/signin" id="privacyFooterSignIn">Sign in</a>
     </div>
-    <p>&copy; <span id="year"></span> May Cross Hub. This draft must be completed and reviewed before launch.</p>
+    <p>&copy; <span id="year"></span> May Cross Hub. Privacy Policy effective from 30 June 2026.</p>
 </footer>
 
 <script type="module">

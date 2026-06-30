@@ -162,7 +162,7 @@ const firebaseConfig = JSON.parse(fs.readFileSync(path.join(root, 'firebase.json
 if (firebaseConfig.hosting?.cleanUrls !== true) fail('firebase.json: cleanUrls must be enabled');
 if (firebaseConfig.hosting?.trailingSlash !== false) fail('firebase.json: trailingSlash must be false');
 const privacy = fs.readFileSync(path.join(root, 'privacy.html'), 'utf8');
-for (const placeholder of ['Add before launch', 'Appoint and register', 'Add monitored address']) {
+for (const placeholder of ['Add before launch', 'Appoint and register', 'Add monitored address', 'Draft for pre-launch review', 'pre-launch draft', 'Before public launch', 'This draft must be completed']) {
     if (privacy.includes(placeholder)) fail(`privacy.html: launch placeholder remains: ${placeholder}`);
 }
 
