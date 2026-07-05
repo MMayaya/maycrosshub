@@ -510,6 +510,10 @@ footer {
 <script type="module">
 import { firebaseApp } from "./firebase-config.js";
 import {
+    emailVerificationActionSettings,
+    passwordResetActionSettings
+} from "./email-action-settings.js";
+import {
     browserLocalPersistence,
     getAuth,
     sendEmailVerification,
@@ -538,9 +542,17 @@ const formError = document.getElementById('formError');
 const resetMessage = document.getElementById('resetMessage');
 const successState = document.getElementById('successState');
 const signinButton = document.getElementById('signinButton');
-
+const pageParams = new URLSearchParams(window.location.search);
 document.getElementById('year').textContent = new Date().getFullYear();
 
+const completedEmailAction = pageParams.get('emailAction');
+if (completedEmailAction === 'verified') {
+    resetMessage.textContent = 'If your email verification is complete, sign in to open your dashboard.';
+    resetMessage.classList.add('show');
+} else if (completedEmailAction === 'passwordReset') {
+    resetMessage.textContent = 'If your password reset is complete, sign in with your new password.';
+    resetMessage.classList.add('show');
+}
 auth.authStateReady().then(() => {
     if (auth.currentUser?.emailVerified) {
         window.location.replace('/dashboard');
@@ -635,7 +647,7 @@ forgotPassword.addEventListener('click', async () => {
     forgotPassword.textContent = 'Sending...';
 
     try {
-        await sendPasswordResetEmail(auth, email.value.trim());
+        await sendPasswordResetEmail(auth, email.value.trim(), passwordResetActionSettings);
         resetMessage.textContent = 'If an account is registered for that address, password-reset instructions have been sent.';
         resetMessage.classList.add('show');
     } catch (error) {
@@ -666,7 +678,7 @@ resendVerification.addEventListener('click', async () => {
         if (credential.user.emailVerified) {
             resetMessage.textContent = 'This email address is already verified. You can sign in normally.';
         } else {
-            await sendEmailVerification(credential.user);
+            await sendEmailVerification(credential.user, emailVerificationActionSettings);
             resetMessage.textContent = 'The request was accepted. Check Inbox, Spam, Junk and Promotions for the verification email.';
         }
         resetMessage.classList.add('show');

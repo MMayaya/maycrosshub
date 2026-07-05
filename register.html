@@ -1017,6 +1017,7 @@ footer {
 
 <script type="module">
 import { firebaseApp } from "./firebase-config.js";
+import { emailVerificationActionSettings } from "./email-action-settings.js";
 import {
     createUserWithEmailAndPassword,
     deleteUser,
@@ -1520,7 +1521,7 @@ form.addEventListener('submit', async (event) => {
         await batch.commit();
         profileSaved = true;
 
-        await sendEmailVerification(credential.user);
+        await sendEmailVerification(credential.user, emailVerificationActionSettings);
         window.mchTrack?.('sign_up_completed');
         await signOut(auth);
 

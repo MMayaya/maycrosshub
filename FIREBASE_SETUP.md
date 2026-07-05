@@ -96,3 +96,26 @@ Run this command in the project folder:
     node --experimental-vm-modules tests/site-checks.mjs
 
 A passing result checks HTML scripts, local links, duplicate IDs, analytics IDs, JSON syntax and Firestore rule braces.
+## 1a. Custom registration and password-reset links
+
+The site includes a custom email action handler at:
+
+    https://maycrosshub.co.za/auth/action
+
+It handles Firebase `verifyEmail`, `resetPassword` and `recoverEmail` links. Password-reset links are routed into `/reset-password`, where the educator chooses a new password on the May Cross Hub website.
+
+Because this Spark version is a static website, Firebase Admin SDK credentials must not be placed in these files. For fully custom email links now that the Firebase template Action URL control is unavailable, use a small backend or trusted email-sender service to do this:
+
+1. Generate the Firebase link with the Admin SDK:
+   - registration verification: `generateEmailVerificationLink(email, actionCodeSettings)`
+   - password reset: `generatePasswordResetLink(email, actionCodeSettings)`
+2. Convert Firebase's generated link into a May Cross Hub handler link by keeping its query string:
+
+       const firebaseLink = await getAuth().generatePasswordResetLink(email, actionCodeSettings);
+       const customLink = `https://maycrosshub.co.za/auth/action${new URL(firebaseLink).search}`;
+
+3. Send `customLink` in your own email template through SMTP, SendGrid, Brevo, Resend, Mailgun or another trusted sender.
+
+Keep `maycrosshub.co.za` and `www.maycrosshub.co.za` in Firebase Authentication > Settings > Authorized domains. Do not upload service-account JSON files, passwords, private keys or Firebase Admin SDK credentials.
+
+The existing browser-side registration, resend-verification and forgot-password buttons still use Firebase's client email sender, with May Cross Hub as the continuation domain. To make every email link visibly start with `maycrosshub.co.za/auth/action`, switch those send steps to the backend flow above.
