@@ -646,7 +646,11 @@ forgotPassword.addEventListener('click', async () => {
     forgotPassword.textContent = 'Sending...';
 
     try {
+<<<<<<< HEAD
         await sendPasswordResetEmail(auth, email.value.trim(), passwordResetActionSettings);
+=======
+        await sendPasswordResetEmail(auth, email.value.trim(), { url: new URL('/reset-password', window.location.origin).href });
+>>>>>>> 44bba7b138ad4eac11180ee8e615514698cd2923
         resetMessage.textContent = 'If an account is registered for that address, password-reset instructions have been sent.';
         resetMessage.classList.add('show');
     } catch (error) {

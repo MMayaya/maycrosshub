@@ -11,6 +11,7 @@
         '/conversation.html': '/conversation',
         '/register.html': '/register',
         '/signin.html': '/signin',
+        '/reset-password.html': '/reset-password',
         '/privacy.html': '/privacy',
         '/terms.html': '/terms',
         '/guidelines.html': '/guidelines'
