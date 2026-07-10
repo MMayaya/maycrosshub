@@ -37,7 +37,7 @@ service cloud.firestore {
     function validMatchProfile(uid) {
       return request.resource.data.keys().hasOnly([
           'uid', 'displayCode', 'currentProvince', 'currentDistrict',
-          'desiredProvince', 'desiredDistrict', 'desiredTown',
+          'currentQuintile', 'desiredProvince', 'desiredDistrict', 'desiredTown',
           'phase', 'grades', 'subjects', 'postLevel', 'nearby',
           'available', 'lastActiveAt', 'createdAt', 'updatedAt'
         ])
@@ -45,6 +45,8 @@ service cloud.firestore {
         && request.resource.data.displayCode is string
         && request.resource.data.currentProvince is string
         && request.resource.data.currentDistrict is string
+        && (!('currentQuintile' in request.resource.data)
+          || request.resource.data.currentQuintile in ['', '1', '2', '3', '4', '5', 'not_sure'])
         && request.resource.data.desiredProvince is string
         && request.resource.data.desiredDistrict is string
         && request.resource.data.desiredTown is string

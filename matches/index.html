@@ -302,10 +302,44 @@ select:focus-visible {
 
 .stat-card span { color: var(--muted); font-size: 0.86rem; }
 
+.explore-panel {
+    margin: 1.25rem 0;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    border: 1px solid #b8d1f0;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #ffffff, #f5f9ff);
+    box-shadow: 0 5px 18px rgba(0,43,94,0.06);
+}
+
+.explore-panel strong {
+    display: block;
+    color: var(--navy);
+    font-size: 1rem;
+}
+
+.explore-panel span {
+    display: block;
+    color: var(--muted);
+    font-size: 0.86rem;
+}
+
+.explore-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.6rem;
+}
+
+.explore-actions .button { white-space: nowrap; }
+
 .toolbar {
     padding: 1rem;
     display: grid;
-    grid-template-columns: minmax(200px, 1.35fr) repeat(3, minmax(140px, 0.7fr)) auto;
+    grid-template-columns: minmax(200px, 1.25fr) repeat(5, minmax(130px, 0.7fr)) auto;
     gap: 0.75rem;
     align-items: end;
     border: 1px solid var(--line);
@@ -459,6 +493,19 @@ select:focus-visible {
 
 .pill-direct { background: var(--success-bg); color: var(--success); }
 .pill-nearby { background: var(--warning-bg); color: var(--warning); }
+.pill-outside { background: var(--warning-bg); color: var(--warning); }
+
+.match-reason {
+    margin-top: 0.65rem;
+    padding: 0.58rem 0.68rem;
+    border: 1px solid #e8d9b6;
+    border-radius: 8px;
+    background: #fffdf7;
+    color: #5d523f;
+    font-size: 0.82rem;
+}
+
+.match-reason strong { color: var(--warning); }
 
 .route-grid {
     display: grid;
@@ -679,6 +726,9 @@ footer {
     .route-arrow { transform: rotate(90deg); margin: 0 auto; }
     .match-actions { flex-direction: column; }
     .results-heading { align-items: start; flex-direction: column; }
+    .explore-panel { align-items: stretch; flex-direction: column; }
+    .explore-actions { justify-content: stretch; }
+    .explore-actions .button { width: 100%; }
     .toast { left: 0.85rem; right: 0.85rem; bottom: 0.85rem; }
 }
 
@@ -748,6 +798,17 @@ footer {
         <article class="stat-card"><strong id="requestTotal">0</strong><span>pending requests</span></article>
     </section>
 
+    <section class="explore-panel" aria-label="Explore more educators">
+        <div>
+            <strong id="matchModeTitle">Recommended matches</strong>
+            <span id="matchModeNote">Sorted by compatibility.</span>
+        </div>
+        <div class="explore-actions">
+            <button class="button" id="exploreEducators" type="button">Explore More Educators</button>
+            <button class="button button-secondary" id="recommendedMatches" type="button" hidden>Back to Recommended</button>
+        </div>
+    </section>
+
     <section class="toolbar" aria-label="Filter matches">
         <div class="field">
             <label for="subjectFilter">Search by subject</label>
@@ -768,7 +829,19 @@ footer {
             </select>
         </div>
         <div class="field">
-            <label for="strengthFilter">Match strength</label>
+            <label for="phaseFilter">Teaching phase</label>
+            <select id="phaseFilter">
+                <option value="all">All phases</option>
+            </select>
+        </div>
+        <div class="field">
+            <label for="quintileFilter">School quintile</label>
+            <select id="quintileFilter">
+                <option value="all">All quintiles</option>
+            </select>
+        </div>
+        <div class="field">
+            <label for="strengthFilter">Fit strength</label>
             <select id="strengthFilter">
                 <option value="0">All strengths</option>
                 <option value="90">90% and above</option>
@@ -780,10 +853,10 @@ footer {
 
     <div class="results-heading">
         <div>
-            <h2>Recommended matches</h2>
+            <h2 id="resultsTitle">Recommended matches</h2>
             <p id="resultCount" role="status" aria-live="polite">Loading matches...</p>
         </div>
-        <p>Sorted by compatibility</p>
+        <p id="resultsSortNote">Sorted by compatibility</p>
     </div>
 
     <section class="match-list" id="matchList" aria-label="Recommended educator matches" hidden>
@@ -972,11 +1045,15 @@ const matchList = document.getElementById('matchList');
 const subjectFilter = document.getElementById('subjectFilter');
 const provinceFilter = document.getElementById('provinceFilter');
 const districtFilter = document.getElementById('districtFilter');
+const phaseFilter = document.getElementById('phaseFilter');
+const quintileFilter = document.getElementById('quintileFilter');
 const strengthFilter = document.getElementById('strengthFilter');
 const clearFilters = document.getElementById('clearFilters');
 const emptyClear = document.getElementById('emptyClear');
 const emptyState = document.getElementById('emptyState');
 const resultCount = document.getElementById('resultCount');
+const resultsTitle = document.getElementById('resultsTitle');
+const resultsSortNote = document.getElementById('resultsSortNote');
 const matchTotal = document.getElementById('matchTotal');
 const strongTotal = document.getElementById('strongTotal');
 const requestTotal = document.getElementById('requestTotal');
@@ -991,6 +1068,10 @@ const profileMenu = document.querySelector('.profile-menu span');
 const profileAvatar = document.querySelector('.profile-menu .avatar');
 const signOutButton = document.getElementById('signOutButton');
 const loadMoreMatches = document.getElementById('loadMoreMatches');
+const exploreEducators = document.getElementById('exploreEducators');
+const recommendedMatchesButton = document.getElementById('recommendedMatches');
+const matchModeTitle = document.getElementById('matchModeTitle');
+const matchModeNote = document.getElementById('matchModeNote');
 let cards = [];
 let currentUser = null;
 let privateProfile = null;
@@ -1000,8 +1081,14 @@ let outgoingRequests = new Map();
 let incomingRequests = new Map();
 let reportedStatusByUid = new Map();
 let filterCandidates = [];
-let loadedMatches = [];
-let lastMatchDocument = null;
+let recommendedMatches = [];
+let exploreMatches = [];
+let currentMode = 'recommended';
+let lastRecommendedDocument = null;
+let lastExploreDocument = null;
+let hasMoreRecommended = true;
+let hasMoreExplore = true;
+let exploreLoaded = false;
 let toastTimer;
 let pendingRequestContext = null;
 let stopReportWatch = null;
@@ -1037,6 +1124,44 @@ function lastActiveLabel(timestamp) {
     if (days === 0) return 'Active today';
     if (days === 1) return 'Active yesterday';
     return `Active ${days} days ago`;
+}
+
+function candidateQuintile(candidate) {
+    return candidate.currentQuintile || candidate.quintile || '';
+}
+
+function quintileLabel(value) {
+    if (!value) return 'Not specified';
+    if (value === 'not_sure') return 'Not sure';
+    return `Quintile ${value}`;
+}
+
+function matchContextFor(candidate, breakdown, mode) {
+    const desiredDistrict = normalise(privateProfile.desired?.district);
+    const currentDistrict = normalise(privateProfile.current?.district);
+    const candidateCurrentDistrict = normalise(candidate.currentDistrict);
+    const candidateDesiredDistrict = normalise(candidate.desiredDistrict);
+    const ownPhase = normalise(privateProfile.current?.phase);
+    const candidatePhase = normalise(candidate.phase);
+    const oneDistrictAligned = Boolean(
+        (desiredDistrict && desiredDistrict === candidateCurrentDistrict)
+        || (currentDistrict && currentDistrict === candidateDesiredDistrict)
+    );
+    const recommended = breakdown.reciprocalProvince && breakdown.subjectOverlap > 0 && breakdown.districtMatches > 0;
+
+    if (mode === 'recommended' || recommended) {
+        return { label: 'Recommended match', className: 'pill-direct', outside: false };
+    }
+    if (oneDistrictAligned && ownPhase && candidatePhase && ownPhase !== candidatePhase) {
+        return { label: 'Same district, different phase', className: 'pill-outside', outside: true };
+    }
+    if (breakdown.subjectOverlap > 0 && !breakdown.reciprocalProvince) {
+        return { label: 'Subject match, but outside your area', className: 'pill-outside', outside: true };
+    }
+    if (breakdown.reciprocalProvince && breakdown.districtMatches === 0) {
+        return { label: 'Different district', className: 'pill-outside', outside: true };
+    }
+    return { label: 'Available outside your criteria', className: 'pill-outside', outside: true };
 }
 
 function calculateScore(candidate) {
@@ -1181,7 +1306,7 @@ function watchReporterReports(uid) {
 }
 
 
-function renderMatchCard(candidate, breakdown) {
+function renderMatchCard(candidate, breakdown, mode) {
     const score = breakdown.total;
     const saved = savedMatchIds.has(candidate.uid);
     const request = activeRequestFor(candidate.uid);
@@ -1190,12 +1315,13 @@ function renderMatchCard(candidate, breakdown) {
     const currentArea = [candidate.currentDistrict, candidate.currentProvince].filter(Boolean).join(', ');
     const desiredArea = [candidate.desiredDistrict, candidate.desiredProvince].filter(Boolean).join(', ');
     const candidateCode = candidate.displayCode || displayCodeForUid(candidate.uid);
-
+    const context = matchContextFor(candidate, breakdown, mode);
 
     const subjectText = (candidate.subjects || []).join(' ').toLowerCase();
     const gradeText = candidate.grades?.length ? candidate.grades.join(', ') : 'Not specified';
     const subjectDisplay = candidate.subjects?.length ? candidate.subjects.join(', ') : 'Not specified';
     const phaseDisplay = candidate.phase || 'Not specified';
+    const quintileDisplay = quintileLabel(candidateQuintile(candidate));
     const postLevelDisplay = candidate.postLevel || 'Not specified';
     const fitLabel = breakdown.subjectOverlap === 0
         ? 'No subject overlap'
@@ -1211,9 +1337,16 @@ function renderMatchCard(candidate, breakdown) {
         : breakdown.districtMatches === 1
             ? 'One district aligned'
             : 'Reciprocal province';
+    const topLabel = mode === 'recommended' ? locationLabel : context.label;
+    const contextMarkup = context.outside
+        ? `<p class="match-reason"><strong>Why shown:</strong> ${escapeHtml(context.label)}.</p>`
+        : '';
+    const detailsNote = context.outside
+        ? `Outside your current match preferences: ${context.label}. Review route, phase and subjects before sending a request.`
+        : 'Subjects and reciprocal districts carry the most weight. A match with no shared subject is capped at 50%. The score does not guarantee approval of a transfer.';
 
     return `
-        <article class="match-card" data-score="${score}" data-province="${escapeHtml(normalise(candidate.currentProvince))}" data-district="${escapeHtml(normalise(candidate.currentDistrict))}" data-subjects="${escapeHtml(subjectText)}" data-match-uid="${escapeHtml(candidate.uid)}" data-match-code="${escapeHtml(candidateCode)}" data-req-key="${escapeHtml(request?.id || '')}" data-request-status="${escapeHtml(request?.status || '')}">
+        <article class="match-card${context.outside ? ' explore-card' : ''}" data-score="${score}" data-province="${escapeHtml(normalise(candidate.currentProvince))}" data-district="${escapeHtml(normalise(candidate.currentDistrict))}" data-phase="${escapeHtml(normalise(candidate.phase))}" data-quintile="${escapeHtml(normalise(candidateQuintile(candidate)))}" data-subjects="${escapeHtml(subjectText)}" data-match-uid="${escapeHtml(candidate.uid)}" data-match-code="${escapeHtml(candidateCode)}" data-req-key="${escapeHtml(request?.id || '')}" data-request-status="${escapeHtml(request?.status || '')}">
             <div class="match-main">
                 <div class="score-panel">
                     <div class="score-ring" style="--score: ${score}"><strong>${score}%</strong></div>
@@ -1222,7 +1355,7 @@ function renderMatchCard(candidate, breakdown) {
                 <div class="match-content">
                     <div class="match-topline">
                         <h3>${escapeHtml(candidateCode)}</h3>
-                        <span class="pill pill-direct">${locationLabel}</span>
+                        <span class="pill ${escapeHtml(context.className)}">${escapeHtml(topLabel)}</span>
                         <span class="pill">Available</span>
                         <span class="pill">${escapeHtml(lastActiveLabel(candidate.lastActiveAt))}</span>
                     </div>
@@ -1234,12 +1367,14 @@ function renderMatchCard(candidate, breakdown) {
                                 <span><b>Grades:</b> ${escapeHtml(gradeText)}</span>
                                 <span><b>Subjects:</b> ${escapeHtml(subjectDisplay)}</span>
                                 <span><b>Phase:</b> ${escapeHtml(phaseDisplay)}</span>
+                                <span><b>Quintile:</b> ${escapeHtml(quintileDisplay)}</span>
                                 <span><b>Post level:</b> ${escapeHtml(postLevelDisplay)}</span>
                             </div>
                         </div>
                         <span class="route-arrow" aria-hidden="true">&#8596;</span>
                         <div class="route-box"><span>They want</span><strong>${escapeHtml(desiredArea || candidate.desiredProvince)}</strong></div>
                     </div>
+                    ${contextMarkup}
                     <div data-report-notice-for="${escapeHtml(candidate.uid)}">${reportNotice}</div>
 
                 </div>
@@ -1257,11 +1392,10 @@ function renderMatchCard(candidate, breakdown) {
                     <div class="detail-item"><span>Grade alignment</span><strong>${breakdown.grades}/10 points (${breakdown.gradeOverlap} shared)</strong></div>
                     <div class="detail-item"><span>Phase and post</span><strong>${breakdown.phase + breakdown.postLevel}/10 points</strong></div>
                 </div>
-                <p class="details-note">Subjects and reciprocal districts carry the most weight. A match with no shared subject is capped at 50%. The score does not guarantee approval of a transfer.</p>
+                <p class="details-note">${escapeHtml(detailsNote)}</p>
             </div>
         </article>`;
 }
-
 function showToast(message) {
     toast.textContent = message;
     toast.classList.add('show');
@@ -1275,64 +1409,126 @@ function showEmpty(title, message) {
     emptyState.classList.add('show');
 }
 
-function populateDistrictFilter() {
-    const selectedProvince = provinceFilter.value;
-    const previousDistrict = districtFilter.value;
-    const districts = filterCandidates
-        .filter((candidate) => selectedProvince === 'all'
-            || normalise(candidate.currentProvince) === selectedProvince)
-        .map((candidate) => candidate.currentDistrict)
-        .filter(Boolean)
-        .filter((district, index, items) => items.indexOf(district) === index)
-        .sort((a, b) => a.localeCompare(b));
+function currentMatches() {
+    return currentMode === 'explore' ? exploreMatches : recommendedMatches;
+}
 
-    districtFilter.replaceChildren();
+function hasMoreActiveMatches() {
+    return currentMode === 'explore' ? hasMoreExplore : hasMoreRecommended;
+}
+
+function updateModeControls() {
+    const exploring = currentMode === 'explore';
+    matchModeTitle.textContent = exploring ? 'Explore more educators' : 'Recommended matches';
+    matchModeNote.textContent = exploring
+        ? 'Available educators beyond your recommended list.'
+        : 'Sorted by compatibility.';
+    resultsTitle.textContent = exploring ? 'Explore more educators' : 'Recommended matches';
+    resultsSortNote.textContent = exploring ? 'Marked by reason shown' : 'Sorted by compatibility';
+    exploreEducators.hidden = exploring;
+    recommendedMatchesButton.hidden = !exploring;
+    loadMoreMatches.textContent = exploring ? 'Load More Educators' : 'Load More Matches';
+    loadMoreMatches.hidden = !hasMoreActiveMatches();
+}
+
+function populateSelectOptions(select, allLabel, rawValues, valueFor = normalise, labelFor = (value) => value) {
+    const previousValue = select.value;
+    const values = rawValues
+        .filter(Boolean)
+        .filter((value, index, items) => items.findIndex((item) => valueFor(item) === valueFor(value)) === index)
+        .sort((a, b) => labelFor(a).localeCompare(labelFor(b)));
+
+    select.replaceChildren();
     const allOption = document.createElement('option');
     allOption.value = 'all';
-    allOption.textContent = 'All districts';
-    districtFilter.append(allOption);
+    allOption.textContent = allLabel;
+    select.append(allOption);
 
-    districts.forEach((district) => {
+    values.forEach((value) => {
         const option = document.createElement('option');
-        option.value = normalise(district);
-        option.textContent = district;
-        districtFilter.append(option);
+        option.value = valueFor(value);
+        option.textContent = labelFor(value);
+        select.append(option);
     });
 
-    districtFilter.value = Array.from(districtFilter.options)
-        .some((option) => option.value === previousDistrict)
-        ? previousDistrict
+    select.value = Array.from(select.options).some((option) => option.value === previousValue)
+        ? previousValue
         : 'all';
+}
+
+function populateProvinceFilter() {
+    populateSelectOptions(provinceFilter, 'All provinces', filterCandidates.map((candidate) => candidate.currentProvince));
+}
+
+function populateDistrictFilter() {
+    const selectedProvince = provinceFilter.value;
+    populateSelectOptions(
+        districtFilter,
+        'All districts',
+        filterCandidates
+            .filter((candidate) => selectedProvince === 'all'
+                || normalise(candidate.currentProvince) === selectedProvince)
+            .map((candidate) => candidate.currentDistrict)
+    );
+}
+
+function populatePhaseFilter() {
+    populateSelectOptions(phaseFilter, 'All phases', filterCandidates.map((candidate) => candidate.phase));
+}
+
+function populateQuintileFilter() {
+    const order = ['1', '2', '3', '4', '5', 'not_sure'];
+    const values = filterCandidates
+        .map(candidateQuintile)
+        .filter(Boolean)
+        .sort((a, b) => order.indexOf(a) - order.indexOf(b));
+    populateSelectOptions(quintileFilter, 'All quintiles', values, normalise, quintileLabel);
+}
+
+function clearFilterValues() {
+    subjectFilter.value = '';
+    provinceFilter.value = 'all';
+    districtFilter.value = 'all';
+    phaseFilter.value = 'all';
+    quintileFilter.value = 'all';
+    strengthFilter.value = '0';
 }
 
 function applyFilters() {
     const subject = subjectFilter.value.trim().toLowerCase();
     const province = provinceFilter.value;
     const district = districtFilter.value;
+    const phase = phaseFilter.value;
+    const quintile = quintileFilter.value;
     const minimumScore = Number(strengthFilter.value);
+    const noun = currentMode === 'explore' ? 'educators' : 'matches';
     let visible = 0;
 
     cards.forEach((card) => {
         const matchesSubject = !subject || card.dataset.subjects.includes(subject);
         const matchesProvince = province === 'all' || card.dataset.province === province;
         const matchesDistrict = district === 'all' || card.dataset.district === district;
+        const matchesPhase = phase === 'all' || card.dataset.phase === phase;
+        const matchesQuintile = quintile === 'all' || card.dataset.quintile === quintile;
         const matchesStrength = Number(card.dataset.score) >= minimumScore;
-        const shouldShow = matchesSubject && matchesProvince && matchesDistrict && matchesStrength;
+        const shouldShow = matchesSubject && matchesProvince && matchesDistrict && matchesPhase && matchesQuintile && matchesStrength;
         card.hidden = !shouldShow;
         if (shouldShow) visible += 1;
     });
 
     matchTotal.textContent = visible;
-    resultCount.textContent = `Showing ${visible} of ${cards.length} matches`;
-    emptyState.classList.toggle('show', visible === 0);
+    resultCount.textContent = `Showing ${visible} of ${cards.length} ${noun}`;
+    if (visible === 0) {
+        showEmpty(`No ${noun} fit these filters`, 'Clear the filters to see all available results.');
+    } else {
+        emptyState.classList.remove('show');
+    }
+    updateModeControls();
 }
 
 function resetFilters() {
-    subjectFilter.value = '';
-    provinceFilter.value = 'all';
+    clearFilterValues();
     populateDistrictFilter();
-    districtFilter.value = 'all';
-    strengthFilter.value = '0';
     applyFilters();
     subjectFilter.focus();
 }
@@ -1343,10 +1539,11 @@ provinceFilter.addEventListener('change', () => {
     applyFilters();
 });
 districtFilter.addEventListener('change', applyFilters);
+phaseFilter.addEventListener('change', applyFilters);
+quintileFilter.addEventListener('change', applyFilters);
 strengthFilter.addEventListener('change', applyFilters);
 clearFilters.addEventListener('click', resetFilters);
 emptyClear.addEventListener('click', resetFilters);
-
 function bindMatchActions() {
     document.querySelectorAll('.details-button').forEach((button) => {
         button.addEventListener('click', () => {
@@ -1454,6 +1651,8 @@ function bindMatchActions() {
                 await submitSafetyAction(db, currentUser.uid, matchUid, '', action);
                 if (action.block) {
                     blockedMatchIds.add(matchUid);
+                    recommendedMatches = recommendedMatches.filter((item) => item.candidate.uid !== matchUid);
+                    exploreMatches = exploreMatches.filter((item) => item.candidate.uid !== matchUid);
                     card.remove();
                     cards = Array.from(document.querySelectorAll('.match-card'));
                     applyFilters();
@@ -1552,57 +1751,118 @@ async function loadMatchRequests(uid) {
     updatePendingRequestTotal();
 }
 
-function renderLoadedMatches() {
-    loadedMatches.sort((a, b) => b.breakdown.total - a.breakdown.total);
-    const selectedProvince = provinceFilter.value;
-    const provinces = [...new Set(loadedMatches.map((item) => item.candidate.currentProvince).filter(Boolean))].sort();
-    provinceFilter.innerHTML = '<option value="all">All provinces</option>'
-        + provinces.map((province) => `<option value="${escapeHtml(normalise(province))}">${escapeHtml(province)}</option>`).join('');
-    provinceFilter.value = Array.from(provinceFilter.options).some((option) => option.value === selectedProvince) ? selectedProvince : 'all';
-    filterCandidates = loadedMatches.map((item) => item.candidate);
+function renderActiveMatches() {
+    const activeMatches = currentMatches();
+    activeMatches.sort((a, b) => b.breakdown.total - a.breakdown.total);
+    filterCandidates = activeMatches.map((item) => item.candidate);
+    populateProvinceFilter();
     populateDistrictFilter();
-    matchList.innerHTML = loadedMatches.map(({ candidate, breakdown }) => renderMatchCard(candidate, breakdown)).join('');
+    populatePhaseFilter();
+    populateQuintileFilter();
+    matchList.innerHTML = activeMatches.map(({ candidate, breakdown }) => renderMatchCard(candidate, breakdown, currentMode)).join('');
     matchList.hidden = false;
     cards = Array.from(document.querySelectorAll('.match-card'));
-    strongTotal.textContent = loadedMatches.filter((item) => item.breakdown.total >= 85).length;
+    strongTotal.textContent = activeMatches.filter((item) => item.breakdown.total >= 85).length;
     bindMatchActions();
     applyFilters();
 }
 
-async function loadNextMatchPage() {
-    loadMoreMatches.disabled = true;
-    loadMoreMatches.textContent = 'Loading...';
-    const constraints = [
-        where('currentProvince', '==', privateProfile.desired?.province || ''),
-        where('desiredProvince', '==', privateProfile.current?.province || ''),
-        where('available', '==', true)
-    ];
-    if (lastMatchDocument) constraints.push(startAfter(lastMatchDocument));
-    constraints.push(limit(20));
-    const snapshot = await getDocs(query(collection(db, 'matchProfiles'), ...constraints));
-    if (snapshot.docs.length) lastMatchDocument = snapshot.docs[snapshot.docs.length - 1];
-    const existingIds = new Set(loadedMatches.map((item) => item.candidate.uid));
-    const nextMatches = snapshot.docs
+function snapshotToMatches(snapshot, existingIds) {
+    return snapshot.docs
         .filter((item) => item.id !== currentUser.uid && !blockedMatchIds.has(item.id) && !existingIds.has(item.id))
         .map((item) => ({ ...item.data(), uid: item.id }))
         .filter((candidate) => isRecentlyActive(candidate.lastActiveAt))
         .map((candidate) => ({ candidate, breakdown: calculateScore(candidate) }));
-    loadedMatches.push(...nextMatches);
-    renderLoadedMatches();
-    loadMoreMatches.hidden = snapshot.size < 20;
-    loadMoreMatches.disabled = false;
-    loadMoreMatches.textContent = 'Load More Matches';
 }
 
-loadMoreMatches.addEventListener('click', () => {
-    loadNextMatchPage().catch((error) => {
-        console.error('More matches could not be loaded.', error);
-        showToast('More matches could not be loaded. Please try again.');
+async function loadNextRecommendedPage() {
+    loadMoreMatches.disabled = true;
+    loadMoreMatches.textContent = 'Loading...';
+    try {
+        const pageSize = 20;
+        const constraints = [
+            where('currentProvince', '==', privateProfile.desired?.province || ''),
+            where('desiredProvince', '==', privateProfile.current?.province || ''),
+            where('available', '==', true)
+        ];
+        if (lastRecommendedDocument) constraints.push(startAfter(lastRecommendedDocument));
+        constraints.push(limit(pageSize));
+        const snapshot = await getDocs(query(collection(db, 'matchProfiles'), ...constraints));
+        if (snapshot.docs.length) lastRecommendedDocument = snapshot.docs[snapshot.docs.length - 1];
+        hasMoreRecommended = snapshot.size === pageSize;
+        const existingIds = new Set(recommendedMatches.map((item) => item.candidate.uid));
+        recommendedMatches.push(...snapshotToMatches(snapshot, existingIds));
+        if (currentMode === 'recommended') renderActiveMatches();
+    } finally {
         loadMoreMatches.disabled = false;
-        loadMoreMatches.textContent = 'Try Again';
+        updateModeControls();
+    }
+}
+
+async function loadNextExplorePage() {
+    loadMoreMatches.disabled = true;
+    loadMoreMatches.textContent = 'Loading...';
+    try {
+        const pageSize = 40;
+        const constraints = [where('available', '==', true)];
+        if (lastExploreDocument) constraints.push(startAfter(lastExploreDocument));
+        constraints.push(limit(pageSize));
+        const snapshot = await getDocs(query(collection(db, 'matchProfiles'), ...constraints));
+        if (snapshot.docs.length) lastExploreDocument = snapshot.docs[snapshot.docs.length - 1];
+        hasMoreExplore = snapshot.size === pageSize;
+        exploreLoaded = true;
+        const existingIds = new Set(exploreMatches.map((item) => item.candidate.uid));
+        exploreMatches.push(...snapshotToMatches(snapshot, existingIds));
+        if (currentMode === 'explore') renderActiveMatches();
+    } finally {
+        loadMoreMatches.disabled = false;
+        updateModeControls();
+    }
+}
+
+async function loadNextActivePage() {
+    if (currentMode === 'explore') {
+        await loadNextExplorePage();
+    } else {
+        await loadNextRecommendedPage();
+    }
+}
+
+async function activateExploreMode() {
+    currentMode = 'explore';
+    clearFilterValues();
+    updateModeControls();
+    try {
+        if (!exploreLoaded) {
+            await loadNextExplorePage();
+        } else {
+            renderActiveMatches();
+        }
+        window.mchTrack?.('explore_educators_viewed');
+    } catch (error) {
+        console.error('Explore educators could not be loaded.', error);
+        showToast('Explore educators could not be loaded. Please try again.');
+        renderActiveMatches();
+    }
+}
+
+function activateRecommendedMode() {
+    currentMode = 'recommended';
+    clearFilterValues();
+    renderActiveMatches();
+    window.mchTrack?.('recommended_matches_viewed');
+}
+
+exploreEducators.addEventListener('click', activateExploreMode);
+recommendedMatchesButton.addEventListener('click', activateRecommendedMode);
+loadMoreMatches.addEventListener('click', () => {
+    loadNextActivePage().catch((error) => {
+        console.error('More results could not be loaded.', error);
+        showToast('More results could not be loaded. Please try again.');
+        loadMoreMatches.disabled = false;
+        updateModeControls();
     });
 });
-
 async function loadMatches(user) {
     const profileSnapshot = await getDoc(doc(db, 'profiles', user.uid));
     if (!profileSnapshot.exists()) {
@@ -1622,11 +1882,18 @@ async function loadMatches(user) {
     watchReporterReports(user.uid);
     await Promise.all([loadSavedMatches(user.uid), loadBlockedMatches(user.uid), loadMatchRequests(user.uid)]);
 
-    loadedMatches = [];
-    lastMatchDocument = null;
-    await loadNextMatchPage();
+    recommendedMatches = [];
+    exploreMatches = [];
+    currentMode = 'recommended';
+    lastRecommendedDocument = null;
+    lastExploreDocument = null;
+    hasMoreRecommended = true;
+    hasMoreExplore = true;
+    exploreLoaded = false;
+    clearFilterValues();
+    await loadNextRecommendedPage();
 
-    if (!loadedMatches.length) {
+    if (!recommendedMatches.length) {
         showEmpty('No reciprocal matches yet', 'Your verified profile is active. New compatible educators will appear here automatically.');
     }
 }
