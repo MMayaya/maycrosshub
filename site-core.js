@@ -30,6 +30,11 @@
 
     window.mchTrack = track;
 
+    // Shared UI loads independently of Firebase and never reads private collections.
+    const sharingScript = document.createElement('script');
+    sharingScript.src = new URL('sharing.js', document.currentScript.src).href;
+    document.head.append(sharingScript);
+
     function addSkipLink() {
         const main = document.querySelector('main');
         if (!main) return;

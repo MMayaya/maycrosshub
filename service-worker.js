@@ -1,7 +1,7 @@
-const CACHE_NAME = 'may-cross-hub-v17';
+const CACHE_NAME = 'may-cross-hub-v18';
 const CORE_ASSETS = [
   '/', '/signin', '/reset-password', '/register', '/privacy', '/terms', '/guidelines',
-  '/site-core.css', '/site-core.js', '/legal.css', '/favicon.ico',
+  '/sharing.js', '/share-qr.png', '/site-core.css', '/site-core.js', '/legal.css', '/favicon.ico',
   '/favicon-32x32.png', '/favicon-16x16.png',
   '/apple-touch-icon.png', '/icon-192.png', '/icon-512.png',
   '/site.webmanifest', '/404.html'

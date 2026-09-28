@@ -63,7 +63,11 @@ function renderRequestActivity(items, uid) {
         return '<a class="notification" href="' + link + '"><strong>' + direction + '</strong><span>' + label + '</span></a>';
     }).join('');
 }
+let shareProfile = null;
+window.addEventListener('mch-sharing-ready', () => window.mchSharing?.setProfile(shareProfile));
 onAuthStateChanged(auth, async (user) => {
+    shareProfile = null;
+    window.mchSharing?.setProfile(null);
     if (!user?.emailVerified) {
         location.replace('/signin');
         return;
@@ -74,6 +78,9 @@ onAuthStateChanged(auth, async (user) => {
         const profile = profileSnapshot.data();
         document.getElementById('welcomeName').textContent = 'Welcome, ' + compactAccountName(user, profile);
         const review = profileReview(profile);
+        const moderation = await getDoc(doc(db, 'moderation', user.uid));
+        shareProfile = review.percent === 100 && moderation.data()?.status !== 'suspended' ? profile : null;
+        window.mchSharing?.setProfile(shareProfile);
         document.getElementById('completenessText').textContent = review.percent + '% complete';
         document.getElementById('completenessBar').style.width = review.percent + '%';
         document.getElementById('suggestions').innerHTML = (review.missing.length ? review.missing : ['Your profile contains the main matching details.'])

@@ -851,6 +851,7 @@ form.addEventListener('submit', async (event) => {
         accountName.textContent = compactAccountName(currentUser, updatedPrivateProfile);
         accountAvatar.textContent = accountInitials(currentUser, updatedPrivateProfile);
         updateVisibilityPreview();
+        refreshSharing();
         showMessage('Profile updated successfully. Your match results will use the new information.');
         window.mchTrack?.('profile_updated', { match_visibility: available ? 'visible' : 'hidden' });
     } catch (error) {
@@ -1023,7 +1024,10 @@ document.getElementById('signOutButton').addEventListener('click', async () => {
     window.location.replace('/signin');
 });
 
+function refreshSharing() { window.mchSharing?.setProfile(accountSuspended ? null : privateProfile); }
+window.addEventListener('mch-sharing-ready', refreshSharing);
 onAuthStateChanged(auth, async (user) => {
+    window.mchSharing?.setProfile(null);
     if (!user || !user.emailVerified) {
         if (accountDeletionInProgress) return;
         window.location.replace('/signin');
@@ -1049,6 +1053,7 @@ onAuthStateChanged(auth, async (user) => {
         identityProfile = identitySnapshot.exists() ? identitySnapshot.data() : null;
         accountSuspended = moderationSnapshot.data()?.status === 'suspended';
         populateForm(privateProfile);
+        refreshSharing();
         await loadBlockedEducators();
         if (accountSuspended) showMessage('Your profile is suspended from match results. You may update your details, but matching remains unavailable until the safety review is resolved.', 'error');
         accountName.textContent = compactAccountName(user, privateProfile);
