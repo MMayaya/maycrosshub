@@ -173,7 +173,7 @@ nav {
 header {
     background: linear-gradient(135deg, #004080, #0059b3);
     color: #fff;
-    padding: 4rem 1rem 3.3rem;
+    padding: 3rem 1rem 2.5rem;
     overflow: hidden;
     margin-bottom: 2rem;
     position: relative;
@@ -202,8 +202,8 @@ header::before {
 }
 
 .header-logo {
-    width: clamp(170px, 18vw, 210px);
-    height: clamp(170px, 18vw, 210px);
+    width: 120px;
+    height: 120px;
     object-fit: contain;
     background: #fff;
     border-radius: 50%;
@@ -214,8 +214,8 @@ header::before {
 }
 
 .logo-fallback {
-    width: clamp(170px, 18vw, 210px);
-    height: clamp(170px, 18vw, 210px);
+    width: 120px;
+    height: 120px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -236,27 +236,26 @@ header::before {
 
 .header-text {
     text-align: left;
-    max-width: 760px;
+    max-width: 700px;
     opacity: 0;
     animation: slideInRight 0.8s ease-out 0.4s forwards;
 }
 
 .header-text h1 {
-    font-size: clamp(2.2rem, 5vw, 4.6rem);
-    line-height: 1;
-    margin-bottom: 0.55rem;
+    font-size: 2.4rem;
+    margin-bottom: 0.3rem;
 }
 
 .motto {
-    font-size: 1.25rem;
+    font-size: 1.2rem;
     font-style: italic;
     color: #c7deff;
-    margin-bottom: 0.85rem;
+    margin-bottom: 0.8rem;
     font-weight: 500;
 }
 
 .header-text p.instructions {
-    font-size: 1.06rem;
+    font-size: 1.05rem;
     color: #e6f0fa;
     margin-bottom: 1rem;
 }
@@ -1011,10 +1010,7 @@ footer {
         justify-content: center;
     }
 
-    .cta-panel .btn,
-    .hero-actions .btn {
-        width: 100%;
-    }
+    .cta-panel .btn { width: 100%; }
 }
 
 @media (max-width: 480px) {
@@ -1099,10 +1095,10 @@ footer {
         >
         <div class="logo-fallback" aria-hidden="true" hidden>May<br>Cross<br>Hub</div>
         <div class="header-text">
-            <h1>May Cross Hub</h1>
+            <h1>Welcome to May Cross Hub</h1>
             <p class="motto">Helping educators find transfer matches that cross.</p>
             <p class="instructions">
-                A privacy-conscious teacher transfer matching platform where educators can register their current post, desired transfer area, subjects, phase, grades, and preferences to find compatible reciprocal matches.
+                Find reciprocal educator transfer matches by location, subject, phase and grade, with privacy controls for connecting safely.
             </p>
             <div class="hero-actions">
                 <a href="/register" class="btn btn-primary" id="heroAccountAction">Create an Account</a>
